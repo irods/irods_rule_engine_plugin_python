@@ -78,16 +78,6 @@ namespace {
         return out_list;
     }
 
-    template <typename T>
-    std::list<boost::any>
-    liftListToAny(const std::list<T>& in_list) {
-        std::list<boost::any> out_list;
-        for (const auto& itr : in_list) {
-            out_list.push_back(itr);
-        }
-        return out_list;
-    }
-
     struct RuleCallWrapper {
         RuleCallWrapper(irods::callback& effect_handler, std::string rule_name)
             : effect_handler{effect_handler}
@@ -145,72 +135,88 @@ namespace {
     }
 }
 
-extern "C" {
-    irods::error
-    start(irods::default_re_ctx&) {
-        dlopen("libpython2.7.so", RTLD_LAZY | RTLD_GLOBAL); // https://mail.python.org/pipermail/new-bugs-announce/2008-November/003322.html
-        Py_InitializeEx(0);
-        bp::object main_module = bp::import("__main__");
-        bp::object main_namespace = main_module.attr("__dict__");
-        bp::exec("import sys\n"
-                 "sys.path.append('/etc/irods')",
-                 main_namespace);
-        initplugin_wrappers();
-        return SUCCESS();
-    }
+irods::error
+start(irods::default_re_ctx&) {
+    dlopen("libpython2.7.so", RTLD_LAZY | RTLD_GLOBAL); // https://mail.python.org/pipermail/new-bugs-announce/2008-November/003322.html
+    Py_InitializeEx(0);
+    bp::object main_module = bp::import("__main__");
+    bp::object main_namespace = main_module.attr("__dict__");
+    bp::exec("import sys\n"
+             "sys.path.append('/etc/irods')",
+             main_namespace);
+    initplugin_wrappers();
+    return SUCCESS();
+}
 
-    irods::error
-    stop(irods::default_re_ctx&) {
-        return SUCCESS();
-    }
+irods::error
+stop(irods::default_re_ctx&) {
+    return SUCCESS();
+}
 
-    irods::error
-    rule_exists(irods::default_re_ctx&, std::string rule_name, bool& _return) {
-        _return = false;
-        try {
-            bp::object core_module = bp::import("core");
-            _return = PyObject_HasAttrString(core_module.ptr(), rule_name.c_str());
-        } catch (const bp::error_already_set&) {
-            LOG("caught python exception\n", extract_python_exception());
-            std::string err_msg = "irods-re-python::rule_exists Python exception. Check " + LOG_FILE;
-            return ERROR(-1, err_msg);
-        }
-        return SUCCESS();
+irods::error
+rule_exists(irods::default_re_ctx&, std::string rule_name, bool& _return) {
+    _return = false;
+    try {
+        bp::object core_module = bp::import("core");
+        _return = PyObject_HasAttrString(core_module.ptr(), rule_name.c_str());
+    } catch (const bp::error_already_set&) {
+        LOG("caught python exception\n", extract_python_exception());
+        std::string err_msg = "irods-re-python::rule_exists Python exception. Check " + LOG_FILE;
+        return ERROR(-1, err_msg);
     }
+    return SUCCESS();
+}
 
-    irods::error
-    exec_rule(irods::default_re_ctx&, std::string rule_name, std::list<boost::any>& rule_arguments_cpp, irods::callback effect_handler) {
-        try {
-            bp::object core_module = bp::import("core");
-            bp::object rule_function = core_module.attr(rule_name.c_str());
-            bp::list rule_arguments_python;
-            for (auto&& itr : rule_arguments_cpp) {
+irods::error
+exec_rule(irods::default_re_ctx&, std::string rule_name, std::list<boost::any>& rule_arguments_cpp, irods::callback effect_handler) {
+    try {
+        bp::object core_module = bp::import("core");
+        bp::object rule_function = core_module.attr(rule_name.c_str());
+        bp::list rule_arguments_python;
+        for (auto&& itr : rule_arguments_cpp) {
+            if (itr.type() == typeid(std::string)) {
                 rule_arguments_python.append(boost::any_cast<std::string>(itr));
+            } else if (itr.type() == typeid(std::string*)) {
+                rule_arguments_python.append(*boost::any_cast<std::string*>(itr));
+            } else {
+                LOG("unhandled type in boost::any ", itr.type().name());
+                return ERROR(-1, std::string("irods-re-python::exec_rule unhandled type in boost::any ") + itr.type().name());
             }
-
-            CallbackWrapper callback_wrapper{effect_handler};
-            rule_function(rule_arguments_python, callback_wrapper);
-            rule_arguments_cpp = liftListToAny(convert_python_iterable_of_strings_to_cpp(rule_arguments_python));
-        } catch (const bp::error_already_set&) {
-            LOG("caught python exception\n", extract_python_exception());
-            std::string err_msg = "irods-re-python::exec_rule Python exception. Check " + LOG_FILE;
-            return ERROR(-1, err_msg);
-        } catch (const boost::bad_any_cast& e) {
-            LOG("bad any cast : ", e.what());
-            std::string err_msg = std::string("irods-re-python::exec_rule bad_any_cast : ") + e.what();
-            return ERROR(-1, err_msg);
         }
-        return SUCCESS();
-    }
 
-    irods::pluggable_rule_engine<irods::default_re_ctx>*
-    plugin_factory(const std::string& _inst_name, const std::string& _context) {
-        return new irods::pluggable_rule_engine<irods::default_re_ctx>( _inst_name , _context);
-    }
+        CallbackWrapper callback_wrapper{effect_handler};
+        rule_function(rule_arguments_python, callback_wrapper);
 
-    double
-    get_plugin_interface_version() {
-        static const double PLUGIN_INTERFACE_VERSION = 1.0;
-        return PLUGIN_INTERFACE_VERSION;
+        std::list<std::string> processed_arguments_cpp = convert_python_iterable_of_strings_to_cpp(rule_arguments_python);
+        auto out = rule_arguments_cpp.begin();
+        for (auto&& in : processed_arguments_cpp) {
+            if (out->type() == typeid(std::string)) {
+                *out = in;
+            } else {
+                *boost::any_cast<std::string*>(*out) = in;
+            }
+            ++out;
+        }
+
+    } catch (const bp::error_already_set&) {
+        LOG("caught python exception\n", extract_python_exception());
+        std::string err_msg = "irods-re-python::exec_rule Python exception. Check " + LOG_FILE;
+        return ERROR(-1, err_msg);
+    } catch (const boost::bad_any_cast& e) {
+        LOG("bad any cast : ", e.what());
+        std::string err_msg = std::string("irods-re-python::exec_rule bad_any_cast : ") + e.what();
+        return ERROR(-1, err_msg);
     }
+    return SUCCESS();
+}
+
+extern "C"
+irods::pluggable_rule_engine<irods::default_re_ctx>*
+plugin_factory(const std::string& _inst_name, const std::string& _context) {
+    irods::pluggable_rule_engine<irods::default_re_ctx>* re = new irods::pluggable_rule_engine<irods::default_re_ctx>( _inst_name , _context);
+    re->add_operation<irods::default_re_ctx&>("start", std::function<irods::error(irods::default_re_ctx&)>(start));
+    re->add_operation<irods::default_re_ctx&>("stop", std::function<irods::error(irods::default_re_ctx&)>(stop));
+    re->add_operation<irods::default_re_ctx&, std::string, bool&>("rule_exists", std::function<irods::error(irods::default_re_ctx&, std::string, bool&)>(rule_exists));
+    re->add_operation<irods::default_re_ctx&, std::string, std::list<boost::any>&, irods::callback>("exec_rule", std::function<irods::error(irods::default_re_ctx&, std::string, std::list<boost::any>&, irods::callback)>(exec_rule));
+    return re;
 }
