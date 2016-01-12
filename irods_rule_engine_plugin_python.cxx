@@ -59,6 +59,31 @@ namespace {
         }
     }
 
+    namespace StringFromPythonUnicode {
+        void*
+        convertible(PyObject* py_obj) {
+            if (PyUnicode_Check(py_obj)) {
+                return py_obj;
+            }
+            return nullptr;
+        }
+
+        void
+        construct(
+            PyObject *py_obj,
+            boost::python::converter::rvalue_from_python_stage1_data *data) {
+            bp::handle<> h_encoded(PyUnicode_AsUTF8String(py_obj));
+            void *storage = reinterpret_cast<boost::python::converter::rvalue_from_python_storage<std::string>*>(data)->storage.bytes;
+            new (storage) std::string(PyString_AsString(h_encoded.get()));
+            data->convertible = storage;
+        }
+
+        void
+        register_converter() {
+            bp::converter::registry::push_back(&convertible, &construct, bp::type_id<std::string>());
+        }
+    }
+
     std::list<std::string>
     convert_python_iterable_of_strings_to_cpp(const bp::object& in_itr) {
         std::list<std::string> out_list;
@@ -68,8 +93,9 @@ namespace {
             if (s.check()) {
                 out_list.push_back(s);
             } else {
+                std::string object_classname = boost::python::extract<std::string>(in_itr[i].attr("__class__").attr("__name__"));
                 std::stringstream err;
-                err << __PRETTY_FUNCTION__ << ": extract to string failed on element[" << i << "]";
+                err << __PRETTY_FUNCTION__ << ": extract to string failed on element[" << i << "] of type [" << object_classname << "]";
                 LOG(err.str());
                 PyErr_SetString(PyExc_RuntimeError, err.str().c_str());
                 bp::throw_error_already_set();
@@ -145,6 +171,7 @@ start(irods::default_re_ctx&) {
              "sys.path.append('/etc/irods')",
              main_namespace);
     initplugin_wrappers();
+    StringFromPythonUnicode::register_converter();
     return SUCCESS();
 }
 
@@ -160,8 +187,9 @@ rule_exists(irods::default_re_ctx&, std::string rule_name, bool& _return) {
         bp::object core_module = bp::import("core");
         _return = PyObject_HasAttrString(core_module.ptr(), rule_name.c_str());
     } catch (const bp::error_already_set&) {
-        LOG("caught python exception\n", extract_python_exception());
-        std::string err_msg = "irods-re-python::rule_exists Python exception. Check " + LOG_FILE;
+        const std::string formatted_python_exception = extract_python_exception();
+        LOG("caught python exception\n", formatted_python_exception);
+        std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " Caught Python exception.\n" + formatted_python_exception;
         return ERROR(-1, err_msg);
     }
     return SUCCESS();
@@ -180,7 +208,7 @@ exec_rule(irods::default_re_ctx&, std::string rule_name, std::list<boost::any>& 
                 rule_arguments_python.append(*boost::any_cast<std::string*>(itr));
             } else {
                 LOG("unhandled type in boost::any ", itr.type().name());
-                return ERROR(-1, std::string("irods-re-python::exec_rule unhandled type in boost::any ") + itr.type().name());
+                return ERROR(-1, std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " unhandled type in boost::any " + itr.type().name());
             }
         }
 
@@ -199,12 +227,13 @@ exec_rule(irods::default_re_ctx&, std::string rule_name, std::list<boost::any>& 
         }
 
     } catch (const bp::error_already_set&) {
-        LOG("caught python exception\n", extract_python_exception());
-        std::string err_msg = "irods-re-python::exec_rule Python exception. Check " + LOG_FILE;
+        const std::string formatted_python_exception = extract_python_exception();
+        LOG("caught python exception\n", formatted_python_exception);
+        std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " Caught Python exception.\n" + formatted_python_exception;
         return ERROR(-1, err_msg);
     } catch (const boost::bad_any_cast& e) {
         LOG("bad any cast : ", e.what());
-        std::string err_msg = std::string("irods-re-python::exec_rule bad_any_cast : ") + e.what();
+        std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " bad_any_cast : " + e.what();
         return ERROR(-1, err_msg);
     }
     return SUCCESS();
