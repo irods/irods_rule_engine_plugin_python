@@ -5,6 +5,9 @@
 
 #include "boost/any.hpp"
 #include "boost/date_time.hpp"
+#include "boost/algorithm/string/replace.hpp"
+#include "boost/algorithm/string/split.hpp"
+#include "boost/algorithm/string/classification.hpp"
 #include "boost/python.hpp"
 #include "boost/python/raw_function.hpp"
 #include "boost/python/slice.hpp"
@@ -15,11 +18,12 @@
 
 #define LOG(...) log(__func__, ":", __LINE__, " ", __VA_ARGS__)
 
-static std::map<std::string, std::string> PYTHON_GLOBALS {{"PYTHON_RE_RET_CODE", "code"}, {"PYTHON_RE_RET_STATUS", "status"}, {"PYTHON_RE_RET_OUTPUT", "output"}, {"PYTHON_MSPARAM_TYPE", "PYTHON_MSPARAM_TYPE"}, {"PYTHON_RODSOBJSTAT", "PYTHON_RODSOBJSTAT"}, {"PYTHON_INT_MS_T", "PYTHON_INT_MS_T"}, {"PYTHON_DOUBLE_MS_T", "PYTHON_DOUBLE_MS_T"}, {"PYTHON_GENQUERYINP_MS_T", "PYTHON_GENQUERYINP_MS_T"}};
+static std::map<std::string, std::string> PYTHON_GLOBALS {{"PYTHON_RE_RET_CODE", "code"}, {"PYTHON_RE_RET_STATUS", "status"}, {"PYTHON_RE_RET_OUTPUT", "output"}, {"PYTHON_MSPARAM_TYPE", "PYTHON_MSPARAM_TYPE"}, {"PYTHON_RODSOBJSTAT", "PYTHON_RODSOBJSTAT"}, {"PYTHON_INT_MS_T", "PYTHON_INT_MS_T"}, {"PYTHON_DOUBLE_MS_T", "PYTHON_DOUBLE_MS_T"}, {"PYTHON_GENQUERYINP_MS_T", "PYTHON_GENQUERYINP_MS_T"}, {"PYTHON_GENQUERYOUT_MS_T", "PYTHON_GENQUERYOUT_MS_T"}};
 
 const std::string ELEMENT_TYPE = "ELEMENT_TYPE";
 const std::string STRING_TYPE = "STRING_TYPE";
 const std::string STRING_VALUE_KEY = "STRING_VALUE_KEY";
+const std::string IRODS_ERROR_PREFIX = "[iRods__Error__Code:";
 
 namespace bp = boost::python;
 
@@ -190,7 +194,6 @@ namespace {
             bp::tuple rule_args_python = bp::extract<bp::tuple>(args[bp::slice(1, bp::len(args))]);
 
             std::list< std::map<std::string, std::string> > rule_args_maps = convert_python_iterable_to_list_of_maps(rule_args_python);
-
             std::list<boost::any> rule_args_cpp;
 
             std::stringstream log_msg;
@@ -208,9 +211,122 @@ namespace {
                     }
                     log_msg << "}, ";
 
-                    // TODO CONVERT DICT TO APPROPRIATE TYPE
                     msParam_t* tmpMsParam = (msParam_t*) malloc(sizeof(*tmpMsParam));
                     memset(tmpMsParam, 0, sizeof(*tmpMsParam));
+
+                    // TODO Refactor into irods_re_deserialization?
+                    if (itr[ELEMENT_TYPE] == PYTHON_GLOBALS.at("PYTHON_GENQUERYINP_MS_T")) {
+                        try {
+                            genQueryInp_t* genQueryInp = (genQueryInp_t*) malloc(sizeof(genQueryInp_t));
+                            memset(genQueryInp, 0, sizeof(genQueryInp_t));
+                            
+                            std::map<int, int> selectInpMap;
+                            std::map<int, std::string> sqlCondInpMap;
+                            std::map<std::string, std::string> condInputMap;
+                            
+                            for (std::map<std::string, std::string>::iterator map_itr = itr.begin(); map_itr != itr.end(); ++map_itr) {
+                                if (map_itr->first == "maxRows")
+                                    genQueryInp->maxRows = boost::lexical_cast<int>(map_itr->second);
+                                else if (map_itr->first == "continueInx")
+                                    genQueryInp->continueInx = boost::lexical_cast<int>(map_itr->second);
+                                else if (map_itr->first == "rowOffset") 
+                                    genQueryInp->rowOffset = boost::lexical_cast<int>(map_itr->second);
+                                else if (map_itr->first == "options")
+                                    genQueryInp->options = boost::lexical_cast<int>(map_itr->second);
+                                else if (map_itr->first.substr(0,7) == "select_") {
+                                    int selectInx = boost::lexical_cast<int>(map_itr->first.substr(7, map_itr->first.size()));
+                                    int selectVal = boost::lexical_cast<int>(map_itr->second);
+                                    selectInpMap[selectInx] = selectVal;
+                                } else if (map_itr->first.substr(0,6) == "where_") {
+                                    int sqlCondInx = boost::lexical_cast<int>(map_itr->first.substr(6, map_itr->first.size()));
+                                    sqlCondInpMap[sqlCondInx] = map_itr->second;
+                                } else if (map_itr->first == "ELEMENT_TYPE") {
+                                    continue;
+                                } else {
+                                    // Any other key came from the condInput keyValPair
+                                    condInputMap[map_itr->first] = map_itr->second;
+                                }
+                            }
+
+                            for (auto& tmp : selectInpMap) {
+                                addInxIval(&genQueryInp->selectInp, tmp.first, tmp.second);
+                            }
+
+                            for (auto& tmp: sqlCondInpMap) {
+                                addInxVal(&genQueryInp->sqlCondInp, tmp.first, tmp.second.c_str());
+                            }
+
+                            for (auto& tmp: condInputMap) {
+                                addKeyVal(&genQueryInp->condInput, tmp.first.c_str(), tmp.second.c_str());
+                            }
+
+                            fillMsParam(tmpMsParam, NULL, GenQueryInp_MS_T, genQueryInp, NULL);
+
+                        } catch (std::exception&) {
+                            std::string error_msg = "Bad any cast";
+                            PyErr_SetString(PyExc_RuntimeError, error_msg.c_str());
+                            bp::throw_error_already_set();
+                        }
+                    } else if (itr[ELEMENT_TYPE] == PYTHON_GLOBALS.at("PYTHON_GENQUERYOUT_MS_T")) {
+                        try {
+                            genQueryOut_t* genQueryOut = (genQueryOut_t*) malloc(sizeof(genQueryOut_t));
+                            memset(genQueryOut, 0, sizeof(genQueryOut_t));
+
+                            std::map<int, int> attriInxMap;
+                            std::map<int, int> lenMap;
+                            std::map<std::string, std::string> valueMap;
+
+                            for (std::map<std::string, std::string>::iterator map_itr = itr.begin(); map_itr != itr.end(); ++map_itr) {
+                                std::string firstVal = map_itr->first;
+                                std::string secondVal = map_itr->second;
+                                if (map_itr->first == "rowCnt")
+                                    genQueryOut->rowCnt = boost::lexical_cast<int>(map_itr->second);
+                                else if (map_itr->first == "attriCnt")
+                                    genQueryOut->attriCnt = boost::lexical_cast<int>(map_itr->second);
+                                else if (map_itr->first == "continueInx")
+                                    genQueryOut->continueInx = boost::lexical_cast<int>(map_itr->second);
+                                else if (map_itr->first == "totalRowCount")
+                                    genQueryOut->totalRowCount = boost::lexical_cast<int>(map_itr->second);
+                                else if (map_itr->first.substr(0,9) == "attriInx_") {
+                                    int colInx = boost::lexical_cast<int>(map_itr->first.substr(9, map_itr->first.size()));
+                                    int attriInx = boost::lexical_cast<int>(map_itr->second);
+                                    attriInxMap[colInx] = attriInx;
+                                } else if (map_itr->first.substr(0,4) == "len_") {
+                                    int colInx = boost::lexical_cast<int>(map_itr->first.substr(4, map_itr->first.size()));
+                                    int len = boost::lexical_cast<int>(map_itr->second);
+                                    lenMap[colInx] = len;
+                                } else if (map_itr->first.substr(0,6) == "value_") {
+                                    std::string attribute_row = map_itr->first.substr(6, map_itr->first.size());
+                                    valueMap[attribute_row] = map_itr->second;
+                                } else
+                                    continue;
+                            }
+
+                            for (int i = 0; i < genQueryOut->attriCnt; ++i) {
+                                genQueryOut->sqlResult[i].attriInx = attriInxMap[i];
+                                genQueryOut->sqlResult[i].len = lenMap[i];
+                                int len = lenMap[i];
+                                genQueryOut->sqlResult[i].value = (char *) malloc(genQueryOut->rowCnt * len);
+                                for (auto& tmp: valueMap) {
+                                    std::vector<std::string> tokens;
+                                    boost::split(tokens, tmp.first, boost::is_any_of("_"));
+                                    int colInx = boost::lexical_cast<int>(tokens[1]);
+                                    if (colInx == i) {
+                                        int rowInx = boost::lexical_cast<int>(tokens[0]);
+                                        char *valuePtr = genQueryOut->sqlResult[i].value + rowInx * len;
+                                        snprintf(valuePtr, len, "%s", tmp.second.c_str());
+                                    }
+                                }
+                            }
+
+                            fillMsParam(tmpMsParam, NULL, GenQueryOut_MS_T, genQueryOut, NULL);
+
+                        } catch (std::exception&) {
+                            std::string error_msg = "Bad any cast";
+                            PyErr_SetString(PyExc_RuntimeError, error_msg.c_str());
+                            bp::throw_error_already_set();
+                        }
+                    }
  
                     rule_args_cpp.push_back(tmpMsParam);
                 }
@@ -221,7 +337,8 @@ namespace {
 
             if (!retVal.ok()) {
                 if ((retVal.code() != CAT_NO_ROWS_FOUND) && (retVal.code() != CAT_SUCCESS_BUT_WITH_NO_INFO)) {
-                    PyErr_SetString(PyExc_RuntimeError, retVal.result().c_str());
+                    std::string returnString = IRODS_ERROR_PREFIX + boost::lexical_cast<std::string>(retVal.code()) + "] " + retVal.result().c_str();
+                    PyErr_SetString(PyExc_RuntimeError, returnString.c_str());
                     bp::throw_error_already_set();
                 }
             }
@@ -233,7 +350,6 @@ namespace {
             ret[PYTHON_GLOBALS.at("PYTHON_RE_RET_STATUS")] = retVal.status();
 
             bp::list retList;
-            
             std::list<boost::any> rule_returns_cpp;
 
             for (auto&& itr : rule_args_cpp) {
@@ -256,10 +372,22 @@ namespace {
                     } else if (strcmp(realType, GenQueryInp_MS_T) == 0) {
                         genQueryInp_t* tmpGenQueryInp = (genQueryInp_t*) tmpMsParam->inOutStruct;
                         rule_returns_cpp.push_back(tmpGenQueryInp);
-                    }// TODO Need else if for each supported msParam type
+                    } else if (strcmp(realType, GenQueryOut_MS_T) == 0) {
+                        genQueryOut_t* tmpGenQueryOut = (genQueryOut_t*) tmpMsParam->inOutStruct;
+                        rule_returns_cpp.push_back(tmpGenQueryOut);
+                    } // TODO Need else if for each supported msParam type
+                    else {
+                        std::string error_msg = "Unsupported msParam type :";
+                        error_msg += realType;
+                        PyErr_SetString(PyExc_RuntimeError, error_msg.c_str());
+                        bp::throw_error_already_set();
+                    }
                     
                 } else {
-                    // XXX Error - unsupported type
+                    std::string error_msg = "Unsupported return type :";
+                    error_msg += itr.type().name();
+                    PyErr_SetString(PyExc_RuntimeError, error_msg.c_str());
+                    bp::throw_error_already_set();
                 }
             }
             
@@ -365,8 +493,16 @@ exec_rule(irods::default_re_ctx&, std::string rule_name, std::list<boost::any>& 
     } catch (const bp::error_already_set&) {
         const std::string formatted_python_exception = extract_python_exception();
         LOG("caught python exception\n", formatted_python_exception);
+        auto start_pos = formatted_python_exception.find(IRODS_ERROR_PREFIX);
+        int error_code_int = -1;
+        if (start_pos != std::string::npos) {
+            start_pos += IRODS_ERROR_PREFIX.size();
+            auto end_pos = formatted_python_exception.find_first_of("]", start_pos);
+            std::string error_code = formatted_python_exception.substr(start_pos, end_pos-start_pos);
+            error_code_int = boost::lexical_cast<int>(error_code);
+        }
         std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " Caught Python exception.\n" + formatted_python_exception;
-        return ERROR(-1, err_msg);
+        return ERROR(error_code_int, err_msg);
     } catch (const boost::bad_any_cast& e) {
         LOG("bad any cast : ", e.what());
         std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " bad_any_cast : " + e.what();
@@ -423,8 +559,6 @@ exec_rule_text(irods::default_re_ctx&, std::string rule_text, std::list<boost::a
 
         LOG("Passed msParams list");
         // Create out parameter
-        // XXX shouldn't just be null?
-        // XXX what is ruleExecOut in the context of Python Re
         rule_arguments_python[out_desc] = NULL;
 
         // Parse input rule_text into useable Python fcns
@@ -463,7 +597,85 @@ exec_rule_text(irods::default_re_ctx&, std::string rule_text, std::list<boost::a
 
 irods::error
 exec_rule_expression(irods::default_re_ctx&, std::string rule_text, std::list<boost::any>& rule_arguments_cpp, irods::callback effect_handler) {
-    return SUCCESS();
+      try {
+        LOG(rule_text);
+        auto itr = begin(rule_arguments_cpp);
+        ++itr;  // skip tuple
+        ++itr;  // skip callback
+
+        msParamArray_t* ms_params = boost::any_cast<msParamArray_t*>(*itr);
+
+        ++itr;  // skip msparam
+        std::string out_desc = *boost::any_cast<std::string*>(*itr);
+
+        // Convert input/output params to Python dict
+        bp::dict rule_arguments_python;
+
+        int i = 0;
+        for (i = 0; i < ms_params->len; i++) {
+            msParam_t* mp = ms_params->msParam[i];
+            std::string label(mp->label);
+
+            LOG("msParam : ", mp->inOutStruct);
+
+            if (mp->type == NULL) {
+                rule_arguments_python[label] = NULL;
+                LOG("msParam : ", mp->inOutStruct);
+            } else if (strcmp(mp->type, DOUBLE_MS_T) == 0) {
+                double* tmpDouble = (double*) mp->inOutStruct;
+                LOG("msParam : ", tmpDouble);
+                rule_arguments_python[label] = tmpDouble;
+            } else if (strcmp(mp->type, INT_MS_T) == 0) {
+                int* tmpInt = (int*) mp->inOutStruct;
+                LOG("msParam : ", tmpInt);
+                rule_arguments_python[label] = tmpInt;
+            } else if (strcmp(mp->type, STR_MS_T) == 0) {
+                char* tmpChar = (char*) mp->inOutStruct;
+                std::string tmpStr(tmpChar);
+                LOG("msParam : ", tmpStr);
+                rule_arguments_python[label] = tmpStr;
+            } else if (strcmp(mp->type, DATETIME_MS_T) == 0) {
+                rodsLong_t* tmpRodsLong = (rodsLong_t*) mp->inOutStruct;
+                LOG("msParam : ", tmpRodsLong);
+                rule_arguments_python[label] = tmpRodsLong;
+            }
+        }
+
+        LOG("Passed msParams list");
+        // Create out parameter
+        rule_arguments_python[out_desc] = NULL;
+
+        // Parse input rule_text into useable Python fcns
+        bp::object main_module = bp::import("__main__");
+        bp::object main_namespace = main_module.attr("__dict__");
+        // Import globals
+        for (const auto& it : PYTHON_GLOBALS) {
+            main_namespace[it.first] = it.second;
+        }
+        // Add def expressionFcn(rule_args, callback):\n to start of rule text
+        std::string rule_name = "expressionFcn";
+        std::string fcn_text = "def expressionFcn(rule_args, callback):\n" + rule_text;
+        // Replace every '\n' with '\n '
+        boost::replace_all(fcn_text, "\n", "\n ");
+        bp::exec(fcn_text.c_str(), main_namespace, main_namespace);
+        bp::object rule_function = main_module.attr(rule_name.c_str());
+
+        // Call fcns
+        CallbackWrapper callback_wrapper{effect_handler};
+        bp::object outVal = rule_function(rule_arguments_python, callback_wrapper);
+
+    } catch (const bp::error_already_set&) {
+        const std::string formatted_python_exception = extract_python_exception();
+        LOG("caught python exception\n", formatted_python_exception);
+        std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " Caught Python exception.\n" + formatted_python_exception;
+        return ERROR(-1, err_msg);
+    } catch (const boost::bad_any_cast& e) {
+        LOG("bad any cast : ", e.what());
+        std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " bad_any_cast : " + e.what();
+        return ERROR(-1, err_msg);
+    }
+
+   return SUCCESS();
 }
 
 
