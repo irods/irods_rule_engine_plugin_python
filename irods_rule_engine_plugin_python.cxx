@@ -25,7 +25,41 @@ const std::string STRING_TYPE = "STRING_TYPE";
 const std::string STRING_VALUE_KEY = "STRING_VALUE_KEY";
 const std::string IRODS_ERROR_PREFIX = "[iRods__Error__Code:";
 
+const std::string DEFAULT_RULE_REGEX = "ac[^ ]*";
+
 namespace bp = boost::python;
+
+static irods::error register_regexes_from_array(
+    boost::any          _array,
+    const std::string&  _instance_name) {
+    irods::configuration_parser::array_t arr;
+
+    try {
+        arr = boost::any_cast<irods::configuration_parser::array_t>( _array );
+    } catch ( const boost::bad_any_cast& ) {
+        std::stringstream msg;
+        msg << "[" << _instance_name << "] failed to any_cast an array_t";
+        return ERROR(
+                INVALID_ANY_CAST,
+                msg.str() );
+    }
+    
+    for ( auto& itr : arr ) {
+        try {
+            const std::string& tmp = boost::any_cast<std::string>( itr[irods::CFG_REGEX_KW] );
+            RuleExistsHelper::Instance()->registerRuleRegex( tmp );
+            rodsLog( LOG_NOTICE,
+                     "register_regexes_from_array - regex: %s", tmp.c_str() );
+        } catch ( const boost::bad_any_cast& ) {
+            rodsLog( LOG_ERROR,
+                     "%s - failed to cast pep_regex_to_match to string",
+                     __FUNCTION__ );
+            continue;
+        }
+    }
+
+    return SUCCESS();
+}
 
 namespace {
     const std::string LOG_FILE = "/tmp/irods-python-plugin.log";
@@ -420,7 +454,7 @@ namespace {
 }
 
 irods::error
-start(irods::default_re_ctx&, const std::string&) {
+start(irods::default_re_ctx&, const std::string& _instance_name) {
     dlopen("libpython2.7.so", RTLD_LAZY | RTLD_GLOBAL); // https://mail.python.org/pipermail/new-bugs-announce/2008-November/003322.html
     Py_InitializeEx(0);
     
@@ -445,6 +479,74 @@ start(irods::default_re_ctx&, const std::string&) {
         std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " Caught Python exception.\n" + formatted_python_exception;
         return ERROR(-1, err_msg);
     }
+
+    irods::configuration_parser::array_t re_plugin_arr;
+    irods::error ret = irods::get_server_property<irods::configuration_parser::array_t> (
+                            irods::CFG_RULE_ENGINES_KW,
+                            re_plugin_arr);
+    if (!ret.ok()) {
+        return PASS(ret);
+    }
+
+    bool found_instance = false;
+    irods::configuration_parser::object_t plugin_config;
+    for ( auto& itr : re_plugin_arr ) {
+        try {
+            plugin_config = boost::any_cast<irods::configuration_parser::object_t>(itr);
+        } catch (const boost::bad_any_cast&) {
+            std::stringstream msg;
+            msg << "[" << _instance_name << "] failed to any_cast a rule_engines object";
+            return ERROR(
+                    INVALID_ANY_CAST,
+                    msg.str());
+        }
+
+        try {
+            const std::string& inst_name = boost::any_cast<std::string(plugin_config[irods::CFG_INSTANCE_NAME_KW]);
+            if (inst_name == _instance_name) {
+                found_instance = true;
+                continue;
+            }
+        } catch (const boost::bad_any_cast&) {
+            continue;
+        }
+    }
+
+    if (!found_instance) {
+        std::stringstream msg;
+        msg << "failed to find configuration for re-python plugin ["
+            << _instance_name << "]";
+        rodsLog(LOG_ERROR, "%s", msg.str().c_str());
+        return ERROR(
+                SYS_INVALID_INPUT_PARAM,
+                msg.str() );
+    }
+
+    irods::configuration_parser::object_t plugin_spec_cfg;
+    try {
+        plugin_spec_cfg = boost::any_cast<irods::configuration_parser::object_t>(plugin_config[irods::CFG_PLUGIN_SPECIFIC_CONFIGURATION_KW]);
+    } catch (const boost::bad_any_cast&) {
+        std::stringstream msg;
+        msg << "[" << _instance_name << "] failed to any_cast " << irods::CFG_PLUGIN_SPECIFIC_CONFIGURATION_KW;
+        return ERROR(
+                INVALID_ANY_CAST,
+                msg.str() );
+    }
+
+    if (plugin_spec_cfg.has_entry(irods::CFG_RE_PEP_REGEX_SET_KW)) {
+        ret = register_regexes_from_array(
+                plugin_spec_cfg[irods::CFG_RE_PEP_REGEX_SET_KW],
+                _instance_name);
+        if (!ret.ok()) {
+            return PASS(ret);
+        }
+
+    } else {
+        RuleExistsHelper::Instance()->registerRuleRegex(DEFAULT_RULE_REGEX);
+        rodsLog(
+            LOG_DEBUG,
+            "No regexes found in server config - using default regex: %s",
+            DEFAULT_RULE_REGEX.c_str() );
 
     return SUCCESS();
 }
