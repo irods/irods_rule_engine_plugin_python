@@ -63,6 +63,7 @@ set(
       PRIVATE
 	  ${IRODS_INCLUDE_DIRS}
       ${IRODS_EXTERNALS_FULLPATH_BOOST}/include
+      ${IRODS_EXTERNALS_FULLPATH_JANSSON}/include
 	  ${PYTHON_INCLUDE_DIRS}
       )
 
@@ -71,6 +72,7 @@ set(
       PRIVATE
 	  ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_python.so
 	  ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_date_time.so
+      ${IRODS_EXTERNALS_FULLPATH_JANSSON}/lib/libjansson.so
 	  ${PYTHON_LIBRARIES}
 	  ${CMAKE_DL_LIBS}
 	  irods_common
@@ -79,6 +81,7 @@ set(
       )
 
   target_compile_definitions(${PLUGIN} PRIVATE ${IRODS_RULE_ENGINE_PYTHON_PLUGIN_COMPILE_DEFINITIONS} ${IRODS_COMPILE_DEFINITIONS} BOOST_SYSTEM_NO_DEPRECATED)
+  #target_compile_options(${PLUGIN} PRIVATE -Wno-write-strings)
   set_property(TARGET ${PLUGIN} PROPERTY CXX_STANDARD ${IRODS_CXX_STANDARD})
 
 install(
