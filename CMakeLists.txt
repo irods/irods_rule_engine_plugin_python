@@ -7,6 +7,8 @@ set(CMAKE_CXX_COMPILER ${IRODS_EXTERNALS_FULLPATH_CLANG}/bin/clang++)
 
 project(irods_rule_engine_plugin_python)
 
+include(${IRODS_TARGETS_PATH})
+
 if (NOT CMAKE_INSTALL_PREFIX)
   set(CMAKE_INSTALL_PREFIX "/" CACHE STRING "Install root path. Change from \"/\" for run-in-place installations." FORCE)
   message(STATUS "Setting unspecified CMAKE_INSTALL_PREFIX to '${CMAKE_INSTALL_PREFIX}'. This is the correct setting for normal builds.")
@@ -44,7 +46,6 @@ set(
 set(
   IRODS_RULE_ENGINE_PLUGIN_PYTHON_LINK_LIBRARIES
   irods_server
-  irods_clerver
   )
 
 set(
@@ -77,7 +78,6 @@ set(
 	  ${CMAKE_DL_LIBS}
 	  irods_common
 	  irods_server
-	  irods_clerver
       )
 
   target_compile_definitions(${PLUGIN} PRIVATE ${IRODS_RULE_ENGINE_PYTHON_PLUGIN_COMPILE_DEFINITIONS} ${IRODS_COMPILE_DEFINITIONS} BOOST_SYSTEM_NO_DEPRECATED)
