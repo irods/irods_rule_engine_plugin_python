@@ -484,8 +484,7 @@ start(irods::default_re_ctx&, const std::string& _instance_name) {
         const std::string formatted_python_exception = extract_python_exception();
         LOG("caught python exception\n", formatted_python_exception);
         std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " Caught Python exception.\n" + formatted_python_exception;
-        // XXX Need to return a proper error code
-        return ERROR(-1, err_msg);
+        return ERROR(RULE_ENGINE_ERROR, err_msg);
     }
 
     try {
@@ -544,8 +543,7 @@ rule_exists(irods::default_re_ctx&, std::string rule_name, bool& _return) {
         const std::string formatted_python_exception = extract_python_exception();
         LOG("caught python exception\n", formatted_python_exception);
         std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " Caught Python exception.\n" + formatted_python_exception;
-        // XXX Need to return a proper error code
-        return ERROR(-1, err_msg);
+        return ERROR( RULE_ENGINE_ERROR, err_msg);
     }
     return SUCCESS();
 }
@@ -691,15 +689,13 @@ exec_rule_text(irods::default_re_ctx&, std::string rule_text, std::list<boost::a
             bp::object outVal = rule_function(rule_arguments_python, callback_wrapper);
         } else {
             rodsLog( LOG_ERROR, "[%s:%d] Improperly formatted rule text in Python rule engine plugin", __FUNCTION__, __LINE__ );
-            // XXX Need to return a proper error code
-            return ERROR( -1, "Improperly formatted rule_text" );
+            return ERROR( RULE_ENGINE_ERROR, "Improperly formatted rule_text" );
         }
     } catch (const bp::error_already_set&) {
         const std::string formatted_python_exception = extract_python_exception();
         LOG("caught python exception\n", formatted_python_exception);
         std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " Caught Python exception.\n" + formatted_python_exception;
-        // XXX Need to return a proper error code
-        return ERROR(-1, err_msg);
+        return ERROR( RULE_ENGINE_ERROR, err_msg);
     } catch (const boost::bad_any_cast& e) {
         LOG("bad any cast : ", e.what());
         std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " bad_any_cast : " + e.what();
@@ -782,8 +778,7 @@ exec_rule_expression(irods::default_re_ctx&, std::string rule_text, std::list<bo
         const std::string formatted_python_exception = extract_python_exception();
         LOG("caught python exception\n", formatted_python_exception);
         std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " Caught Python exception.\n" + formatted_python_exception;
-        // XXX Need to return a proper error code
-        return ERROR(-1, err_msg);
+        return ERROR(RULE_ENGINE_ERROR, err_msg);
     } catch (const boost::bad_any_cast& e) {
         LOG("bad any cast : ", e.what());
         std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " bad_any_cast : " + e.what();
