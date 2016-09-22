@@ -73,6 +73,7 @@ set(
       PRIVATE
 	  ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_python.so
 	  ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_date_time.so
+	  ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_filesystem.so
       ${IRODS_EXTERNALS_FULLPATH_JANSSON}/lib/libjansson.so
 	  ${PYTHON_LIBRARIES}
 	  ${CMAKE_DL_LIBS}
