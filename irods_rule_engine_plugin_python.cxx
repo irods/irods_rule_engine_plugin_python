@@ -140,11 +140,9 @@ namespace {
                     LOG("ERROR: Unsupported argument for calling re rules from the rule language");
                 } else {
                     if (param.size() == 0) {
-                        LOG("DEBUG: empty serialized map for parameter ");
                         parameter_list_python.append("");
                     }
                     else if (param.size() == 1) {
-                        LOG("INFO: One parameter, assume it's a string");
                         parameter_list_python.append(param.begin()->second.c_str());
                     }
                     else {
@@ -221,28 +219,15 @@ namespace {
         std::string rule_name;
         static bp::dict call(const bp::tuple& args, const bp::dict& kwargs) {
             RuleCallWrapper& self = bp::extract<RuleCallWrapper&>(args[0]);
-            //auto time = std::time(nullptr);
-            LOG("rule_name: ", self.rule_name);
             bp::tuple rule_args_python = bp::extract<bp::tuple>(args[bp::slice(1, bp::len(args))]);
 
             std::list< std::map<std::string, std::string> > rule_args_maps = convert_python_iterable_to_list_of_maps(rule_args_python);
             std::list<boost::any> rule_args_cpp;
 
-            std::stringstream log_msg;
-
-            log_msg << "REAL INPUT [";
             for (auto& itr : rule_args_maps) {
                 if (itr[ELEMENT_TYPE] == STRING_TYPE) {
-                    log_msg << itr[STRING_VALUE_KEY] << ", ";
-
                     rule_args_cpp.push_back(&itr[STRING_VALUE_KEY]);
                 } else {
-                    log_msg << itr[ELEMENT_TYPE] << "{";
-                    for (std::map<std::string, std::string>::iterator mapItr = itr.begin(); mapItr != itr.end(); ++mapItr) {
-                        log_msg << mapItr->first << " : " << mapItr->second << ", ";
-                    }
-                    log_msg << "}, ";
-
                     msParam_t* tmpMsParam = (msParam_t*) malloc(sizeof(*tmpMsParam));
                     memset(tmpMsParam, 0, sizeof(*tmpMsParam));
 
@@ -363,7 +348,6 @@ namespace {
                     rule_args_cpp.push_back(tmpMsParam);
                 }
             }
-            LOG(log_msg.str(), "]");
 
             irods::error retVal = self.effect_handler(self.rule_name, irods::unpack(rule_args_cpp));
 
@@ -375,8 +359,6 @@ namespace {
                 }
             }
 
-            log_msg.str(std::string{}); log_msg.clear();
-            log_msg << "output [";
             bp::dict ret;
             ret[PYTHON_GLOBALS.at("PYTHON_RE_RET_CODE")] = retVal.code();
             ret[PYTHON_GLOBALS.at("PYTHON_RE_RET_STATUS")] = retVal.status();
@@ -458,6 +440,7 @@ start(irods::default_re_ctx&, const std::string& _instance_name) {
     ./usr/lib/x86_64-linux-gnu/libpython2.7.so
     ./usr/lib/python3.4/config-3.4m-x86_64-linux-gnu/libpython3.4.so
 */
+    // TODO Enable config-selectable Python version
     dlopen("libpython2.7.so", RTLD_LAZY | RTLD_GLOBAL); // https://mail.python.org/pipermail/new-bugs-announce/2008-November/003322.html
     Py_InitializeEx(0);
     
@@ -472,6 +455,7 @@ start(irods::default_re_ctx&, const std::string& _instance_name) {
         bp::object main_namespace = main_module.attr("__dict__");
         bp::exec( exec_str.c_str(), main_namespace );
 
+        // TODO Enable non core.py Python rulebases
         bp::object core_module = bp::import("core");
         bp::object core_namespace = core_module.attr("__dict__");
         for (const auto& it : PYTHON_GLOBALS) {
@@ -494,6 +478,8 @@ start(irods::default_re_ctx&, const std::string& _instance_name) {
             const auto& inst_name = boost::any_cast< const std::string& >( plugin_config.at( irods::CFG_INSTANCE_NAME_KW ) );
             if ( inst_name == _instance_name ) {
                 const auto& plugin_spec_cfg = boost::any_cast< const std::unordered_map< std::string, boost::any >& >( plugin_config.at( irods::CFG_PLUGIN_SPECIFIC_CONFIGURATION_KW ) );
+
+                // TODO Enable non core.py Python rulebases
                 //std::string core_py = get_string_array_from_array( plugin_spec_cfg.at( irods::CFG_RE_RULEBASE_SET_KW ) );
 
                 if ( plugin_spec_cfg.count( irods::CFG_RE_PEP_REGEX_SET_KW ) > 0 ) {
@@ -537,6 +523,7 @@ irods::error
 rule_exists(irods::default_re_ctx&, std::string rule_name, bool& _return) {
     _return = false;
     try {
+        // TODO Enable non core.py Python rulebases
         bp::object core_module = bp::import("core");
         _return = PyObject_HasAttrString(core_module.ptr(), rule_name.c_str());
     } catch (const bp::error_already_set&) {
@@ -593,7 +580,6 @@ exec_rule(irods::default_re_ctx&, std::string rule_name, std::list<boost::any>& 
 irods::error
 exec_rule_text(irods::default_re_ctx&, std::string rule_text, std::list<boost::any>& rule_arguments_cpp, irods::callback effect_handler) {
     try {
-        LOG(rule_text);
         auto itr = begin(rule_arguments_cpp);
         ++itr;  // skip tuple
         ++itr;  // skip callback
@@ -603,47 +589,45 @@ exec_rule_text(irods::default_re_ctx&, std::string rule_text, std::list<boost::a
         ++itr;  // skip msparam
         std::string out_desc = *boost::any_cast<std::string*>(*itr);
 
-        // Convert input/output params to Python dict
-        bp::dict rule_arguments_python;
+        bp::list rule_arguments_python = serialize_parameter_list_of_boost_anys_to_python_list(rule_arguments_cpp);
+
+        // Convert INPUT and OUTPUT global vars to Python dict
+        bp::dict global_vars_python;
 
         int i = 0;
         for (i = 0; i < ms_params->len; i++) {
             msParam_t* mp = ms_params->msParam[i];
             std::string label(mp->label);
 
-            LOG("msParam : ", mp->inOutStruct);
-
             if (mp->type == NULL) {
-                rule_arguments_python[label] = NULL;
-                LOG("msParam : ", mp->inOutStruct);
+                global_vars_python[label] = NULL;
             } else if (strcmp(mp->type, DOUBLE_MS_T) == 0) {
                 double* tmpDouble = (double*) mp->inOutStruct;
-                LOG("msParam : ", tmpDouble);
-                rule_arguments_python[label] = tmpDouble;
+                global_vars_python[label] = tmpDouble;
             } else if (strcmp(mp->type, INT_MS_T) == 0) {
                 int* tmpInt = (int*) mp->inOutStruct;
-                LOG("msParam : ", tmpInt);
-                rule_arguments_python[label] = tmpInt;
+                global_vars_python[label] = tmpInt;
             } else if (strcmp(mp->type, STR_MS_T) == 0) {
                 char* tmpChar = (char*) mp->inOutStruct;
                 std::string tmpStr(tmpChar);
-                LOG("msParam : ", tmpStr);
-                rule_arguments_python[label] = tmpStr;
+                global_vars_python[label] = tmpStr;
             } else if (strcmp(mp->type, DATETIME_MS_T) == 0) {
                 rodsLong_t* tmpRodsLong = (rodsLong_t*) mp->inOutStruct;
-                LOG("msParam : ", tmpRodsLong);
-                rule_arguments_python[label] = tmpRodsLong;
+                global_vars_python[label] = tmpRodsLong;
             }
         }
 
         // Create out parameter
-        // XXX Testing -RTS
-        rule_arguments_python[out_desc] = "outVar";
+        global_vars_python[out_desc] = "";
 
         // Parse input rule_text into useable Python fcns
         bp::object main_module = bp::import("__main__");
         bp::object main_namespace = main_module.attr("__dict__");
-        // Import globals
+
+        // Import global INPUT and OUTPUT variables
+        main_namespace["global_vars"] = global_vars_python;
+
+        // Import global constants
         for (const auto& it : PYTHON_GLOBALS) {
             main_namespace[it.first] = it.second;
         }
@@ -654,11 +638,9 @@ exec_rule_text(irods::default_re_ctx&, std::string rule_text, std::list<boost::a
 
             // Delete first line ("@external")
             std::string trimmed_rule = rule_text.substr(rule_text.find_first_of('\n')+1);
-            LOG("trimmed rule text : ", trimmed_rule);
 
             // Extract rule name ("def RULE_NAME(parameters):")
             std::string rule_name = trimmed_rule.substr(4, trimmed_rule.find_first_of('(')-4);
-            LOG("rule name : ", rule_name);
 
             bp::exec(trimmed_rule.c_str(), main_namespace, main_namespace);
             bp::object rule_function = main_module.attr(rule_name.c_str());
@@ -671,16 +653,14 @@ exec_rule_text(irods::default_re_ctx&, std::string rule_text, std::list<boost::a
             // If rule_text begins with "@external ", call is of form
             //  irule rule ...
 
-            // XXX Python RE currently only supports the core.py rulebase
+            // TODO Enable non core.py Python rulebases
             bp::object core_module = bp::import("core");
 
             // Delete "@external rule { " from the start of the rule_text
             std::string trimmed_rule = rule_text.substr(17);
-            LOG("trimmed rule text : ", trimmed_rule);
 
             // Extract rule name ("@external rule { RULE_NAME }")
             std::string rule_name = trimmed_rule.substr( 0, trimmed_rule.find_first_of(' ') );
-            LOG("rule name : ", rule_name);
 
             bp::object rule_function = core_module.attr( rule_name.c_str() );
 
@@ -708,7 +688,6 @@ exec_rule_text(irods::default_re_ctx&, std::string rule_text, std::list<boost::a
 irods::error
 exec_rule_expression(irods::default_re_ctx&, std::string rule_text, std::list<boost::any>& rule_arguments_cpp, irods::callback effect_handler) {
       try {
-        LOG(rule_text);
         auto itr = begin(rule_arguments_cpp);
         ++itr;  // skip tuple
         ++itr;  // skip callback
@@ -718,50 +697,49 @@ exec_rule_expression(irods::default_re_ctx&, std::string rule_text, std::list<bo
         ++itr;  // skip msparam
         std::string out_desc = *boost::any_cast<std::string*>(*itr);
 
-        // Convert input/output params to Python dict
-        bp::dict rule_arguments_python;
+        bp::list rule_arguments_python = serialize_parameter_list_of_boost_anys_to_python_list(rule_arguments_cpp);
+
+        // Convert INPUT/OUTPUT global vars to Python dict
+        bp::dict global_vars_python;
 
         int i = 0;
         for (i = 0; i < ms_params->len; i++) {
             msParam_t* mp = ms_params->msParam[i];
             std::string label(mp->label);
 
-            LOG("msParam : ", mp->inOutStruct);
-
             if (mp->type == NULL) {
-                rule_arguments_python[label] = NULL;
-                LOG("msParam : ", mp->inOutStruct);
+                global_vars_python[label] = NULL;
             } else if (strcmp(mp->type, DOUBLE_MS_T) == 0) {
                 double* tmpDouble = (double*) mp->inOutStruct;
-                LOG("msParam : ", tmpDouble);
-                rule_arguments_python[label] = tmpDouble;
+                global_vars_python[label] = tmpDouble;
             } else if (strcmp(mp->type, INT_MS_T) == 0) {
                 int* tmpInt = (int*) mp->inOutStruct;
-                LOG("msParam : ", tmpInt);
-                rule_arguments_python[label] = tmpInt;
+                global_vars_python[label] = tmpInt;
             } else if (strcmp(mp->type, STR_MS_T) == 0) {
                 char* tmpChar = (char*) mp->inOutStruct;
                 std::string tmpStr(tmpChar);
-                LOG("msParam : ", tmpStr);
-                rule_arguments_python[label] = tmpStr;
+                global_vars_python[label] = tmpStr;
             } else if (strcmp(mp->type, DATETIME_MS_T) == 0) {
                 rodsLong_t* tmpRodsLong = (rodsLong_t*) mp->inOutStruct;
-                LOG("msParam : ", tmpRodsLong);
-                rule_arguments_python[label] = tmpRodsLong;
+                global_vars_python[label] = tmpRodsLong;
             }
         }
 
-        LOG("Passed msParams list");
         // Create out parameter
-        rule_arguments_python[out_desc] = NULL;
+        global_vars_python[out_desc] = NULL;
 
         // Parse input rule_text into useable Python fcns
         bp::object main_module = bp::import("__main__");
         bp::object main_namespace = main_module.attr("__dict__");
+
+        // Import global INPUT and OUTPUT variables
+        main_namespace["global_vars"] = global_vars_python;
+
         // Import globals
         for (const auto& it : PYTHON_GLOBALS) {
             main_namespace[it.first] = it.second;
         }
+
         // Add def expressionFcn(rule_args, callback):\n to start of rule text
         std::string rule_name = "expressionFcn";
         std::string fcn_text = "def expressionFcn(rule_args, callback):\n" + rule_text;
@@ -773,7 +751,6 @@ exec_rule_expression(irods::default_re_ctx&, std::string rule_text, std::list<bo
         // Call fcns
         CallbackWrapper callback_wrapper{effect_handler};
         bp::object outVal = rule_function(rule_arguments_python, callback_wrapper);
-
     } catch (const bp::error_already_set&) {
         const std::string formatted_python_exception = extract_python_exception();
         LOG("caught python exception\n", formatted_python_exception);
@@ -787,7 +764,6 @@ exec_rule_expression(irods::default_re_ctx&, std::string rule_text, std::list<bo
 
    return SUCCESS();
 }
-
 
 extern "C"
 irods::pluggable_rule_engine<irods::default_re_ctx>*
