@@ -5,7 +5,7 @@ find_package(IRODS 4.2.0 EXACT REQUIRED)
 set(CMAKE_C_COMPILER ${IRODS_EXTERNALS_FULLPATH_CLANG}/bin/clang)
 set(CMAKE_CXX_COMPILER ${IRODS_EXTERNALS_FULLPATH_CLANG}/bin/clang++)
 
-project(irods_rule_engine_plugin_python)
+project(irods_rule_engine_plugin-python)
 
 include(${IRODS_TARGETS_PATH})
 
@@ -38,19 +38,19 @@ link_libraries(c++abi)
 include_directories(${IRODS_EXTERNALS_FULLPATH_CLANG}/include/c++/v1)
 
 set(
-  IRODS_RULE_ENGINE_PLUGIN_PYTHON_COMPILE_DEFINITIONS
+  IRODS_RULE_ENGINE_PLUGIN-PYTHON_COMPILE_DEFINITIONS
   RODS_SERVER
   ENABLE_RE
   )
 
 set(
-  IRODS_RULE_ENGINE_PLUGIN_PYTHON_LINK_LIBRARIES
+  IRODS_RULE_ENGINE_PLUGIN-PYTHON_LINK_LIBRARIES
   irods_server
   )
 
 set(
   PLUGIN
-  rule-engine-plugin-python
+  irods_rule_engine_plugin-python
   )
 
   add_library(
@@ -92,7 +92,7 @@ install(
     DESTINATION var/lib/irods/plugins/rule_engines
   )
 
-set(CPACK_PACKAGE_FILE_NAME "irods-rule-engine-plugin-python-${IRODS_VERSION}-${IRODS_LINUX_DISTRIBUTION_NAME}${IRODS_LINUX_DISTRIBUTION_VERSION_MAJOR}-${CMAKE_SYSTEM_PROCESSOR}")
+set(CPACK_PACKAGE_FILE_NAME "irods_rule_engine_plugin-python-${IRODS_VERSION}-${IRODS_LINUX_DISTRIBUTION_NAME}${IRODS_LINUX_DISTRIBUTION_VERSION_MAJOR}-${CMAKE_SYSTEM_PROCESSOR}")
 
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
 set(CPACK_COMPONENT_INCLUDE_TOPLEVEL_DIRECTORY OFF)
@@ -123,10 +123,10 @@ set(CPACK_RPM_PACKAGE_AUTOPROV 0)
 
 set(CPACK_ARCHIVE_COMPONENT_INSTALL OFF)
 
-set(CPACK_DEBIAN_PACKAGE_NAME "irods-rule-engine-plugin-python")
+set(CPACK_DEBIAN_PACKAGE_NAME "irods_rule_engine_plugin-python")
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "${IRODS_PACKAGE_DEPENDENCIES_STRING}, irods-runtime (= ${IRODS_VERSION}), libc6")
 
-set(CPACK_RPM_PACKAGE_NAME "irods-rule-engine-plugin-python")
+set(CPACK_RPM_PACKAGE_NAME "irods_rule_engine_plugin-python")
 if (IRODS_LINUX_DISTRIBUTION_NAME STREQUAL "centos" OR IRODS_LINUX_DISTRIBUTION_NAME STREQUAL "centos linux")
   set(CPACK_RPM_PACKAGE_REQUIRES "${IRODS_PACKAGE_DEPENDENCIES_STRING}, irods-runtime = ${IRODS_VERSION}, openssl")
 elseif (IRODS_LINUX_DISTRIBUTION_NAME STREQUAL "opensuse")
