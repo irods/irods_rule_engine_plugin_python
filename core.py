@@ -5,32 +5,15 @@ def pythonRuleEnginePluginTest(rule_args, callback):
     with open('/tmp/from_core_py.txt', 'a') as f:
         f.write(str(datetime.datetime.now()))
         f.write('\n')
-        #f.write(SUCCESS())
-        #f.write('\n')
         c = 0
         for arg in rule_args:
             f.write('\t')
             f.write(str(c))
             f.write(' : ')
             f.write(str(arg))
-            #f.write(' : ')
-            #f.write(str(type(rule_args[arg])))
-            #f.write(' : ')
-            #f.write(str(rule_args[arg]))
             f.write('\n')
             c = c +1
-    callback.writeLine('serverLog', 'XXXXXXXXXXXXXX Printed to server log from python')
-
-# Testing rule for UGM training
-def pep_resource_resolve_hierarchy_pre(rule_args, callback):
-    #pythonRuleEnginePluginTest(rule_args, callback)
-    if rule_args[3] == 'CREATE':
-        if rule_args[0] == 'pt3':
-            rule_args[2] = 'read=1;write=1'
-        else:
-            rule_args[2] = 'read=1;write=0'
-
-#pep_resource_resolve_hierarchy_post(*A,*B,*OUT,*E,*F,*G,*H)
+    callback.writeLine('serverLog', 'Printed to server log from python rule engine')
 
 def acPreConnect(rule_args, callback):
     rule_args[0] = 'CS_NEG_DONT_CARE'
