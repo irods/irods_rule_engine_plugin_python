@@ -42,7 +42,7 @@ void register_regexes_from_array(
         const auto& arr = boost::any_cast< const std::vector< boost::any >& >( _array );
         for ( const auto& elem : arr ) {
             try {
-                const auto tmp = boost::any_cast< const std::string& >( boost::any_cast< const std::unordered_map< std::string, boost::any >& >( elem ).at( irods::CFG_REGEX_KW ) );
+                const auto tmp = boost::any_cast< const std::string& >( elem );
                 RuleExistsHelper::Instance()->registerRuleRegex( tmp );
                 rodsLog( LOG_NOTICE, "register_regexes_from_array - regex: [%s]", tmp.c_str() );
             } catch ( const boost::bad_any_cast& ) {
@@ -472,7 +472,7 @@ start(irods::default_re_ctx&, const std::string& _instance_name) {
     }
 
     try {
-        const auto& re_plugin_arr = irods::get_server_property< const std::vector< boost::any >& >( irods::CFG_RULE_ENGINES_KW );
+        const auto& re_plugin_arr = irods::get_server_property< const std::vector< boost::any >& >( std::vector< std::string >{ irods::CFG_PLUGIN_CONFIGURATION_KW, irods::PLUGIN_TYPE_RULE_ENGINE } );
         for ( const auto& elem : re_plugin_arr ) {
             const auto& plugin_config = boost::any_cast< const std::unordered_map< std::string, boost::any>& >( elem );
             const auto& inst_name = boost::any_cast< const std::string& >( plugin_config.at( irods::CFG_INSTANCE_NAME_KW ) );
@@ -482,7 +482,7 @@ start(irods::default_re_ctx&, const std::string& _instance_name) {
                 // TODO Enable non core.py Python rulebases
                 //std::string core_py = get_string_array_from_array( plugin_spec_cfg.at( irods::CFG_RE_RULEBASE_SET_KW ) );
 
-                if ( plugin_spec_cfg.count( irods::CFG_RE_PEP_REGEX_SET_KW ) > 0 ) {
+                if ( plugin_spec_cfg.count( irods::CFG_RE_PEP_REGEX_SET_KW ) ) {
                     register_regexes_from_array( plugin_spec_cfg.at( irods::CFG_RE_PEP_REGEX_SET_KW ),
                                                  _instance_name );
                 } else {
@@ -538,6 +538,7 @@ rule_exists(irods::default_re_ctx&, std::string rule_name, bool& _return) {
 irods::error
 exec_rule(irods::default_re_ctx&, std::string rule_name, std::list<boost::any>& rule_arguments_cpp, irods::callback effect_handler) {
     try {
+        // TODO Enable non core.py Python rulebases
         bp::object core_module = bp::import("core");
         bp::object rule_function = core_module.attr(rule_name.c_str());
         bp::list rule_arguments_python;
