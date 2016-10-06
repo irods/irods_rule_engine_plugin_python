@@ -17,6 +17,7 @@
 #include "irods_re_plugin.hpp"
 #include "irods_re_ruleexistshelper.hpp"
 #include "irods_re_serialization.hpp"
+#include "irods_ms_plugin.hpp"
 
 #include "irods_server_properties.hpp"
 
@@ -433,6 +434,8 @@ namespace {
     }
 }
 
+irods::ms_table& get_microservice_table();
+
 irods::error
 start(irods::default_re_ctx&, const std::string& _instance_name) {
 /*
@@ -470,6 +473,9 @@ start(irods::default_re_ctx&, const std::string& _instance_name) {
         std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " Caught Python exception.\n" + formatted_python_exception;
         return ERROR(RULE_ENGINE_ERROR, err_msg);
     }
+
+    // Initialize microservice table
+    get_microservice_table();
 
     try {
         const auto& re_plugin_arr = irods::get_server_property< const std::vector< boost::any >& >( std::vector< std::string >{ irods::CFG_PLUGIN_CONFIGURATION_KW, irods::PLUGIN_TYPE_RULE_ENGINE } );
