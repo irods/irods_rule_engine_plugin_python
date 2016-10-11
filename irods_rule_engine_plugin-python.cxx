@@ -127,6 +127,288 @@ namespace {
             bp::converter::registry::push_back(&convertible, &construct, bp::type_id<std::string>());
         }
     }
+
+    irods::error
+    populate_session_var_dict_from_effect_handler(irods::callback effect_handler, bp::dict& session_var_dict) {
+        ruleExecInfo_t* rei;
+        irods::error err;
+
+        if ( !(err = effect_handler("unsafe_ms_ctx", &rei)).ok() ) {
+            LOG("ERROR: Could not retrieve RuleExecInfo_t object from effect handler");
+            return err;
+        }
+
+        if ( !rei ) {
+            LOG("ERROR: RuleExecInfo object is NULL - cannot populate session vars");
+            return ERROR(NULL_VALUE_ERR, "Null rei pointer in populate_session_var_dict_from_effect_handler");
+        }
+
+        session_var_dict.clear();
+
+        session_var_dict["plugin_instance_name"] = rei->pluginInstanceName;
+        session_var_dict["status"] = rei->status;
+
+        if ( rei->doi ) {
+            session_var_dict["objPath"] = rei->doi->objPath;
+        } else if ( rei->doinp ) {
+            session_var_dict["objPath"] = rei->doinp->objPath;
+        }
+
+        if ( rei->doi ) {
+            session_var_dict["dataSize"] = rei->doi->dataSize;
+        } else if ( rei->doinp ) {
+            session_var_dict["dataSize"] = rei->doinp->dataSize;
+        }
+
+        if ( rei->doi ) {
+            session_var_dict["dataType"] = rei->doi->dataType;
+            session_var_dict["chksum"] = rei->doi->chksum;
+            session_var_dict["version"] = rei->doi->version;
+            session_var_dict["filePath"] = rei->doi->filePath;
+            session_var_dict["replNum"] = rei->doi->replNum;
+            session_var_dict["replStatus"] = rei->doi->replStatus;
+            session_var_dict["writeFlag"] = rei->doi->writeFlag;
+            session_var_dict["dataOwner"] = rei->doi->dataOwnerName;
+            session_var_dict["dataOwnerZone"] = rei->doi->dataOwnerZone;
+            session_var_dict["dataExpiry"] = rei->doi->dataExpiry;
+            session_var_dict["dataComments"] = rei->doi->dataComments;
+            session_var_dict["dataCreate"] = rei->doi->dataCreate;
+            session_var_dict["dataModify"] = rei->doi->dataModify;
+            session_var_dict["dataAccess"] = rei->doi->dataAccess;
+            session_var_dict["dataAccessInx"] = rei->doi->dataAccessInx;
+            session_var_dict["dataId"] = rei->doi->dataId;
+            session_var_dict["collId"] = rei->doi->collId;
+            session_var_dict["statusString"] = rei->doi->statusString;
+            session_var_dict["destRescName"] = rei->doi->destRescName;
+            session_var_dict["backupRescName"] = rei->doi->backupRescName;
+            session_var_dict["rescName"] = rei->doi->rescName;
+        }
+        
+        if ( rei->uoic ) {            
+            bp::dict userClient_dict;
+            irods::re_serialization::serialized_parameter_t userClient_map;
+            irods::error ret = irods::re_serialization::serialize_parameter(rei->uoic, userClient_map);
+
+            if (err.ok()) {
+                for (auto itr = userClient_map.begin(); itr != userClient_map.end(); ++itr) {
+                    userClient_dict[itr->first] = itr->second;
+                }
+
+                session_var_dict["userClient"] = userClient_dict;
+            }
+        } else if ( rei->rsComm ) {
+            bp::dict userClient_dict;
+            irods::re_serialization::serialized_parameter_t userClient_map;
+            irods::error ret = irods::re_serialization::serialize_parameter(rei->rsComm->clientUser, userClient_map);
+
+            if (err.ok()) {
+                for (auto itr = userClient_map.begin(); itr != userClient_map.end(); ++itr) {
+                    userClient_dict[itr->first] = itr->second;
+                }
+
+                session_var_dict["userClient"] = userClient_dict;
+            }
+        }
+
+        if ( rei->uoic ) {
+            session_var_dict["userNameClient"] = rei->uoic->userName;
+        } else if ( rei->rsComm ) {
+            session_var_dict["userNameClient"] = rei->rsComm->clientUser.userName;
+        }
+
+        if ( rei->uoic ) {
+            session_var_dict["rodsZoneClient"] = rei->uoic->rodsZone;
+        } else if ( rei->rsComm ) {
+            session_var_dict["rodsZoneClient"] = rei->rsComm->clientUser.rodsZone;
+        }
+        
+        if ( rei->uoic ) {
+            session_var_dict["sysUidClient"] = rei->uoic->sysUid;
+        } else if ( rei->rsComm ) {
+            session_var_dict["sysUidClient"] = rei->rsComm->clientUser.sysUid;
+        }
+        
+        if ( rei->uoic ) {
+            session_var_dict["privClient"] = rei->uoic->authInfo.authFlag;
+        } else if ( rei->rsComm ) {
+            session_var_dict["privClient"] = rei->rsComm->clientUser.authInfo.authFlag;
+        }
+
+        if ( rei->rsComm ) {
+            session_var_dict["clientAddr"] = rei->rsComm->clientAddr;
+        }
+
+        if ( rei->uoic ) {
+            session_var_dict["authStrClient"] = rei->uoic->authInfo.authStr;
+        } else if ( rei->rsComm ) {
+            session_var_dict["authStrClient"] = rei->rsComm->clientUser.authInfo.authStr;
+        }
+
+        if ( rei->uoic ) {
+            session_var_dict["userAuthSchemeClient"] = rei->uoic->authInfo.authScheme;
+        } else if ( rei->rsComm ) {
+            session_var_dict["userAuthSchemeClient"] = rei->rsComm->clientUser.authInfo.authScheme;
+        }
+
+        if ( rei->uoic ) {
+            session_var_dict["userInfoClient"] = rei->uoic->userOtherInfo.userInfo;
+        } else if ( rei->rsComm ) {
+            session_var_dict["userInfoClient"] = rei->rsComm->clientUser.userOtherInfo.userInfo;
+        }
+
+        if ( rei->uoic ) {
+            session_var_dict["userCommentClient"] = rei->uoic->userOtherInfo.userComments;
+        } else if ( rei->rsComm ) {
+            session_var_dict["userCommentClient"] = rei->rsComm->clientUser.userOtherInfo.userComments;
+        }
+
+        if ( rei->uoic ) {
+            session_var_dict["userCreateClient"] = rei->uoic->userOtherInfo.userCreate;
+        } else if ( rei->rsComm ) {
+            session_var_dict["userCreateClient"] = rei->rsComm->clientUser.userOtherInfo.userCreate;
+        }
+
+        if ( rei->uoic ) {
+            session_var_dict["userModifyClient"] = rei->uoic->userOtherInfo.userModify;
+        } else if ( rei->rsComm ) {
+            session_var_dict["userModifyClient"] = rei->rsComm->clientUser.userOtherInfo.userModify;
+        }
+
+        if ( rei->uoip ) {            
+            bp::dict userProxy_dict;
+            irods::re_serialization::serialized_parameter_t userProxy_map;
+            irods::error ret = irods::re_serialization::serialize_parameter(rei->uoip, userProxy_map);
+
+            if (err.ok()) {
+                for (auto itr = userProxy_map.begin(); itr != userProxy_map.end(); ++itr) {
+                    userProxy_dict[itr->first] = itr->second;
+                }
+
+                session_var_dict["userProxy"] = userProxy_dict;
+            }
+        } else if ( rei->rsComm ) {
+            bp::dict userProxy_dict;
+            irods::re_serialization::serialized_parameter_t userProxy_map;
+            irods::error ret = irods::re_serialization::serialize_parameter(rei->rsComm->proxyUser, userProxy_map);
+
+            if (err.ok()) {
+                for (auto itr = userProxy_map.begin(); itr != userProxy_map.end(); ++itr) {
+                    userProxy_dict[itr->first] = itr->second;
+                }
+
+                session_var_dict["userProxy"] = userProxy_dict;
+            }
+        }
+
+        if ( rei->uoip ) {
+            session_var_dict["userNameProxy"] = rei->uoip->userName;
+        } else if ( rei->rsComm ) {
+            session_var_dict["userNameProxy"] = rei->rsComm->proxyUser.userName;
+        }
+
+        if ( rei->uoip ) {
+            session_var_dict["rodsZoneProxy"] = rei->uoip->rodsZone;
+        } else if ( rei->rsComm ) {
+            session_var_dict["rodsZoneProxy"] = rei->rsComm->proxyUser.rodsZone;
+        }
+
+        if ( rei->uoip ) {
+            session_var_dict["privProxy"] = rei->uoip->authInfo.authFlag;
+        } else if ( rei->rsComm ) {
+            session_var_dict["privProxy"] = rei->rsComm->proxyUser.authInfo.authFlag;
+        }
+
+        if ( rei->uoip ) {
+            session_var_dict["authStrProxy"] = rei->uoip->authInfo.authStr;
+        } else if ( rei->rsComm ) {
+            session_var_dict["authStrProxy"] = rei->rsComm->proxyUser.authInfo.authStr;
+        }
+
+        if ( rei->uoip ) {
+            session_var_dict["userAuthSchemeProxy"] = rei->uoip->authInfo.authScheme;
+        } else if ( rei->rsComm ) {
+            session_var_dict["userAuthSchemeProxy"] = rei->rsComm->proxyUser.authInfo.authScheme;
+        }
+
+        if ( rei->uoip ) {
+            session_var_dict["userInfoProxy"] = rei->uoip->userOtherInfo.userInfo;
+        } else if ( rei->rsComm ) {
+            session_var_dict["userInfoProxy"] = rei->rsComm->proxyUser.userOtherInfo.userInfo;
+        }
+
+        if ( rei->uoip ) {
+            session_var_dict["userCommentProxy"] = rei->uoip->userOtherInfo.userComments;
+        } else if ( rei->rsComm ) {
+            session_var_dict["userCommentProxy"] = rei->rsComm->proxyUser.userOtherInfo.userComments;
+        }
+
+        if ( rei->uoip ) {
+            session_var_dict["userCreateProxy"] = rei->uoip->userOtherInfo.userCreate;
+        } else if ( rei->rsComm ) {
+            session_var_dict["userCreateProxy"] = rei->rsComm->proxyUser.userOtherInfo.userCreate;
+        }
+
+        if ( rei->uoip ) {
+            session_var_dict["userModifyProxy"] = rei->uoip->userOtherInfo.userModify;
+        } else if ( rei->rsComm ) {
+            session_var_dict["userModifyProxy"] = rei->rsComm->proxyUser.userOtherInfo.userModify;
+        }
+
+        if ( rei->coi ) {
+            session_var_dict["collName"] = rei->coi->collName;
+            session_var_dict["collParentName"] = rei->coi->collParentName;
+            session_var_dict["collOwnerName"] = rei->coi->collOwnerName;
+            session_var_dict["collExpiry"] = rei->coi->collExpiry;
+            session_var_dict["collComments"] = rei->coi->collComments;
+            session_var_dict["collCreate"] = rei->coi->collCreate;
+            session_var_dict["collModify"] = rei->coi->collModify;
+            session_var_dict["collAccess"] = rei->coi->collAccess;
+            session_var_dict["collAccessInx"] = rei->coi->collAccessInx;
+            session_var_dict["collInheritance"] = rei->coi->collInheritance;
+        }
+
+        if ( rei->uoio ) {
+            bp::dict otherUser_dict;
+            irods::re_serialization::serialized_parameter_t otherUser_map;
+            irods::error ret = irods::re_serialization::serialize_parameter(rei->uoio, otherUser_map);
+
+            if (err.ok()) {
+                for (auto itr = otherUser_map.begin(); itr != otherUser_map.end(); ++itr) {
+                    otherUser_dict[itr->first] = itr->second;
+                }
+
+                session_var_dict["otherUser"] = otherUser_dict;
+            }
+
+            session_var_dict["otherUserName"] = rei->uoio->userName;
+            session_var_dict["otherUserZone"] = rei->uoio->rodsZone;
+            session_var_dict["otherUserType"] = rei->uoio->userType;
+        }
+
+        if ( rei->rsComm ) {
+            session_var_dict["connectCnt"] = rei->rsComm->connectCnt;
+            session_var_dict["connectSock"] = rei->rsComm->sock;
+            session_var_dict["connectOption"] = rei->rsComm->option;
+            session_var_dict["connectStatus"] = rei->rsComm->status;
+            session_var_dict["connectApiInx"] = rei->rsComm->apiInx;
+        }
+
+        if ( rei->condInputData ) {
+            bp::dict kv_dict;
+            irods::re_serialization::serialized_parameter_t kv_map;
+            irods::error ret = irods::re_serialization::serialize_parameter(rei->condInputData, kv_map);
+    
+            if (err.ok()) {
+                for (auto itr = kv_map.begin(); itr != kv_map.end(); ++itr) {
+                    kv_dict[itr->first] = itr->second;
+                }
+
+                session_var_dict["KVPairs"] = kv_dict;
+            }
+        }
+
+        return SUCCESS();
+    }
     
     bp::list
     serialize_parameter_list_of_boost_anys_to_python_list(std::list<boost::any> parameter_list_cpp) {
@@ -546,10 +828,19 @@ exec_rule(irods::default_re_ctx&, std::string rule_name, std::list<boost::any>& 
     try {
         // TODO Enable non core.py Python rulebases
         bp::object core_module = bp::import("core");
+        bp::object core_namespace = core_module.attr("__dict__");
         bp::object rule_function = core_module.attr(rule_name.c_str());
         bp::list rule_arguments_python;
+        bp::dict session_vars_python;
 
         rule_arguments_python = serialize_parameter_list_of_boost_anys_to_python_list(rule_arguments_cpp);
+        irods::error err = populate_session_var_dict_from_effect_handler(effect_handler, session_vars_python);
+        if ( !err.ok() ) {
+            LOG("Session vars dict could not be populated");
+        }
+
+        // Import session variables
+        core_namespace["session_vars"] = session_vars_python;
         
         CallbackWrapper callback_wrapper{effect_handler};
         bp::object outVal = rule_function(rule_arguments_python, callback_wrapper);
@@ -598,6 +889,12 @@ exec_rule_text(irods::default_re_ctx&, std::string rule_text, std::list<boost::a
 
         bp::list rule_arguments_python = serialize_parameter_list_of_boost_anys_to_python_list(rule_arguments_cpp);
 
+        bp::dict session_vars_python;
+        irods::error err = populate_session_var_dict_from_effect_handler(effect_handler, session_vars_python);
+        if ( !err.ok() ) {
+            LOG("Session vars dict could not be populated");
+        }
+
         // Convert INPUT and OUTPUT global vars to Python dict
         bp::dict global_vars_python;
 
@@ -627,21 +924,24 @@ exec_rule_text(irods::default_re_ctx&, std::string rule_text, std::list<boost::a
         // Create out parameter
         global_vars_python[out_desc] = "";
 
-        // Parse input rule_text into useable Python fcns
-        bp::object main_module = bp::import("__main__");
-        bp::object main_namespace = main_module.attr("__dict__");
-
-        // Import global INPUT and OUTPUT variables
-        main_namespace["global_vars"] = global_vars_python;
-
-        // Import global constants
-        for (const auto& it : PYTHON_GLOBALS) {
-            main_namespace[it.first] = it.second;
-        }
-
         if ( strncmp( rule_text.c_str(), "@external\n", 10) == 0 ) {
             // If rule_text begins with "@external\n", call is of form
             //  irule -F inputFile ...
+
+            // Parse input rule_text into useable Python fcns
+            bp::object main_module = bp::import("__main__");
+            bp::object main_namespace = main_module.attr("__dict__");
+
+            // Import global INPUT and OUTPUT variables
+            main_namespace["global_vars"] = global_vars_python;
+
+            // Import session variables
+            main_namespace["session_vars"] = session_vars_python;
+
+            // Import global constants
+            for (const auto& it : PYTHON_GLOBALS) {
+                main_namespace[it.first] = it.second;
+            }
 
             // Delete first line ("@external")
             std::string trimmed_rule = rule_text.substr(rule_text.find_first_of('\n')+1);
@@ -662,6 +962,18 @@ exec_rule_text(irods::default_re_ctx&, std::string rule_text, std::list<boost::a
 
             // TODO Enable non core.py Python rulebases
             bp::object core_module = bp::import("core");
+            bp::object core_namespace = core_module.attr("__dict__");
+
+            // Import global INPUT and OUTPUT variables
+            core_namespace["global_vars"] = global_vars_python;
+
+            // Import session variables
+            core_namespace["session_vars"] = session_vars_python;
+
+            // Import global constants
+            for (const auto& it : PYTHON_GLOBALS) {
+                core_namespace[it.first] = it.second;
+            }
 
             // Delete "@external rule { " from the start of the rule_text
             std::string trimmed_rule = rule_text.substr(17);
@@ -706,6 +1018,12 @@ exec_rule_expression(irods::default_re_ctx&, std::string rule_text, std::list<bo
 
         bp::list rule_arguments_python = serialize_parameter_list_of_boost_anys_to_python_list(rule_arguments_cpp);
 
+        bp::dict session_vars_python;
+        irods::error err = populate_session_var_dict_from_effect_handler(effect_handler, session_vars_python);
+        if ( !err.ok() ) {
+            LOG("Session vars dict could not be populated");
+        }
+
         // Convert INPUT/OUTPUT global vars to Python dict
         bp::dict global_vars_python;
 
@@ -741,6 +1059,9 @@ exec_rule_expression(irods::default_re_ctx&, std::string rule_text, std::list<bo
 
         // Import global INPUT and OUTPUT variables
         main_namespace["global_vars"] = global_vars_python;
+
+        // Import session variables
+        main_namespace["session_vars"] = session_vars_python;
 
         // Import globals
         for (const auto& it : PYTHON_GLOBALS) {
