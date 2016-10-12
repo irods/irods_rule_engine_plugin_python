@@ -720,13 +720,8 @@ irods::ms_table& get_microservice_table();
 
 irods::error
 start(irods::default_re_ctx&, const std::string& _instance_name) {
-/*
-    ./usr/lib/python2.7/config-x86_64-linux-gnu/libpython2.7.so
-    ./usr/lib/x86_64-linux-gnu/libpython2.7.so
-    ./usr/lib/python3.4/config-3.4m-x86_64-linux-gnu/libpython3.4.so
-*/
     // TODO Enable config-selectable Python version
-    dlopen("libpython2.7.so", RTLD_LAZY | RTLD_GLOBAL); // https://mail.python.org/pipermail/new-bugs-announce/2008-November/003322.html
+
     Py_InitializeEx(0);
     
     try {
