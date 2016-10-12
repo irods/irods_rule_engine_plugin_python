@@ -1,17 +1,45 @@
+# iRODS Rule Engine Plugin - Python
+
+This C++ plugin provides the iRODS platform a rule engine that allows iRODS rules to be written in Python.
+
+# Build
+
 Building the iRODS Python Rule Engine Plugin requires version 4.2 of the iRODS software from github (http://github.com/irods/irods).
 
-Build with 'cmake PATH_TO_SOURCE_DIRECTORY --GNinja', then run 'ninja package' to create the deb, and 'sudo dpkg -i irods_rule_engine_plugin-python-4.2.0-ubuntu14-x86_64.deb' to install the python rule engine plugin.
+```
+cd irods_rule_engine_plugin_python
+mkdir build
+cd build
+cmake ../
+make package
+```
 
-After installing the plugin, you need to edit /etc/hosts/server_config.json to make your iRODS install aware of the plugin. In the "rule_engines" section of the json file, you need to add a new stanza, below the stanza that begins "instance_name": "irods_rule_engine_plugin-irods_rule_language". A working stanza for the python rule engine plugin is included below:
+# Install
 
-    {
-        "instance_name": "irods_rule_engine_plugin-python-instance",
-        "plugin_name": "irods_rule_engine_plugin_python",
-        "plugin_specific_configuration": {
-        }
-    } 
+The packages produced by CMake will install the Python plugin shared object file:
 
-If you want the python rule engine to be your default rule engine, you will need to change the order of the rule_engines stanzas, so that the python stanza comes before the irods_rule_language stanza.
+`/var/lib/irods/plugins/rule_engines/libirods_rule_engine_plugin-python.so`
 
-The core.py file in this repo contains a Python implementation of all static peps from core.re.
+# Configuration
 
+After installing the plugin, `/etc/irods/server_config.json` needs to be configured to use the plugin.
+
+Add a new stanza to the "rule_engines" array within `server_config.json`:
+
+```json
+{
+    "instance_name": "irods_rule_engine_plugin-python-instance",
+    "plugin_name": "irods_rule_engine_plugin-python",
+    "plugin_specific_configuration": {}
+}
+```
+
+Adding the Python Rule Engine Plugin stanza above the default "irods_rule_engine_plugin-irods_rule_language" stanza will allow any defined Python rules to take precedence over any similarly named rules in the iRODS Rule Language.
+
+Python rules will be loaded from `core.py` (located at `/etc/irods/core.py` in a default installation).
+
+# Other
+
+- The example `core.py` file in this repository contains a Python implementation of all static policy enforcement points (PEPs) from a default `core.re` rulebase.
+
+- This version of the Python Rule Engine Plugin uses the Python 2.7 interpreter.
