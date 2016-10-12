@@ -21,8 +21,6 @@
 
 #include "irods_server_properties.hpp"
 
-#define LOG(...) log(__func__, ":", __LINE__, " ", __VA_ARGS__)
-
 static std::map<std::string, std::string> PYTHON_GLOBALS {{"PYTHON_RE_RET_CODE", "code"}, {"PYTHON_RE_RET_STATUS", "status"}, {"PYTHON_RE_RET_OUTPUT", "output"}, {"PYTHON_MSPARAM_TYPE", "PYTHON_MSPARAM_TYPE"}, {"PYTHON_RODSOBJSTAT", "PYTHON_RODSOBJSTAT"}, {"PYTHON_INT_MS_T", "PYTHON_INT_MS_T"}, {"PYTHON_DOUBLE_MS_T", "PYTHON_DOUBLE_MS_T"}, {"PYTHON_GENQUERYINP_MS_T", "PYTHON_GENQUERYINP_MS_T"}, {"PYTHON_GENQUERYOUT_MS_T", "PYTHON_GENQUERYOUT_MS_T"}};
 
 const std::string ELEMENT_TYPE = "ELEMENT_TYPE";
@@ -61,31 +59,6 @@ void register_regexes_from_array(
 }
 
 namespace {
-    const std::string LOG_FILE = "/tmp/irods-python-plugin.log";
-
-    template<typename L, typename T>
-    void
-    log_impl(L& logger, const T& arg) {
-        logger << arg;
-    }
-
-    template<typename L, typename T, typename... Types>
-    void
-    log_impl(L& logger, const T& arg, Types&&... args) {
-        logger << arg;
-        log_impl(logger, args...);
-    }
-
-    template<typename... Types>
-    void
-    log(Types&&... args) {
-        std::ofstream l{LOG_FILE, std::ofstream::out | std::ofstream::app};
-        auto now = boost::posix_time::microsec_clock::universal_time();
-        l << boost::posix_time::to_iso_extended_string(now) << " ";
-        log_impl(l, args...);
-        l << std::endl;
-    }
-
     std::string
     extract_python_exception(void) {
         PyObject *exc,*val,*tb;
@@ -134,12 +107,12 @@ namespace {
         irods::error err;
 
         if ( !(err = effect_handler("unsafe_ms_ctx", &rei)).ok() ) {
-            LOG("ERROR: Could not retrieve RuleExecInfo_t object from effect handler");
+            rodsLog(LOG_ERROR, "Could not retrieve RuleExecInfo_t object from effect handler");
             return err;
         }
 
         if ( !rei ) {
-            LOG("ERROR: RuleExecInfo object is NULL - cannot populate session vars");
+            rodsLog(LOG_ERROR, "RuleExecInfo object is NULL - cannot populate session vars");
             return ERROR(NULL_VALUE_ERR, "Null rei pointer in populate_session_var_dict_from_effect_handler");
         }
 
@@ -420,7 +393,7 @@ namespace {
                 irods::error ret = irods::re_serialization::serialize_parameter(*itr, param);
 
                 if (!ret.ok()) {
-                    LOG("ERROR: Unsupported argument for calling re rules from the rule language");
+                    rodsLog(LOG_DEBUG, "Unsupported argument for calling re rules from the rule language");
                 } else {
                     if (param.size() == 0) {
                         parameter_list_python.append("");
@@ -439,7 +412,7 @@ namespace {
             }
         } catch (const bp::error_already_set&) {
             const std::string formatted_python_exception = extract_python_exception();
-            LOG("caught python exception\n", formatted_python_exception);
+            rodsLog(LOG_ERROR, "caught python exception: %s", formatted_python_exception.c_str());
             std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " Caught Python exception.\n" + formatted_python_exception;
         }
         
@@ -484,7 +457,7 @@ namespace {
                     std::string object_classname = boost::python::extract<std::string>(in_itr[i].attr("__class__").attr("__name__"));
                     std::stringstream err;
                     err << __PRETTY_FUNCTION__ << ": extract to msParam failed on element[" << i << "] of type [" << object_classname << "]";
-                    LOG(err.str());
+                    rodsLog(LOG_ERROR, err.str().c_str());
                     PyErr_SetString(PyExc_RuntimeError, err.str().c_str());
                     bp::throw_error_already_set();
                 }
@@ -721,7 +694,7 @@ irods::ms_table& get_microservice_table();
 irods::error
 start(irods::default_re_ctx&, const std::string& _instance_name) {
     // TODO Enable config-selectable Python version
-
+    dlopen("libpython2.7.so", RTLD_LAZY | RTLD_GLOBAL); // https://mail.python.org/pipermail/new-bugs-announce/2008-November/003322.html
     Py_InitializeEx(0);
     
     try {
@@ -746,7 +719,7 @@ start(irods::default_re_ctx&, const std::string& _instance_name) {
         StringFromPythonUnicode::register_converter();
     } catch (const bp::error_already_set&) {
         const std::string formatted_python_exception = extract_python_exception();
-        LOG("caught python exception\n", formatted_python_exception);
+        rodsLog(LOG_ERROR, "caught python exception: %s", formatted_python_exception.c_str());
         std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " Caught Python exception.\n" + formatted_python_exception;
         return ERROR(RULE_ENGINE_ERROR, err_msg);
     }
@@ -811,7 +784,7 @@ rule_exists(irods::default_re_ctx&, std::string rule_name, bool& _return) {
         _return = PyObject_HasAttrString(core_module.ptr(), rule_name.c_str());
     } catch (const bp::error_already_set&) {
         const std::string formatted_python_exception = extract_python_exception();
-        LOG("caught python exception\n", formatted_python_exception);
+        rodsLog(LOG_ERROR, "caught python exception: %s", formatted_python_exception.c_str());
         std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " Caught Python exception.\n" + formatted_python_exception;
         return ERROR( RULE_ENGINE_ERROR, err_msg);
     }
@@ -831,7 +804,7 @@ exec_rule(irods::default_re_ctx&, std::string rule_name, std::list<boost::any>& 
         rule_arguments_python = serialize_parameter_list_of_boost_anys_to_python_list(rule_arguments_cpp);
         irods::error err = populate_session_var_dict_from_effect_handler(effect_handler, session_vars_python);
         if ( !err.ok() ) {
-            LOG("Session vars dict could not be populated");
+            rodsLog(LOG_DEBUG, "Session vars dict could not be populated");
         }
 
         // Import session variables
@@ -851,7 +824,7 @@ exec_rule(irods::default_re_ctx&, std::string rule_name, std::list<boost::any>& 
         }
     } catch (const bp::error_already_set&) {
         const std::string formatted_python_exception = extract_python_exception();
-        LOG("caught python exception\n", formatted_python_exception);
+        rodsLog(LOG_ERROR, "caught python exception: %s", formatted_python_exception.c_str());
         auto start_pos = formatted_python_exception.find(IRODS_ERROR_PREFIX);
         int error_code_int = -1;
         if (start_pos != std::string::npos) {
@@ -863,7 +836,7 @@ exec_rule(irods::default_re_ctx&, std::string rule_name, std::list<boost::any>& 
         std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " Caught Python exception.\n" + formatted_python_exception;
         return ERROR(error_code_int, err_msg);
     } catch (const boost::bad_any_cast& e) {
-        LOG("bad any cast : ", e.what());
+        rodsLog(LOG_ERROR, "bad any cast : %s", e.what());
         std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " bad_any_cast : " + e.what();
         return ERROR( INVALID_ANY_CAST, e.what() );
     }
@@ -887,7 +860,7 @@ exec_rule_text(irods::default_re_ctx&, std::string rule_text, std::list<boost::a
         bp::dict session_vars_python;
         irods::error err = populate_session_var_dict_from_effect_handler(effect_handler, session_vars_python);
         if ( !err.ok() ) {
-            LOG("Session vars dict could not be populated");
+            rodsLog(LOG_DEBUG, "Session vars dict could not be populated");
         }
 
         // Convert INPUT and OUTPUT global vars to Python dict
@@ -987,11 +960,11 @@ exec_rule_text(irods::default_re_ctx&, std::string rule_text, std::list<boost::a
         }
     } catch (const bp::error_already_set&) {
         const std::string formatted_python_exception = extract_python_exception();
-        LOG("caught python exception\n", formatted_python_exception);
+        rodsLog(LOG_ERROR, "caught python exception: %s", formatted_python_exception.c_str());
         std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " Caught Python exception.\n" + formatted_python_exception;
         return ERROR( RULE_ENGINE_ERROR, err_msg);
     } catch (const boost::bad_any_cast& e) {
-        LOG("bad any cast : ", e.what());
+        rodsLog(LOG_ERROR, "bad any cast : %s", e.what());
         std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " bad_any_cast : " + e.what();
         return ERROR( INVALID_ANY_CAST, e.what() );
     }
@@ -1016,7 +989,7 @@ exec_rule_expression(irods::default_re_ctx&, std::string rule_text, std::list<bo
         bp::dict session_vars_python;
         irods::error err = populate_session_var_dict_from_effect_handler(effect_handler, session_vars_python);
         if ( !err.ok() ) {
-            LOG("Session vars dict could not be populated");
+            rodsLog(LOG_DEBUG, "Session vars dict could not be populated");
         }
 
         // Convert INPUT/OUTPUT global vars to Python dict
@@ -1076,11 +1049,11 @@ exec_rule_expression(irods::default_re_ctx&, std::string rule_text, std::list<bo
         bp::object outVal = rule_function(rule_arguments_python, callback_wrapper);
     } catch (const bp::error_already_set&) {
         const std::string formatted_python_exception = extract_python_exception();
-        LOG("caught python exception\n", formatted_python_exception);
+        rodsLog(LOG_ERROR, "caught python exception: %s", formatted_python_exception.c_str());
         std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " Caught Python exception.\n" + formatted_python_exception;
         return ERROR(RULE_ENGINE_ERROR, err_msg);
     } catch (const boost::bad_any_cast& e) {
-        LOG("bad any cast : ", e.what());
+        rodsLog(LOG_ERROR, "bad any cast : %s", e.what());
         std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " bad_any_cast : " + e.what();
         return ERROR( INVALID_ANY_CAST, e.what() );
     }
