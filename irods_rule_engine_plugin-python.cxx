@@ -845,6 +845,40 @@ exec_rule(irods::default_re_ctx&, std::string rule_name, std::list<boost::any>& 
 
 irods::error
 exec_rule_text(irods::default_re_ctx&, std::string rule_text, std::list<boost::any>& rule_arguments_cpp, irods::callback effect_handler) {
+    // Because Python is not sandboxed, need to restrict irule to admin users only
+    ruleExecInfo_t* rei;
+    irods::error err;
+
+    if ( !( err = effect_handler( "unsafe_ms_ctx", &rei ) ).ok() ) {
+        rodsLog( LOG_ERROR, "Could not retrieve RuleExecInfo_t object from effect handler" );
+        return err;
+    }
+
+    if ( !rei ) {
+        rodsLog( LOG_ERROR, "RuleExecInfo object is NULL - cannot authenticate user" );
+        return ERROR( NULL_VALUE_ERR, "Null rei pointer in exec_rule_text" );
+    }
+
+    int client_user_authflag = 0;
+    int proxy_user_authflag = 0;
+
+    if ( rei->uoic ) {
+        client_user_authflag = rei->uoic->authInfo.authFlag;
+    } else if ( rei->rsComm ) {
+        client_user_authflag = rei->rsComm->clientUser.authInfo.authFlag;
+    }
+
+    if ( rei->uoip ) {
+        proxy_user_authflag = rei->uoip->authInfo.authFlag;
+    } else if ( rei->rsComm ) {
+        proxy_user_authflag = rei->rsComm->proxyUser.authInfo.authFlag;
+    }
+
+    if ( ( client_user_authflag < REMOTE_PRIV_USER_AUTH ) || ( proxy_user_authflag < REMOTE_PRIV_USER_AUTH ) ) {
+        rodsLog( LOG_DEBUG, "Insufficient privileges to run irule in Python rule engine plugin" );
+        return ERROR( SYS_NO_API_PRIV, "Insufficient privileges to run irule in Python rule engine plugin" );
+    }
+
     try {
         auto itr = begin(rule_arguments_cpp);
         ++itr;  // skip tuple
