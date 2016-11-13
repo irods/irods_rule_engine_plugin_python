@@ -792,6 +792,48 @@ rule_exists(irods::default_re_ctx&, std::string rule_name, bool& _return) {
 }
 
 irods::error
+list_rules( irods::default_re_ctx&, std::vector<std::string>& rule_vec ) {
+    try {
+        bp::object core_module = bp::import("core");
+        bp::object core_namespace = core_module.attr("__dict__");
+
+        bp::exec(
+            "import inspect\n"
+            "import sys\n"
+            "function_list = inspect.getmembers(sys.modules['core'], inspect.isfunction)\n"
+            "function_names = [ tup[0] for tup in function_list ]\n",
+            core_namespace, core_namespace );
+
+        bp::list function_names = bp::extract<bp::list>(core_namespace["function_names"]);
+
+        size_t len_names = bp::extract<std::size_t>(function_names.attr("__len__")());
+        for ( std::size_t i = 0; i < len_names; ++i ) {
+            rule_vec.push_back( bp::extract<std::string>( function_names[i] ) );
+            std::string tmp = bp::extract<std::string>( function_names[i] );
+        }
+    } catch (const bp::error_already_set&) {
+        const std::string formatted_python_exception = extract_python_exception();
+        rodsLog(LOG_ERROR, "caught python exception: %s", formatted_python_exception.c_str());
+        auto start_pos = formatted_python_exception.find(IRODS_ERROR_PREFIX);
+        int error_code_int = -1;
+        if (start_pos != std::string::npos) {
+            start_pos += IRODS_ERROR_PREFIX.size();
+            auto end_pos = formatted_python_exception.find_first_of("]", start_pos);
+            std::string error_code = formatted_python_exception.substr(start_pos, end_pos-start_pos);
+            error_code_int = boost::lexical_cast<int>(error_code);
+        }
+        std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " Caught Python exception.\n" + formatted_python_exception;
+        return ERROR(error_code_int, err_msg);
+    } catch (const boost::bad_any_cast& e) {
+        rodsLog(LOG_ERROR, "bad any cast : %s", e.what());
+        std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " bad_any_cast : " + e.what();
+        return ERROR( INVALID_ANY_CAST, e.what() );
+    }   
+
+    return SUCCESS();
+}
+
+irods::error
 exec_rule(irods::default_re_ctx&, std::string rule_name, std::list<boost::any>& rule_arguments_cpp, irods::callback effect_handler) {
     try {
         // TODO Enable non core.py Python rulebases
@@ -1110,6 +1152,10 @@ plugin_factory(const std::string& _inst_name, const std::string& _context) {
      re->add_operation<irods::default_re_ctx&, std::string, bool&>(
              "rule_exists",
              std::function<irods::error(irods::default_re_ctx&, std::string, bool&)>( rule_exists ) );
+
+     re->add_operation<irods::default_re_ctx&, std::vector<std::string>&>(
+            "list_rules",
+            std::function<irods::error(irods::default_re_ctx&,std::vector<std::string>&)>( list_rules ) );
 
      re->add_operation<irods::default_re_ctx&,std::string,std::list<boost::any>&,irods::callback>(
              "exec_rule",
