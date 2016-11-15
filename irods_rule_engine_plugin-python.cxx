@@ -22,7 +22,7 @@
 
 #include "irods_server_properties.hpp"
 
-static std::map<std::string, std::string> PYTHON_GLOBALS {{"PYTHON_RE_RET_CODE", "code"}, {"PYTHON_RE_RET_STATUS", "status"}, {"PYTHON_RE_RET_OUTPUT", "output"}, {"PYTHON_MSPARAM_TYPE", "PYTHON_MSPARAM_TYPE"}, {"PYTHON_RODSOBJSTAT", "PYTHON_RODSOBJSTAT"}, {"PYTHON_INT_MS_T", "PYTHON_INT_MS_T"}, {"PYTHON_DOUBLE_MS_T", "PYTHON_DOUBLE_MS_T"}, {"PYTHON_GENQUERYINP_MS_T", "PYTHON_GENQUERYINP_MS_T"}, {"PYTHON_GENQUERYOUT_MS_T", "PYTHON_GENQUERYOUT_MS_T"}};
+static std::map<std::string, std::string> PYTHON_GLOBALS {{"PYTHON_RE_RET_CODE", "code"}, {"PYTHON_RE_RET_STATUS", "status"}, {"PYTHON_RE_RET_OUTPUT", "output"}, {"PYTHON_MSPARAM_TYPE", "PYTHON_MSPARAM_TYPE"}, {"PYTHON_RODSOBJSTAT", "PYTHON_RODSOBJSTAT"}, {"PYTHON_INT_MS_T", "PYTHON_INT_MS_T"}, {"PYTHON_DOUBLE_MS_T", "PYTHON_DOUBLE_MS_T"}, {"PYTHON_GENQUERYINP_MS_T", "PYTHON_GENQUERYINP_MS_T"}, {"PYTHON_GENQUERYOUT_MS_T", "PYTHON_GENQUERYOUT_MS_T"}, {"PYTHON_BUF_LEN_MS_T", "PYTHON_BUF_LEN_MS_T"}};
 
 const std::string ELEMENT_TYPE = "ELEMENT_TYPE";
 const std::string STRING_TYPE = "STRING_TYPE";
@@ -133,9 +133,9 @@ namespace {
         }
 
         if ( rei->doi ) {
-            session_var_dict["dataSize"] = rei->doi->dataSize;
+            session_var_dict["dataSize"] = boost::lexical_cast<std::string>(rei->doi->dataSize);
         } else if ( rei->doinp ) {
-            session_var_dict["dataSize"] = rei->doinp->dataSize;
+            session_var_dict["dataSize"] = boost::lexical_cast<std::string>(rei->doinp->dataSize);
         }
 
         if ( rei->doi ) {
@@ -427,47 +427,55 @@ namespace {
     std::list< std::map<std::string, std::string> >
     convert_python_iterable_to_list_of_maps(const bp::object& in_itr) {
         std::list<std::map<std::string, std::string> > out_list;
-        const auto N = bp::len(in_itr);
-        for (int i=0; i<N; ++i) {
-            std::map<std::string, std::string> tmpMap;
-            bp::extract<std::string> s{in_itr[i]};
-            if (s.check()) {
-                std::string tmpStr = s;
-                tmpMap[ELEMENT_TYPE] = STRING_TYPE;
-                tmpMap[STRING_VALUE_KEY] = tmpStr;
-                out_list.push_back(tmpMap);
-            } else {
-                bp::dict d = bp::extract<bp::dict>(in_itr[i]);
-                if (d.has_key(PYTHON_GLOBALS.at("PYTHON_MSPARAM_TYPE"))) {
-                    std::string type = bp::extract<std::string>(d[PYTHON_GLOBALS.at("PYTHON_MSPARAM_TYPE")]);
-                    tmpMap[ELEMENT_TYPE] = type;
-                    bp::list keys = d.keys();
-                    for (int j=0; j < len(keys); ++j) {
-                        bp::extract<std::string> extracted_key(keys[j]);
-                        std::string key = extracted_key;
 
-                        if (key == PYTHON_GLOBALS.at("PYTHON_MSPARAM_TYPE")) {
-                            // already got type, don't need to repeat
-                            continue;
-                        } else {
-                            bp::extract<std::string> extracted_val(d[key]);
-                            std::string val = extracted_val;
-                            tmpMap[key] = val;
-                        }
-                    }
-
+        try {
+            const auto N = bp::len(in_itr);
+            for (int i=0; i<N; ++i) {
+                std::map<std::string, std::string> tmpMap;
+                bp::extract<std::string> s{in_itr[i]};
+                if (s.check()) {
+                    std::string tmpStr = s;
+                    tmpMap[ELEMENT_TYPE] = STRING_TYPE;
+                    tmpMap[STRING_VALUE_KEY] = tmpStr;
                     out_list.push_back(tmpMap);
-
                 } else {
-                    std::string object_classname = boost::python::extract<std::string>(in_itr[i].attr("__class__").attr("__name__"));
-                    std::stringstream err;
-                    err << __PRETTY_FUNCTION__ << ": extract to msParam failed on element[" << i << "] of type [" << object_classname << "]";
-                    rodsLog(LOG_ERROR, err.str().c_str());
-                    PyErr_SetString(PyExc_RuntimeError, err.str().c_str());
-                    bp::throw_error_already_set();
+                    bp::dict d = bp::extract<bp::dict>(in_itr[i]);
+                    if (d.has_key(PYTHON_GLOBALS.at("PYTHON_MSPARAM_TYPE"))) {
+                        std::string type = bp::extract<std::string>(d[PYTHON_GLOBALS.at("PYTHON_MSPARAM_TYPE")]);
+                        tmpMap[ELEMENT_TYPE] = type;
+                        bp::list keys = d.keys();
+                        for (int j=0; j < len(keys); ++j) {
+                            bp::extract<std::string> extracted_key(keys[j]);
+                            std::string key = extracted_key;
+
+                            if (key == PYTHON_GLOBALS.at("PYTHON_MSPARAM_TYPE")) {
+                                // already got type, don't need to repeat
+                                continue;
+                            } else {
+                                bp::extract<std::string> extracted_val(d[key]);
+                                std::string val = extracted_val;
+                                tmpMap[key] = val;
+                            }
+                        }
+
+                        out_list.push_back(tmpMap);
+
+                    } else {
+                        std::string object_classname = boost::python::extract<std::string>(in_itr[i].attr("__class__").attr("__name__"));
+                        std::stringstream err;
+                        err << __PRETTY_FUNCTION__ << ": extract to msParam failed on element[" << i << "] of type [" << object_classname << "]";
+                        rodsLog(LOG_ERROR, err.str().c_str());
+                        PyErr_SetString(PyExc_RuntimeError, err.str().c_str());
+                        bp::throw_error_already_set();
+                    }
                 }
             }
+        } catch (const bp::error_already_set&) {
+            const std::string formatted_python_exception = extract_python_exception();
+            rodsLog(LOG_ERROR, "caught python exception: %s", formatted_python_exception.c_str());
+            std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " Caught Python exception.\n" + formatted_python_exception;
         }
+
         return out_list;
     }
 
@@ -650,6 +658,10 @@ namespace {
                     } else if (strcmp(realType, GenQueryOut_MS_T) == 0) {
                         genQueryOut_t* tmpGenQueryOut = (genQueryOut_t*) tmpMsParam->inOutStruct;
                         rule_returns_cpp.push_back(tmpGenQueryOut);
+                    } else if (strcmp(realType, BUF_LEN_MS_T) == 0) {
+                        bytesBuf_t* tmpBytesBuf = (bytesBuf_t*) tmpMsParam->inpOutBuf;
+                        char* tmpCStr = (char*) tmpBytesBuf->buf;
+                        rule_returns_cpp.push_back(std::string(tmpCStr));
                     } // TODO Need else if for each supported msParam type
                     else {
                         std::string error_msg = "Unsupported msParam type :";
