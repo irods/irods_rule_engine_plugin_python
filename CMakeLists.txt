@@ -22,8 +22,13 @@ if (NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
   message(STATUS "Setting unspecified CMAKE_BUILD_TYPE to '${CMAKE_BUILD_TYPE}'")
 endif()
 
-find_package(PythonInterp 2.7 REQUIRED)
-find_package(PythonLibs 2.7 REQUIRED)
+if (NOT IRODS_PYTHON_VERSION)
+  set(IRODS_PYTHON_VERSION "2" CACHE STRING "The version of python to link against" FORCE)
+  message(STATUS "Setting unspecified IRODS_PYTHON_VERSION to '${IRODS_PYTHON_VERSION}'. This is the correct setting for normal builds.")
+endif()
+
+find_package(PythonInterp ${IRODS_PYTHON_VERSION} REQUIRED)
+find_package(PythonLibs ${IRODS_PYTHON_VERSION} REQUIRED)
 
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++")
 set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -stdlib=libc++")
@@ -69,6 +74,7 @@ set(
       ${PLUGIN}
       PRIVATE
 	  ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_python.so
+	  ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_system.so
 	  ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_date_time.so
 	  ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_filesystem.so
       ${IRODS_EXTERNALS_FULLPATH_JANSSON}/lib/libjansson.so

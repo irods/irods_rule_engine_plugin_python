@@ -49,17 +49,12 @@ def acCreateUserZoneCollections(rule_args, callback):
     rodsZoneProxy = str(ret[PYTHON_RE_RET_OUTPUT][1])
     ret = callback.getSessionVar('otherUserName', tmpStr)
     otherUserName = str(ret[PYTHON_RE_RET_OUTPUT][1])
-    homeStr = '/' + rodsZoneProxy + '/home'
-    trashStr = '/' + rodsZoneProxy + '/trash/home'
+    homeStr = '/'.join(['', rodsZoneProxy, 'home'])
+    trashStr = '/'.join(['', rodsZoneProxy, 'trash', 'home'])
 
-    homeDict = []
-    homeDict.append(homeStr)
-    homeDict.append(otherUserName)
+    homeDict = [homeStr, otherUserName]
+    trashDict = [trashStr, otherUserName]
 
-    trashDict = []
-    trashDict.append(trashStr)
-    trashDict.append(otherUserName)
-    
     ret = acCreateCollByAdmin(homeDict, callback)
     ret = acCreateCollByAdmin(trashDict, callback)
     return ret
@@ -76,7 +71,7 @@ def acDeleteUser(rule_args, callback):
         return ret
 
     ret = callback.msiDeleteUser()
-    
+
     if not ret[PYTHON_RE_RET_STATUS]:
         callback.msiRollback()
         return ret
@@ -84,8 +79,7 @@ def acDeleteUser(rule_args, callback):
     callback.msiCommit()
 
 def acDeleteDefaultCollections(rule_args, callback):
-    ret = acDeleteUserZoneCollections(rule_args, callback)
-    return ret
+    return acDeleteUserZoneCollections(rule_args, callback)
 
 def acDeleteUserZoneCollections(rule_args, callback):
     tmpStr = ''
@@ -93,16 +87,11 @@ def acDeleteUserZoneCollections(rule_args, callback):
     rodsZoneProxy = ret[PYTHON_RE_RET_OUTPUT][1]
     ret = callback.getSessionVar('otherUserName', tmpStr)
     otherUserName = ret[PYTHON_RE_RET_OUTPUT][1]
-    homeStr = '/' + rodsZoneProxy + '/home'
-    trashStr = '/' + rodsZoneProxy + '/trash/home'
-    
-    homeDict = []
-    homeDict.append(homeStr)
-    homeDict.append(otherUserName)
+    homeStr = '/'.join(['', rodsZoneProxy, 'home'])
+    trashStr = '/'.join(['', rodsZoneProxy, 'trash', 'home'])
 
-    trashDict = []
-    trashDict.append(trashStr)
-    trashDict.append(otherUserName)
+    homeDict = [homeStr, otherUserName]
+    trashDict = [trashStr, otherUserName]
 
     ret = acDeleteCollByAdminIfPresent(homeDict, callback)
     ret = acDeleteCollByAdminIfPresent(trashDict, callback)
@@ -149,24 +138,14 @@ def acCheckPasswordStrength(rule_args, callback):
     pass
 
 def acSetRescSchemeForCreate(rule_args, callback):
-    server_config_file = open('/etc/irods/server_config.json')
-    server_config_str = server_config_file.read()
-    server_config_dict = json.loads(server_config_str)
-    resc_name = 'demoResc'
-    if server_config_dict.has_key('default_resource_name'):
-        rescName = server_config_dict['default_resource_name']
-    callback.msiSetDefaultResc(resc_name, 'null')
-    pass
+    with open('/etc/irods/server_config.json') as f:
+        server_config_dict = json.load(f)
+    callback.msiSetDefaultResc(server_config_dict.get('default_resource_name', 'demoResc'), 'null')
 
 def acSetRescSchemeForRepl(rule_args, callback):
-    server_config_file = open('/etc/irods/server_config.json')
-    server_config_str = server_config_file.read()
-    server_config_dict = json.loads(server_config_str)
-    resc_name = 'demoResc'
-    if server_config_dict.has_key('default_resource_name'):
-        rescName = server_config_dict['default_resource_name']
-    callback.msiSetDefaultResc(resc_name, 'null')
-    pass
+    with open('/etc/irods/server_config.json') as f:
+        server_config_dict = json.load(f)
+    callback.msiSetDefaultResc(server_config_dict.get('default_resource_name', 'demoResc'), 'null')
 
 def acPreprocForDataObjOpen(rule_args, callback):
     pass
@@ -176,7 +155,6 @@ def acSetMultiReplPerResc(rule_args, callback):
 
 def acPostProcForPut(rule_args, callback):
     pythonRuleEnginePluginTest(rule_args, callback)
-    pass
 
 def acPostProcForCopy(rule_args, callback):
     pass

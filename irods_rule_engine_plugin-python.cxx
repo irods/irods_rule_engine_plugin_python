@@ -12,6 +12,7 @@
 #include "boost/python.hpp"
 #include "boost/python/raw_function.hpp"
 #include "boost/python/slice.hpp"
+#include "boost/python/module_init.hpp"
 
 #include "irods_error.hpp"
 #include "irods_re_plugin.hpp"
@@ -91,7 +92,11 @@ namespace {
             boost::python::converter::rvalue_from_python_stage1_data *data) {
             bp::handle<> h_encoded(PyUnicode_AsUTF8String(py_obj));
             void *storage = reinterpret_cast<boost::python::converter::rvalue_from_python_storage<std::string>*>(data)->storage.bytes;
+#if PY_VERSION_HEX < 0x03000000
             new (storage) std::string(PyString_AsString(h_encoded.get()));
+#else
+            new (storage) std::string(PyBytes_AsString(h_encoded.get()));
+#endif
             data->convertible = storage;
         }
 
@@ -156,8 +161,8 @@ namespace {
             session_var_dict["backupRescName"] = rei->doi->backupRescName;
             session_var_dict["rescName"] = rei->doi->rescName;
         }
-        
-        if ( rei->uoic ) {            
+
+        if ( rei->uoic ) {
             bp::dict userClient_dict;
             irods::re_serialization::serialized_parameter_t userClient_map;
             irods::error ret = irods::re_serialization::serialize_parameter(rei->uoic, userClient_map);
@@ -194,13 +199,13 @@ namespace {
         } else if ( rei->rsComm ) {
             session_var_dict["rodsZoneClient"] = rei->rsComm->clientUser.rodsZone;
         }
-        
+
         if ( rei->uoic ) {
             session_var_dict["sysUidClient"] = rei->uoic->sysUid;
         } else if ( rei->rsComm ) {
             session_var_dict["sysUidClient"] = rei->rsComm->clientUser.sysUid;
         }
-        
+
         if ( rei->uoic ) {
             session_var_dict["privClient"] = rei->uoic->authInfo.authFlag;
         } else if ( rei->rsComm ) {
@@ -247,7 +252,7 @@ namespace {
             session_var_dict["userModifyClient"] = rei->rsComm->clientUser.userOtherInfo.userModify;
         }
 
-        if ( rei->uoip ) {            
+        if ( rei->uoip ) {
             bp::dict userProxy_dict;
             irods::re_serialization::serialized_parameter_t userProxy_map;
             irods::error ret = irods::re_serialization::serialize_parameter(rei->uoip, userProxy_map);
@@ -370,7 +375,7 @@ namespace {
             bp::dict kv_dict;
             irods::re_serialization::serialized_parameter_t kv_map;
             irods::error ret = irods::re_serialization::serialize_parameter(rei->condInputData, kv_map);
-    
+
             if (err.ok()) {
                 for (auto itr = kv_map.begin(); itr != kv_map.end(); ++itr) {
                     kv_dict[itr->first] = itr->second;
@@ -382,7 +387,7 @@ namespace {
 
         return SUCCESS();
     }
-    
+
     bp::list
     serialize_parameter_list_of_boost_anys_to_python_list(std::list<boost::any> parameter_list_cpp) {
         bp::list parameter_list_python;
@@ -415,10 +420,10 @@ namespace {
             rodsLog(LOG_ERROR, "caught python exception: %s", formatted_python_exception.c_str());
             std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " Caught Python exception.\n" + formatted_python_exception;
         }
-        
+
         return parameter_list_python;
     }
-    
+
     std::list< std::map<std::string, std::string> >
     convert_python_iterable_to_list_of_maps(const bp::object& in_itr) {
         std::list<std::map<std::string, std::string> > out_list;
@@ -492,17 +497,17 @@ namespace {
                         try {
                             genQueryInp_t* genQueryInp = (genQueryInp_t*) malloc(sizeof(genQueryInp_t));
                             memset(genQueryInp, 0, sizeof(genQueryInp_t));
-                            
+
                             std::map<int, int> selectInpMap;
                             std::map<int, std::string> sqlCondInpMap;
                             std::map<std::string, std::string> condInputMap;
-                            
+
                             for (std::map<std::string, std::string>::iterator map_itr = itr.begin(); map_itr != itr.end(); ++map_itr) {
                                 if (map_itr->first == "maxRows")
                                     genQueryInp->maxRows = boost::lexical_cast<int>(map_itr->second);
                                 else if (map_itr->first == "continueInx")
                                     genQueryInp->continueInx = boost::lexical_cast<int>(map_itr->second);
-                                else if (map_itr->first == "rowOffset") 
+                                else if (map_itr->first == "rowOffset")
                                     genQueryInp->rowOffset = boost::lexical_cast<int>(map_itr->second);
                                 else if (map_itr->first == "options")
                                     genQueryInp->options = boost::lexical_cast<int>(map_itr->second);
@@ -600,7 +605,7 @@ namespace {
                             bp::throw_error_already_set();
                         }
                     }
- 
+
                     rule_args_cpp.push_back(tmpMsParam);
                 }
             }
@@ -652,7 +657,7 @@ namespace {
                         PyErr_SetString(PyExc_RuntimeError, error_msg.c_str());
                         bp::throw_error_already_set();
                     }
-                    
+
                 } else {
                     std::string error_msg = "Unsupported return type :";
                     error_msg += itr.type().name();
@@ -660,11 +665,11 @@ namespace {
                     bp::throw_error_already_set();
                 }
             }
-            
+
             retList = serialize_parameter_list_of_boost_anys_to_python_list(rule_returns_cpp);
 
             ret[PYTHON_GLOBALS.at("PYTHON_RE_RET_OUTPUT")] = retList;
-        
+
             return ret;
         }
     };
@@ -694,9 +699,11 @@ irods::ms_table& get_microservice_table();
 irods::error
 start(irods::default_re_ctx&, const std::string& _instance_name) {
     // TODO Enable config-selectable Python version
+#if PY_VERSION_HEX < 0x03000000
     dlopen("libpython2.7.so", RTLD_LAZY | RTLD_GLOBAL); // https://mail.python.org/pipermail/new-bugs-announce/2008-November/003322.html
+#endif
     Py_InitializeEx(0);
-    
+
     try {
         boost::filesystem::path full_path( boost::filesystem::current_path() );
         boost::filesystem::path etc_irods_path = full_path.parent_path().parent_path();
@@ -715,7 +722,11 @@ start(irods::default_re_ctx&, const std::string& _instance_name) {
             core_namespace[it.first] = it.second;
         }
 
+#if PY_VERSION_HEX < 0x03000000
         initplugin_wrappers();
+#else
+        PyInit_plugin_wrappers();
+#endif
         StringFromPythonUnicode::register_converter();
     } catch (const bp::error_already_set&) {
         const std::string formatted_python_exception = extract_python_exception();
@@ -828,7 +839,7 @@ list_rules( irods::default_re_ctx&, std::vector<std::string>& rule_vec ) {
         rodsLog(LOG_ERROR, "bad any cast : %s", e.what());
         std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " bad_any_cast : " + e.what();
         return ERROR( INVALID_ANY_CAST, e.what() );
-    }   
+    }
 
     return SUCCESS();
 }
@@ -851,7 +862,7 @@ exec_rule(irods::default_re_ctx&, std::string rule_name, std::list<boost::any>& 
 
         // Import session variables
         core_namespace["session_vars"] = session_vars_python;
-        
+
         CallbackWrapper callback_wrapper{effect_handler};
         bp::object outVal = rule_function(rule_arguments_python, callback_wrapper);
 
@@ -1144,11 +1155,11 @@ plugin_factory(const std::string& _inst_name, const std::string& _context) {
      re->add_operation<irods::default_re_ctx&,const std::string&>(
              "start",
              std::function<irods::error(irods::default_re_ctx&,const std::string&)>( start ) );
- 
+
      re->add_operation<irods::default_re_ctx&,const std::string&>(
              "stop",
              std::function<irods::error(irods::default_re_ctx&,const std::string&)>( stop ) );
- 
+
      re->add_operation<irods::default_re_ctx&, std::string, bool&>(
              "rule_exists",
              std::function<irods::error(irods::default_re_ctx&, std::string, bool&)>( rule_exists ) );
@@ -1164,7 +1175,7 @@ plugin_factory(const std::string& _inst_name, const std::string& _context) {
      re->add_operation<irods::default_re_ctx&,std::string,std::list<boost::any>&,irods::callback>(
              "exec_rule_text",
              std::function<irods::error(irods::default_re_ctx&,std::string,std::list<boost::any>&,irods::callback)>( exec_rule_text ) );
- 
+
      re->add_operation<irods::default_re_ctx&,std::string,std::list<boost::any>&,irods::callback>(
              "exec_rule_expression",
              std::function<irods::error(irods::default_re_ctx&,std::string,std::list<boost::any>&,irods::callback)>( exec_rule_expression ) );
