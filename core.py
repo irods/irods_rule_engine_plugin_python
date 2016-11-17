@@ -138,12 +138,12 @@ def acCheckPasswordStrength(rule_args, callback):
     pass
 
 def acSetRescSchemeForCreate(rule_args, callback):
-    with open('/etc/irods/server_config.json') as f:
+    with open('../../etc/irods/server_config.json') as f:
         server_config_dict = json.load(f)
     callback.msiSetDefaultResc(server_config_dict.get('default_resource_name', 'demoResc'), 'null')
 
 def acSetRescSchemeForRepl(rule_args, callback):
-    with open('/etc/irods/server_config.json') as f:
+    with open('../../etc/irods/server_config.json') as f:
         server_config_dict = json.load(f)
     callback.msiSetDefaultResc(server_config_dict.get('default_resource_name', 'demoResc'), 'null')
 
@@ -154,7 +154,8 @@ def acSetMultiReplPerResc(rule_args, callback):
     pass
 
 def acPostProcForPut(rule_args, callback):
-    pythonRuleEnginePluginTest(rule_args, callback)
+    #pythonRuleEnginePluginTest(rule_args, callback)
+    pass
 
 def acPostProcForCopy(rule_args, callback):
     pass
