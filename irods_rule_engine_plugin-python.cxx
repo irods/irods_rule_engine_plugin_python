@@ -126,6 +126,10 @@ namespace {
         session_var_dict["plugin_instance_name"] = rei->pluginInstanceName;
         session_var_dict["status"] = rei->status;
 
+        if ( rei->doinp ) {
+            session_var_dict["oprType"] = rei->doinp->oprType;
+        }
+
         if ( rei->doi ) {
             session_var_dict["objPath"] = rei->doi->objPath;
         } else if ( rei->doinp ) {
@@ -1073,7 +1077,7 @@ exec_rule_text(irods::default_re_ctx&, std::string rule_text, std::list<boost::a
 
 irods::error
 exec_rule_expression(irods::default_re_ctx&, std::string rule_text, std::list<boost::any>& rule_arguments_cpp, irods::callback effect_handler) {
-      try {
+    try {
         auto itr = begin(rule_arguments_cpp);
         ++itr;  // skip tuple
         ++itr;  // skip callback
@@ -1157,7 +1161,7 @@ exec_rule_expression(irods::default_re_ctx&, std::string rule_text, std::list<bo
         return ERROR( INVALID_ANY_CAST, e.what() );
     }
 
-   return SUCCESS();
+    return SUCCESS();
 }
 
 extern "C"
