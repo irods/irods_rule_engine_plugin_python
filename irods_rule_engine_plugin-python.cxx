@@ -22,6 +22,10 @@
 
 #include "irods_server_properties.hpp"
 
+// TEMPORARY workaround for iRODS issue #3408 - RTS
+int writeLine(msParam_t*, msParam_t*, ruleExecInfo_t*);
+// end workaround
+
 static std::map<std::string, std::string> PYTHON_GLOBALS {{"PYTHON_RE_RET_CODE", "code"}, {"PYTHON_RE_RET_STATUS", "status"}, {"PYTHON_RE_RET_OUTPUT", "output"}, {"PYTHON_MSPARAM_TYPE", "PYTHON_MSPARAM_TYPE"}, {"PYTHON_RODSOBJSTAT", "PYTHON_RODSOBJSTAT"}, {"PYTHON_INT_MS_T", "PYTHON_INT_MS_T"}, {"PYTHON_DOUBLE_MS_T", "PYTHON_DOUBLE_MS_T"}, {"PYTHON_GENQUERYINP_MS_T", "PYTHON_GENQUERYINP_MS_T"}, {"PYTHON_GENQUERYOUT_MS_T", "PYTHON_GENQUERYOUT_MS_T"}, {"PYTHON_BUF_LEN_MS_T", "PYTHON_BUF_LEN_MS_T"}};
 
 const std::string ELEMENT_TYPE = "ELEMENT_TYPE";
@@ -467,7 +471,7 @@ namespace {
                     } else {
                         std::string object_classname = boost::python::extract<std::string>(in_itr[i].attr("__class__").attr("__name__"));
                         std::stringstream err;
-                        err << __PRETTY_FUNCTION__ << ": extract to msParam failed on element[" << i << "] of type [" << object_classname << "]";
+                        err << __PRETTY_FUNCTION__ << ": extract to std::string failed on element[" << i << "] of type [" << object_classname << "]";
                         rodsLog(LOG_ERROR, err.str().c_str());
                         PyErr_SetString(PyExc_RuntimeError, err.str().c_str());
                         bp::throw_error_already_set();
@@ -490,8 +494,48 @@ namespace {
             {}
         irods::callback& effect_handler;
         std::string rule_name;
+        // TEMPORARY workaround for iRODS issue #3408 - RTS
+        int python_writeLine(std::string s0, std::string s1) {
+            irods::error err;
+            ruleExecInfo_t* rei;
+            if ( !( err = effect_handler( "unsafe_ms_ctx", &rei ) ).ok() ) {
+                rodsLog( LOG_ERROR, "Could not retrieve RuleExecInfo_t object from effect handler" );
+                return err.code();
+            }
+
+            if ( !rei ) {
+                rodsLog( LOG_ERROR, "RuleExecInfo object is NULL - cannot authenticate user" );
+                return NULL_VALUE_ERR;
+            }
+
+            msParam_t param0{nullptr, nullptr, nullptr, nullptr};  
+            msParam_t param1{nullptr, nullptr, nullptr, nullptr};  
+            fillMsParam(&param0, nullptr, STR_MS_T, (void*) s0.c_str(), nullptr);
+            fillMsParam(&param1, nullptr, STR_MS_T, (void*) s1.c_str(), nullptr);
+
+            return writeLine(&param0, &param1, rei);
+        }
+        // end workaround code
         static bp::dict call(const bp::tuple& args, const bp::dict& kwargs) {
             RuleCallWrapper& self = bp::extract<RuleCallWrapper&>(args[0]);
+
+            bp::dict ret;
+            // TEMPORARY workaround for iRODS issue #3408 - RTS
+            if (self.rule_name == "writeLine") {
+                int ret_val = self.python_writeLine(bp::extract<std::string>(args[1]), bp::extract<std::string>(args[2]));
+
+                ret[PYTHON_GLOBALS.at("PYTHON_RE_RET_CODE")] = ret_val;
+                ret[PYTHON_GLOBALS.at("PYTHON_RE_RET_STATUS")] = !ret_val;
+
+                bp::list ret_list;
+                ret_list.append(args[1]);
+                ret_list.append(args[2]);
+                ret[PYTHON_GLOBALS.at("PYTHON_RE_RET_OUTPUT")] = ret_list;
+
+                return ret;
+            }
+            // end workaround code
+
             bp::tuple rule_args_python = bp::extract<bp::tuple>(args[bp::slice(1, bp::len(args))]);
 
             std::list< std::map<std::string, std::string> > rule_args_maps = convert_python_iterable_to_list_of_maps(rule_args_python);
@@ -632,7 +676,6 @@ namespace {
                 }
             }
 
-            bp::dict ret;
             ret[PYTHON_GLOBALS.at("PYTHON_RE_RET_CODE")] = retVal.code();
             ret[PYTHON_GLOBALS.at("PYTHON_RE_RET_STATUS")] = retVal.status();
 
@@ -959,6 +1002,11 @@ exec_rule_text(irods::default_re_ctx&, std::string rule_text, std::list<boost::a
         std::string out_desc = *boost::any_cast<std::string*>(*itr);
 
         bp::list rule_arguments_python = serialize_parameter_list_of_boost_anys_to_python_list(rule_arguments_cpp);
+
+        execCmdOut_t *myExecCmdOut = (execCmdOut_t*) malloc (sizeof(*myExecCmdOut));
+        memset(myExecCmdOut, 0, sizeof(*myExecCmdOut));
+
+        addMsParam(rei->msParamArray, (char*) out_desc.c_str(), ExecCmdOut_MS_T, myExecCmdOut, NULL);
 
         bp::dict session_vars_python;
         irods::error err = populate_session_var_dict_from_effect_handler(effect_handler, session_vars_python);
