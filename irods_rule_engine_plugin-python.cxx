@@ -49,7 +49,7 @@ void register_regexes_from_array(
             try {
                 const auto tmp = boost::any_cast< const std::string& >( elem );
                 RuleExistsHelper::Instance()->registerRuleRegex( tmp );
-                rodsLog( LOG_NOTICE, "register_regexes_from_array - regex: [%s]", tmp.c_str() );
+                rodsLog( LOG_DEBUG, "register_regexes_from_array - regex: [%s]", tmp.c_str() );
             } catch ( const boost::bad_any_cast& ) {
                 rodsLog( LOG_ERROR,
                          "[%s] - failed to cast pep_regex_to_match to string",
