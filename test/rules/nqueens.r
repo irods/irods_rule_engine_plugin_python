@@ -34,7 +34,6 @@ def print_board(queens, n, callback):
             else:
                 out_str += '0 '
         out_str += '\n'
-    callback.writeLine('serverLog', out_str)
     callback.writeLine('stdout', out_str)
 
 INPUT null
