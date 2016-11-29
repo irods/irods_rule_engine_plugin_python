@@ -95,6 +95,11 @@ install(
     DESTINATION usr/lib/irods/plugins/rule_engines
   )
 
+install(
+  DIRECTORY ${CMAKE_SOURCE_DIR}/python_rules
+  DESTINATION var/lib/irods/scripts/irods/test
+  )
+
 set(CPACK_PACKAGE_FILE_NAME "irods-rule-engine-plugin-python-${IRODS_VERSION}-${IRODS_LINUX_DISTRIBUTION_NAME}${IRODS_LINUX_DISTRIBUTION_VERSION_MAJOR}-${CMAKE_SYSTEM_PROCESSOR}")
 
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
