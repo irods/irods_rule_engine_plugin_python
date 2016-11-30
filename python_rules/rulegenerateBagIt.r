@@ -83,14 +83,8 @@ def generateBagIt(rule_args, callback):
     callback.msiTarFileCreate(tar_file_path, new_bagIt_root, 'null', 'null')
 
     # Get filesize of new tarfile
-    callback.writeLine('serverLog', 'XXXXX computing filesize of new tar file')
-    
     import os
     (coll, tar_file_name) = os.path.split(tar_file_path)
-    callback.writeLine('serverLog', 'XXXXX coll = ' + coll + ' tar_file_name = ' + tar_file_name)
-#    ret_val = callback.msiSplitPath(new_bagIt_root + '.tar', 'dummy_str', 'dummy_str')
-#    coll = ret_val[PYTHON_RE_RET_OUTPUT][1]
-#    tar_file_name = ret_val[PYTHON_RE_RET_OUTPUT][2]
 
     genQueryInp[PYTHON_MSPARAM_TYPE] = PYTHON_GENQUERYINP_MS_T
     condition = "COLL_NAME like '" + coll + "%%' and DATA_NAME = '" + tar_file_name + "'"
@@ -103,13 +97,6 @@ def generateBagIt(rule_args, callback):
     ret_val = callback.msiExecGenQuery(genQueryInp, genQueryOut)
     genQueryOut = ret_val[PYTHON_RE_RET_OUTPUT][1]
 
-#    query_str = "COLL_NAME like '" + coll + "%%' and DATA_NAME = '" + tar_file_name + "'"
-#    callback.writeLine('serverLog', 'XXXXX ' + query_str)
-#    ret_val = callback.msiMakeQuery("DATA_SIZE", "COLL_NAME like '" + coll + "%%' and DATA_NAME = '" + tar_file_name + "'", 'dummy_str')
-#    query_str = ret_val[PYTHON_RE_RET_OUTPUT][1]
-#    genQueryOut[PYTHON_MSPARAM_TYPE] = PYTHON_GENQUERYOUT_MS_T
-#    ret_val = callback.msiExecStrCondQuery(query_str, genQueryOut)
-#    genQueryOut = ret_val[PYTHON_RE_RET_OUTPUT][1]
     for row in range(int(genQueryOut['rowCnt'])):
         data_size_str = 'value_' + str(row) + '_0'
         data_size = int(genQueryOut[data_size_str])
@@ -123,7 +110,6 @@ def generateBagIt(rule_args, callback):
             else:
                 print_size = data_size
                 print_unit = 'B'
-    callback.writeLine('serverLog', 'XXXXX filesize done')
 
     # Output report and suggested download procedures
     callback.writeLine('stdout', '\nYour BagIt bag has been created and tarred on the iRODS server:')
@@ -132,7 +118,6 @@ def generateBagIt(rule_args, callback):
     callback.writeLine('stdout', '  iget -Pf ' + new_bagIt_root + '.tar ' + tar_file_name + '\n')
 
     # Write to rodsLog
-#    callback.msiWriteRodsLog('BagIt bag created: ' + new_bagIt_root + ' <- ' + bagIt_data, dummy_int)
     callback.writeLine('serverLog', 'BagIt bag created: ' + new_bagIt_root + ' <- ' + bagIt_data)
 
 INPUT *BAGITDATA="/tempZone/home/rods/sub1", *NEWBAGITROOT="/tempZone/home/rods/bagit"
