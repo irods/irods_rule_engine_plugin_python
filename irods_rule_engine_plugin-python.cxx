@@ -13,7 +13,6 @@
 #include "boost/python/raw_function.hpp"
 #include "boost/python/slice.hpp"
 #include "boost/python/module_init.hpp"
-#include "boost/thread.hpp"
 
 #include "irods_error.hpp"
 #include "irods_re_plugin.hpp"
@@ -40,7 +39,7 @@ const std::string DYNAMIC_PEP_RULE_REGEX = "[^ ]*pep_[^ ]*_(pre|post)";
 
 namespace bp = boost::python;
 
-boost::mutex python_mutex;
+static std::recursive_mutex python_mutex;
 
 void register_regexes_from_array(
     boost::any          _array,
@@ -729,7 +728,7 @@ start(irods::default_re_ctx&, const std::string& _instance_name) {
     Py_InitializeEx(0);
 
     try {
-        boost::lock_guard<boost::mutex> lock{python_mutex};
+        std::lock_guard<std::recursive_mutex> lock{python_mutex};
 
         boost::filesystem::path full_path( boost::filesystem::current_path() );
         boost::filesystem::path etc_irods_path = full_path.parent_path().parent_path();
@@ -819,7 +818,7 @@ irods::error
 rule_exists(irods::default_re_ctx&, std::string rule_name, bool& _return) {
     _return = false;
     try {
-        boost::lock_guard<boost::mutex> lock{python_mutex};
+        std::lock_guard<std::recursive_mutex> lock{python_mutex};
 
         // TODO Enable non core.py Python rulebases
         bp::object core_module = bp::import("core");
@@ -837,7 +836,7 @@ rule_exists(irods::default_re_ctx&, std::string rule_name, bool& _return) {
 irods::error
 list_rules( irods::default_re_ctx&, std::vector<std::string>& rule_vec ) {
     try {
-        boost::lock_guard<boost::mutex> lock{python_mutex};
+        std::lock_guard<std::recursive_mutex> lock{python_mutex};
 
         bp::object core_module = bp::import("core");
         bp::object core_namespace = core_module.attr("__dict__");
@@ -881,7 +880,7 @@ list_rules( irods::default_re_ctx&, std::vector<std::string>& rule_vec ) {
 irods::error
 exec_rule(irods::default_re_ctx&, std::string rule_name, std::list<boost::any>& rule_arguments_cpp, irods::callback effect_handler) {
     try {
-        boost::lock_guard<boost::mutex> lock{python_mutex};
+        std::lock_guard<std::recursive_mutex> lock{python_mutex};
 
         // TODO Enable non core.py Python rulebases
         bp::object core_module = bp::import("core");
@@ -970,7 +969,7 @@ exec_rule_text(irods::default_re_ctx&, std::string rule_text, std::list<boost::a
     }
 
     try {
-        boost::lock_guard<boost::mutex> lock{python_mutex};
+        std::lock_guard<std::recursive_mutex> lock{python_mutex};
 
         auto itr = begin(rule_arguments_cpp);
         ++itr;  // skip tuple
@@ -1106,7 +1105,7 @@ exec_rule_text(irods::default_re_ctx&, std::string rule_text, std::list<boost::a
 irods::error
 exec_rule_expression(irods::default_re_ctx&, std::string rule_text, std::list<boost::any>& rule_arguments_cpp, irods::callback effect_handler) {
     try {
-        boost::lock_guard<boost::mutex> lock{python_mutex};
+        std::lock_guard<std::recursive_mutex> lock{python_mutex};
 
         auto itr = begin(rule_arguments_cpp);
         ++itr;  // skip tuple
