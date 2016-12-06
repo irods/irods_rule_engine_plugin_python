@@ -23,8 +23,6 @@
 
 #include "irods_server_properties.hpp"
 
-#include "sys/types.h"
-
 irods::ms_table& get_microservice_table();
 
 // writeLine is not in the microservice table in 4.2.0 - #3408
