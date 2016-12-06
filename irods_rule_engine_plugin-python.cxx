@@ -13,6 +13,7 @@
 #include "boost/python/raw_function.hpp"
 #include "boost/python/slice.hpp"
 #include "boost/python/module_init.hpp"
+#include "boost/thread.hpp"
 
 #include "irods_error.hpp"
 #include "irods_re_plugin.hpp"
@@ -21,6 +22,8 @@
 #include "irods_ms_plugin.hpp"
 
 #include "irods_server_properties.hpp"
+
+#include "sys/types.h"
 
 irods::ms_table& get_microservice_table();
 
@@ -38,6 +41,8 @@ const std::string STATIC_PEP_RULE_REGEX = "ac[^ ]*";
 const std::string DYNAMIC_PEP_RULE_REGEX = "[^ ]*pep_[^ ]*_(pre|post)";
 
 namespace bp = boost::python;
+
+boost::mutex python_mutex;
 
 void register_regexes_from_array(
     boost::any          _array,
@@ -722,9 +727,12 @@ start(irods::default_re_ctx&, const std::string& _instance_name) {
 #if PY_VERSION_HEX < 0x03000000
     dlopen("libpython2.7.so", RTLD_LAZY | RTLD_GLOBAL); // https://mail.python.org/pipermail/new-bugs-announce/2008-November/003322.html
 #endif
+    // Initialize the Python interpreter
     Py_InitializeEx(0);
 
     try {
+        boost::lock_guard<boost::mutex> lock{python_mutex};
+
         boost::filesystem::path full_path( boost::filesystem::current_path() );
         boost::filesystem::path etc_irods_path = full_path.parent_path().parent_path();
         etc_irods_path /= "etc";
@@ -771,7 +779,6 @@ start(irods::default_re_ctx&, const std::string& _instance_name) {
                 const auto& plugin_spec_cfg = boost::any_cast< const std::unordered_map< std::string, boost::any >& >( plugin_config.at( irods::CFG_PLUGIN_SPECIFIC_CONFIGURATION_KW ) );
 
                 // TODO Enable non core.py Python rulebases
-                //std::string core_py = get_string_array_from_array( plugin_spec_cfg.at( irods::CFG_RE_RULEBASE_SET_KW ) );
 
                 if ( plugin_spec_cfg.count( irods::CFG_RE_PEP_REGEX_SET_KW ) ) {
                     register_regexes_from_array( plugin_spec_cfg.at( irods::CFG_RE_PEP_REGEX_SET_KW ),
@@ -814,6 +821,8 @@ irods::error
 rule_exists(irods::default_re_ctx&, std::string rule_name, bool& _return) {
     _return = false;
     try {
+        boost::lock_guard<boost::mutex> lock{python_mutex};
+
         // TODO Enable non core.py Python rulebases
         bp::object core_module = bp::import("core");
         _return = PyObject_HasAttrString(core_module.ptr(), rule_name.c_str());
@@ -823,12 +832,15 @@ rule_exists(irods::default_re_ctx&, std::string rule_name, bool& _return) {
         std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " Caught Python exception.\n" + formatted_python_exception;
         return ERROR( RULE_ENGINE_ERROR, err_msg);
     }
+    
     return SUCCESS();
 }
 
 irods::error
 list_rules( irods::default_re_ctx&, std::vector<std::string>& rule_vec ) {
     try {
+        boost::lock_guard<boost::mutex> lock{python_mutex};
+
         bp::object core_module = bp::import("core");
         bp::object core_namespace = core_module.attr("__dict__");
 
@@ -871,6 +883,8 @@ list_rules( irods::default_re_ctx&, std::vector<std::string>& rule_vec ) {
 irods::error
 exec_rule(irods::default_re_ctx&, std::string rule_name, std::list<boost::any>& rule_arguments_cpp, irods::callback effect_handler) {
     try {
+        boost::lock_guard<boost::mutex> lock{python_mutex};
+
         // TODO Enable non core.py Python rulebases
         bp::object core_module = bp::import("core");
         bp::object core_namespace = core_module.attr("__dict__");
@@ -917,6 +931,7 @@ exec_rule(irods::default_re_ctx&, std::string rule_name, std::list<boost::any>& 
         std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " bad_any_cast : " + e.what();
         return ERROR( INVALID_ANY_CAST, e.what() );
     }
+
     return SUCCESS();
 }
 
@@ -957,6 +972,8 @@ exec_rule_text(irods::default_re_ctx&, std::string rule_text, std::list<boost::a
     }
 
     try {
+        boost::lock_guard<boost::mutex> lock{python_mutex};
+
         auto itr = begin(rule_arguments_cpp);
         ++itr;  // skip tuple
         ++itr;  // skip callback
@@ -1091,6 +1108,8 @@ exec_rule_text(irods::default_re_ctx&, std::string rule_text, std::list<boost::a
 irods::error
 exec_rule_expression(irods::default_re_ctx&, std::string rule_text, std::list<boost::any>& rule_arguments_cpp, irods::callback effect_handler) {
     try {
+        boost::lock_guard<boost::mutex> lock{python_mutex};
+
         auto itr = begin(rule_arguments_cpp);
         ++itr;  // skip tuple
         ++itr;  // skip callback
