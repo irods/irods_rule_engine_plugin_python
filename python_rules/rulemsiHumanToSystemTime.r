@@ -1,9 +1,9 @@
-def myTestRule(rule_args, callback):
+def myTestRule(rule_args, callback, rei):
     ret_val = callback.msiGetSystemTime('dummy_str', 'human')
-    date = ret_val[PYTHON_RE_RET_OUTPUT][0]
+    date = ret_val[PYTHON_RE_RET_ARGUMENTS][0]
 
     ret_val = callback.msiHumanToSystemTime(date, 'dummy_str')
-    time = ret_val[PYTHON_RE_RET_OUTPUT][1]
+    time = ret_val[PYTHON_RE_RET_ARGUMENTS][1]
 
     callback.writeLine('stdout', 'Input date is ' + date)
     callback.writeLine('stdout', 'Time in unix seconds is ' + time)

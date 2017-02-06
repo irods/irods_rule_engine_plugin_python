@@ -1,4 +1,4 @@
-def myTestRule(rule_args, callback):
+def myTestRule(rule_args, callback, rei):
     sec = global_vars['*Sec'][1:-1]
     microsec = global_vars['*MicroSec'][1:-1]
 

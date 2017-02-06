@@ -1,4 +1,4 @@
-def myTestRule(rule_args, callback):
+def myTestRule(rule_args, callback, rei):
     session_var_name = global_vars['*A'][1:-1]
 
     var = session_vars[session_var_name]

@@ -1,4 +1,4 @@
-def myTestRule(rule_args, callback):
+def myTestRule(rule_args, callback, rei):
     tag = global_vars['*Tag'][1:-1]
     in_str = global_vars['*Str'][1:-1]
 
@@ -6,7 +6,7 @@ def myTestRule(rule_args, callback):
     callback.writeLine('stdout', in_str)
 
     ret_val = callback.msiGetTaggedValueFromString(tag, in_str, 'dummy_str')
-    val = ret_val[PYTHON_RE_RET_OUTPUT][2]
+    val = ret_val[PYTHON_RE_RET_ARGUMENTS][2]
 
     callback.writeLine('stdout', 'Found value is ' + val)
 

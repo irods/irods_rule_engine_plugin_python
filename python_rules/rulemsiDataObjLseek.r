@@ -1,4 +1,4 @@
-def myTestRule(rule_args, callback):
+def myTestRule(rule_args, callback, rei):
     obj = global_vars['*Obj'][1:-1]
     oflags = global_vars['*OFlags'][1:-1]
     obj_b = global_vars['*ObjB'][1:-1]
@@ -7,24 +7,21 @@ def myTestRule(rule_args, callback):
     loc = global_vars['*Loc'][1:-1]
     length = global_vars['*Len'][1:-1]
 
-    dummy_int = {}
-    dummy_int[PYTHON_MSPARAM_TYPE] = PYTHON_INT_MS_T
+    ret_val = callback.msiDataObjOpen(oflags, 0)
+    file_desc = ret_val[PYTHON_RE_RET_ARGUMENTS][1]
 
-    ret_val = callback.msiDataObjOpen(oflags, dummy_int)
-    file_desc = ret_val[PYTHON_RE_RET_OUTPUT][1]
+    ret_val = callback.msiDataObjCreate(obj_b, oflags_b, 0)
+    file_desc_b = ret_val[PYTHON_RE_RET_ARGUMENTS][2]
 
-    ret_val = callback.msiDataObjCreate(obj_b, oflags_b, dummy_int)
-    file_desc_b = ret_val[PYTHON_RE_RET_OUTPUT][2]
+    ret_val = callback.msiDataObjLseek(file_desc, offset, loc, 0)
 
-    dummy_buf_len = {}
-    dummy_buf_len[PYTHON_MSPARAM_TYPE] = PYTHON_BUF_LEN_MS_T
-    ret_val = callback.msiDataObjRead(file_desc, length, dummy_buf_len)
-    read_buf = ret_val[PYTHON_RE_RET_OUTPUT][2]
+    ret_val = callback.msiDataObjRead(file_desc, length, irods_types.BytesBuf())
+    read_buf = ret_val[PYTHON_RE_RET_ARGUMENTS][2]
 
-    callback.msiDataObjWrite(file_desc_b, read_buf, dummy_int)
+    callback.msiDataObjWrite(file_desc_b, read_buf, 0)
 
-    callback.msiDataObjClose(file_desc, dummy_int)
-    callback.msiDataObjClose(file_desc_b, dummy_int)
+    callback.msiDataObjClose(file_desc, 0)
+    callback.msiDataObjClose(file_desc_b, 0)
 
     callback.writeLine('stdout', 'Open file ' + obj + ', create file ' + obj_b + ', copy ' + length + ' bytes starting at location ' + offset)
 

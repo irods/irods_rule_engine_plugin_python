@@ -1,4 +1,4 @@
-def nqueens(rule_args, callback):
+def nqueens(rule_args, callback, rei):
     queens = add_queen([], 8)
     print_board(queens, 8, callback)
 

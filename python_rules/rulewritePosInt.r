@@ -1,4 +1,4 @@
-def myTestRule(rule_args, callback):
+def myTestRule(rule_args, callback, rei):
     a = 1
 
     callback.writeLine('stdout', 'Wrote an integer')

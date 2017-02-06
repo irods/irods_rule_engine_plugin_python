@@ -1,12 +1,9 @@
-def myTestRule(rule_args, callback):
+def myTestRule(rule_args, callback, rei):
     src_coll = global_vars['*srcColl'][1:-1]
     dest_coll = global_vars['*destColl'][1:-1]
     resource = global_vars['*Resource'][1:-1]
 
-    dummy_int = {}
-    dummy_int[PYTHON_MSPARAM_TYPE] = PYTHON_INT_MS_T
-
-    callback.msiCollRsync(src_coll, dest_coll, resource, 'IRODS_TO_IRODS', dummy_int)
+    callback.msiCollRsync(src_coll, dest_coll, resource, 'IRODS_TO_IRODS', 0)
 
     callback.writeLine('stdout', 'Synchronized collection ' + src_coll + ' with collection ' + dest_coll)
 

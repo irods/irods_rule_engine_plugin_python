@@ -1,4 +1,4 @@
-def myTestRule(rule_args, callback):
+def myTestRule(rule_args, callback, rei):
     in_str = global_vars['*StringIn'][1:-1]
 
     new_str = in_str[:-1]

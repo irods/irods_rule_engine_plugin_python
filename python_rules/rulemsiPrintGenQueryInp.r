@@ -1,18 +1,13 @@
-def myTestRule(rule_args, callback):
+def myTestRule(rule_args, callback, rei):
     select = global_vars['*Select'][1:-1]
     select_add = global_vars['*SelectAdd'][1:-1]
     fcn = global_vars['*Function'][1:-1]
 
-    genQueryInp = {}
-    genQueryInp[PYTHON_MSPARAM_TYPE] = PYTHON_GENQUERYINP_MS_T
-
-    ret_val = callback.msiMakeGenQuery(select, "COLL_NAME like '/tempZone/home/rods/%%'", genQueryInp)
-    genQueryInp = ret_val[PYTHON_RE_RET_OUTPUT][2]
-    genQueryInp[PYTHON_MSPARAM_TYPE] = PYTHON_GENQUERYINP_MS_T
+    ret_val = callback.msiMakeGenQuery(select, "COLL_NAME like '/tempZone/home/rods/%%'", irods_types.GenQueryInp())
+    genQueryInp = ret_val[PYTHON_RE_RET_ARGUMENTS][2]
 
     ret_val = callback.msiAddSelectFieldToGenQuery(select_add, fcn, genQueryInp)
-    genQueryInp = ret_val[PYTHON_RE_RET_OUTPUT][2]
-    genQueryInp[PYTHON_MSPARAM_TYPE] = PYTHON_GENQUERYINP_MS_T
+    genQueryInp = ret_val[PYTHON_RE_RET_ARGUMENTS][2]
 
     callback.msiPrintGenQueryInp('stdout', genQueryInp)
 

@@ -1,4 +1,4 @@
-def myTestRule(rule_args, callback):
+def myTestRule(rule_args, callback, rei):
     message = global_vars['*Message'][1:-1]
 
     callback.writeLine('stdout', 'Message is ' + message)

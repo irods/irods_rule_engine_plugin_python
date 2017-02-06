@@ -1,4 +1,4 @@
-def myTestRule(rule_args, callback):
+def myTestRule(rule_args, callback, rei):
     in_str = global_vars['*StringIn'][1:-1]
     offset_str = global_vars['*Offset'][1:-1]
     length_str = global_vars['*Length'][1:-1]

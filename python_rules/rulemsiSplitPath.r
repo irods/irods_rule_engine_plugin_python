@@ -1,4 +1,4 @@
-def myTestRule(rule_args, callback):
+def myTestRule(rule_args, callback, rei):
     data_object = global_vars['*dataObject'][1:-1]
 
     callback.writeLine('stdout', 'Object is ' + data_object)

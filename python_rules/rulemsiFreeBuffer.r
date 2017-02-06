@@ -1,20 +1,14 @@
-def myTestRule(rule_args, callback):
+def myTestRule(rule_args, callback, rei):
     flags = global_vars['*Flags'][1:-1]
     length = global_vars['*Len'][1:-1]
 
-    dummy_int = {}
-    dummy_int[PYTHON_MSPARAM_TYPE] = PYTHON_INT_MS_T
+    ret_val = callback.msiDataObjOpen(flags, 0)
+    file_desc = ret_val[PYTHON_RE_RET_ARGUMENTS][1]
 
-    ret_val = callback.msiDataObjOpen(flags, dummy_int)
-    file_desc = ret_val[PYTHON_RE_RET_OUTPUT][1]
+    ret_val = callback.msiDataObjRead(file_desc, length, irods_types.BytesBuf())
+    read_buffer = ret_val[PYTHON_RE_RET_ARGUMENTS][2]
 
-    dummy_buf_len = {}
-    dummy_buf_len[PYTHON_MSPARAM_TYPE] = PYTHON_BUF_LEN_MS_T
-
-    ret_val = callback.msiDataObjRead(file_desc, length, dummy_buf_len)
-    read_buffer = ret_val[PYTHON_RE_RET_OUTPUT][2]
-
-    callback.msiDataObjClose(file_desc, dummy_int)
+    callback.msiDataObjClose(file_desc, 0)
 
     callback.msiFreeBuffer(read_buffer)
 

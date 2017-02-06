@@ -1,10 +1,7 @@
-def myTestRule(rule_args, callback):
+def myTestRule(rule_args, callback, rei):
     source_file = global_vars['*SourceFile'][1:-1]
 
-    dummy_int = {}
-    dummy_int[PYTHON_MSPARAM_TYPE] = PYTHON_INT_MS_T
-
-    callback.msiDataObjTrim(source_file, 'null', 'null', '1', 'null', dummy_int)
+    callback.msiDataObjTrim(source_file, 'null', 'null', '1', 'null', 0)
 
     callback.writeLine('stdout', 'The replicas of file ' + source_file + ' are deleted')
 

@@ -1,4 +1,4 @@
-def acServerMonPerf(rule_args, callback):
+def acServerMonPerf(rule_args, callback, rei):
     callback.msiServerMonPerf('default', 'default')
     callback.msiServerMonPerf('verbose', 'default')
 

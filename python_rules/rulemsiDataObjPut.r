@@ -1,12 +1,9 @@
-def myTestRule(rule_args, callback):
+def myTestRule(rule_args, callback, rei):
     dest_file = global_vars['*DestFile'][1:-1]
     dest_resource = global_vars['*DestResource'][1:-1]
     local_file = global_vars['*LocalFile'][1:-1]
 
-    dummy_int = {}
-    dummy_int[PYTHON_MSPARAM_TYPE] = PYTHON_INT_MS_T
-
-    callback.msiDataObjPut(dest_file, dest_resource, 'localPath=' + local_file + '++++forceFlag=', dummy_int)
+    callback.msiDataObjPut(dest_file, dest_resource, 'localPath=' + local_file + '++++forceFlag=', 0)
 
     callback.writeLine('stdout', 'File ' + local_file + ' is written to the data grid as '+ dest_file)
 

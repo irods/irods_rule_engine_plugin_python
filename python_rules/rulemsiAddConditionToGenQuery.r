@@ -1,4 +1,4 @@
-def myTestRule(rule_args, callback):
+def myTestRule(rule_args, callback, rei):
     select = global_vars['*Select'][1:-1]
     attribute = global_vars['*Attribute'][1:-1]
     operator = global_vars['*Operator'][1:-1]
@@ -6,29 +6,20 @@ def myTestRule(rule_args, callback):
 
     ret_val = {}
 
-    genQueryInp = {}
-    genQueryInp[PYTHON_MSPARAM_TYPE] = PYTHON_GENQUERYINP_MS_T
-
     # Initial condition for query corresponds to "COLL_NAME like '/tempZone/home/rods/%%'"
-    ret_val = callback.msiMakeGenQuery(select, "COLL_NAME like '/tempZone/home/rods/%%'", genQueryInp)
-    genQueryInp = ret_val[PYTHON_RE_RET_OUTPUT][2]
-    genQueryInp[PYTHON_MSPARAM_TYPE] = PYTHON_GENQUERYINP_MS_T
+    ret_val = callback.msiMakeGenQuery(select, "COLL_NAME like '/tempZone/home/rods/%%'", irods_types.GenQueryInp())
+    genQueryInp = ret_val[PYTHON_RE_RET_ARGUMENTS][2]
 
     # Add condition to query "DATA_NAME like rule%%"
     ret_val = callback.msiAddConditionToGenQuery(attribute, operator, value, genQueryInp)
-    genQueryInp = ret_val[PYTHON_RE_RET_OUTPUT][3]
-    genQueryInp[PYTHON_MSPARAM_TYPE] = PYTHON_GENQUERYINP_MS_T
+    genQueryInp = ret_val[PYTHON_RE_RET_ARGUMENTS][3]
 
-    genQueryOut = {}
-    genQueryOut[PYTHON_MSPARAM_TYPE] = PYTHON_GENQUERYOUT_MS_T
-    ret_val = callback.msiExecGenQuery(genQueryInp, genQueryOut)
-    genQueryOut = ret_val[PYTHON_RE_RET_OUTPUT][1]
+    ret_val = callback.msiExecGenQuery(genQueryInp, irods_types.GenQueryOut())
+    genQueryOut = ret_val[PYTHON_RE_RET_ARGUMENTS][1]
 
-    for row in range(int(genQueryOut['rowCnt'])):
-        data_name_str = 'value_' + str(row) + '_0'
-        coll_name_str = 'value_' + str(row) + '_1'
-        data = genQueryOut[data_name_str]
-        coll = genQueryOut[coll_name_str]
+    for row in range(genQueryOut.rowCnt):
+        data = genQueryOut.sqlResult[0].row(row)
+        coll = genQueryOut.sqlResult[1].row(row)
         callback.writeLine('stdout', coll + '/' + data)
 
 INPUT *Select="DATA_NAME, COLL_NAME", *Attribute="DATA_NAME", *Operator=" like ", *Value="rule%%"

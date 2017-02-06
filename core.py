@@ -1,7 +1,11 @@
 import datetime
 import json
 
-def pythonRuleEnginePluginTest(rule_args, callback):
+def writeStringToCharArray(s, char_array):
+    for i in range(0, len(s)):
+        char_array[i] = s[i]
+
+def pythonRuleEnginePluginTest(rule_args, callback, rei):
     with open('/tmp/from_core_py.txt', 'a') as f:
         f.write(str(datetime.datetime.now()))
         f.write('\n')
@@ -15,17 +19,17 @@ def pythonRuleEnginePluginTest(rule_args, callback):
             c = c +1
     callback.writeLine('serverLog', 'Printed to server log from python rule engine')
 
-def acPreConnect(rule_args, callback):
+def acPreConnect(rule_args, callback, rei):
     rule_args[0] = 'CS_NEG_DONT_CARE'
 
-def acCreateUser(rule_args, callback):
+def acCreateUser(rule_args, callback, rei):
     ret = callback.msiCreateUser()
 
     if not ret[PYTHON_RE_RET_STATUS]:
         callback.msiRollback()
         return ret
 
-    ret = acCreateDefaultCollections(rule_args, callback)
+    ret = acCreateDefaultCollections(rule_args, callback, rei)
 
     if not ret[PYTHON_RE_RET_STATUS]:
         callback.msiRollback()
@@ -39,31 +43,28 @@ def acCreateUser(rule_args, callback):
 
     callback.msiCommit()
 
-def acCreateDefaultCollections(rule_args, callback):
-    ret = acCreateUserZoneCollections(rule_args, callback)
+def acCreateDefaultCollections(rule_args, callback, rei):
+    ret = acCreateUserZoneCollections(rule_args, callback, rei)
     return ret
 
-def acCreateUserZoneCollections(rule_args, callback):
-    tmpStr = ''
-    ret = callback.getSessionVar('rodsZoneProxy', tmpStr)
-    rodsZoneProxy = str(ret[PYTHON_RE_RET_OUTPUT][1])
-    ret = callback.getSessionVar('otherUserName', tmpStr)
-    otherUserName = str(ret[PYTHON_RE_RET_OUTPUT][1])
+def acCreateUserZoneCollections(rule_args, callback, rei):
+    rodsZoneProxy = str(rei.uoip.rodsZone)
+    otherUserName = str(rei.uoio.userName)
     homeStr = '/'.join(['', rodsZoneProxy, 'home'])
     trashStr = '/'.join(['', rodsZoneProxy, 'trash', 'home'])
 
     homeDict = [homeStr, otherUserName]
     trashDict = [trashStr, otherUserName]
 
-    ret = acCreateCollByAdmin(homeDict, callback)
-    ret = acCreateCollByAdmin(trashDict, callback)
+    ret = acCreateCollByAdmin(homeDict, callback, rei)
+    ret = acCreateCollByAdmin(trashDict, callback, rei)
     return ret
 
-def acCreateCollByAdmin(rule_args, callback):
+def acCreateCollByAdmin(rule_args, callback, rei):
     ret = callback.msiCreateCollByAdmin(rule_args[0], rule_args[1])
     return ret
 
-def acDeleteUser(rule_args, callback):
+def acDeleteUser(rule_args, callback, rei):
     ret = callback.acDeleteDefaultCollections()
 
     if not ret[PYTHON_RE_RET_STATUS]:
@@ -78,26 +79,23 @@ def acDeleteUser(rule_args, callback):
 
     callback.msiCommit()
 
-def acDeleteDefaultCollections(rule_args, callback):
-    return acDeleteUserZoneCollections(rule_args, callback)
+def acDeleteDefaultCollections(rule_args, callback, rei):
+    return acDeleteUserZoneCollections(rule_args, callback, rei)
 
-def acDeleteUserZoneCollections(rule_args, callback):
-    tmpStr = ''
-    ret = callback.getSessionVar('rodsZoneProxy', tmpStr)
-    rodsZoneProxy = ret[PYTHON_RE_RET_OUTPUT][1]
-    ret = callback.getSessionVar('otherUserName', tmpStr)
-    otherUserName = ret[PYTHON_RE_RET_OUTPUT][1]
+def acDeleteUserZoneCollections(rule_args, callback, rei):
+    rodsZoneProxy = str(rei.uoip.rodsZone)
+    otherUserName = str(rei.uoio.userName)
     homeStr = '/'.join(['', rodsZoneProxy, 'home'])
     trashStr = '/'.join(['', rodsZoneProxy, 'trash', 'home'])
 
     homeDict = [homeStr, otherUserName]
     trashDict = [trashStr, otherUserName]
 
-    ret = acDeleteCollByAdminIfPresent(homeDict, callback)
-    ret = acDeleteCollByAdminIfPresent(trashDict, callback)
+    ret = acDeleteCollByAdminIfPresent(homeDict, callback, rei)
+    ret = acDeleteCollByAdminIfPresent(trashDict, callback, rei)
     return ret
 
-def acDeleteCollByAdminIfPresent(rule_args, callback):
+def acDeleteCollByAdminIfPresent(rule_args, callback, rei):
     ret = callback.msiDeleteCollByAdmin(rule_args[0], rule_args[1])
 
     if not ret[PYTHON_RE_RET_STATUS]:
@@ -105,10 +103,10 @@ def acDeleteCollByAdminIfPresent(rule_args, callback):
             callback.failmsg(ret[PYTHON_RE_RET_CODE], 'error deleting collection')
     return ret
 
-def acDeleteCollByAdmin(rule_args, callback):
+def acDeleteCollByAdmin(rule_args, callback, rei):
     callback.msiDeleteCollByAdmin(rule_args[0], rule_args[1])
 
-def acRenameLocalZone(rule_args, callback):
+def acRenameLocalZone(rule_args, callback, rei):
     coll_name = '/' + rule_args[0]
 
     ret = callback.msiRenameCollection(coll_name, rule_args[1])
@@ -125,205 +123,205 @@ def acRenameLocalZone(rule_args, callback):
 
     callback.msiCommit()
 
-def acGetUserByDN(rule_args, callback):
+def acGetUserByDN(rule_args, callback, rei):
     pass
 
-def acAclPolicy(rule_args, callback):
+def acAclPolicy(rule_args, callback, rei):
     callback.msiAclPolicy('STRICT')
 
-def acTicketPolicy(rule_args, callback):
+def acTicketPolicy(rule_args, callback, rei):
     pass
 
-def acCheckPasswordStrength(rule_args, callback):
+def acCheckPasswordStrength(rule_args, callback, rei):
     pass
 
-def acSetRescSchemeForCreate(rule_args, callback):
+def acSetRescSchemeForCreate(rule_args, callback, rei):
     with open('../../etc/irods/server_config.json') as f:
         server_config_dict = json.load(f)
     callback.msiSetDefaultResc(server_config_dict.get('default_resource_name', 'demoResc'), 'null')
 
-def acSetRescSchemeForRepl(rule_args, callback):
+def acSetRescSchemeForRepl(rule_args, callback, rei):
     with open('../../etc/irods/server_config.json') as f:
         server_config_dict = json.load(f)
     callback.msiSetDefaultResc(server_config_dict.get('default_resource_name', 'demoResc'), 'null')
 
-def acPreprocForDataObjOpen(rule_args, callback):
+def acPreprocForDataObjOpen(rule_args, callback, rei):
     pass
 
-def acSetMultiReplPerResc(rule_args, callback):
+def acSetMultiReplPerResc(rule_args, callback, rei):
     pass
 
-def acPostProcForPut(rule_args, callback):
-    #pythonRuleEnginePluginTest(rule_args, callback)
+def acPostProcForPut(rule_args, callback, rei):
+    #pythonRuleEnginePluginTest(rule_args, callback, rei)
     pass
 
-def acPostProcForCopy(rule_args, callback):
+def acPostProcForCopy(rule_args, callback, rei):
     pass
 
-def acPostProcForFilePathReg(rule_args, callback):
+def acPostProcForFilePathReg(rule_args, callback, rei):
     pass
 
-def acPostProcForCreate(rule_args, callback):
+def acPostProcForCreate(rule_args, callback, rei):
     pass
 
-def acPostProcForOpen(rule_args, callback):
+def acPostProcForOpen(rule_args, callback, rei):
     pass
 
-def acPostProcForPhymv(rule_args, callback):
+def acPostProcForPhymv(rule_args, callback, rei):
     pass
 
-def acPostProcForRepl(rule_args, callback):
+def acPostProcForRepl(rule_args, callback, rei):
     pass
 
-def acSetNumThreads(rule_args, callback):
+def acSetNumThreads(rule_args, callback, rei):
     callback.msiSetNumThreads('default', '64', 'default')
 
-def acDataDeletePolicy(rule_args, callback):
+def acDataDeletePolicy(rule_args, callback, rei):
     pass
 
-def acPostProcForDelete(rule_args, callback):
+def acPostProcForDelete(rule_args, callback, rei):
     pass
 
-def acSetChkFilePathPerm(rule_args, callback):
+def acSetChkFilePathPerm(rule_args, callback, rei):
     callback.msiSetChkFilePathPerm('disallowPathReg')
 
-def acTrashPolicy(rule_args, callback):
+def acTrashPolicy(rule_args, callback, rei):
     pass
 
-def acSetPublicUserPolicy(rule_args, callback):
+def acSetPublicUserPolicy(rule_args, callback, rei):
     pass
 
-def acChkHostAccessControl(rule_args, callback):
+def acChkHostAccessControl(rule_args, callback, rei):
     pass
 
-def acSetVaultPathPolicy(rule_args, callback):
+def acSetVaultPathPolicy(rule_args, callback, rei):
     callback.msiSetGraftPathScheme('no', '1')
 
-def acSetReServerNumProc(rule_args, callback):
+def acSetReServerNumProc(rule_args, callback, rei):
     callback.msiSetReServerNumProc('default')
 
-def acPreprocForCollCreate(rule_args, callback):
+def acPreprocForCollCreate(rule_args, callback, rei):
     pass
 
-def acPostProcForCollCreate(rule_args, callback):
+def acPostProcForCollCreate(rule_args, callback, rei):
     pass
 
-def acPreprocForRmColl(rule_args, callback):
+def acPreprocForRmColl(rule_args, callback, rei):
     pass
 
-def acPostProcForRmColl(rule_args, callback):
+def acPostProcForRmColl(rule_args, callback, rei):
     pass
 
-def acPreProcForModifyUser(rule_args, callback):
+def acPreProcForModifyUser(rule_args, callback, rei):
     pass
 
-def acPostProcForModifyUser(rule_args, callback):
+def acPostProcForModifyUser(rule_args, callback, rei):
     pass
 
-def acPreProcForModifyAVUMetadata(rule_args, callback):
+def acPreProcForModifyAVUMetadata(rule_args, callback, rei):
     pass
 
-def acPostProcForModifyAVUMetadata(rule_args, callback):
+def acPostProcForModifyAVUMetadata(rule_args, callback, rei):
     pass
 
-def acPreProcForCreateUser(rule_args, callback):
+def acPreProcForCreateUser(rule_args, callback, rei):
     pass
 
-def acPostProcForCreateUser(rule_args, callback):
+def acPostProcForCreateUser(rule_args, callback, rei):
     pass
 
-def acPreProcForDeleteUser(rule_args, callback):
+def acPreProcForDeleteUser(rule_args, callback, rei):
     pass
 
-def acPostProcForDeleteUser(rule_args, callback):
+def acPostProcForDeleteUser(rule_args, callback, rei):
     pass
 
-def acPreProcForCreateResource(rule_args, callback):
+def acPreProcForCreateResource(rule_args, callback, rei):
     pass
 
-def acPostProcForCreateResource(rule_args, callback):
+def acPostProcForCreateResource(rule_args, callback, rei):
     pass
 
-def acPreProcForCreateToken(rule_args, callback):
+def acPreProcForCreateToken(rule_args, callback, rei):
     pass
 
-def acPostProcForCreateToken(rule_args, callback):
+def acPostProcForCreateToken(rule_args, callback, rei):
     pass
 
-def acPreProcForModifyUserGroup(rule_args, callback):
+def acPreProcForModifyUserGroup(rule_args, callback, rei):
     pass
 
-def acPostProcForModifyUserGroup(rule_args, callback):
+def acPostProcForModifyUserGroup(rule_args, callback, rei):
     pass
 
-def acPreProcForDeleteResource(rule_args, callback):
+def acPreProcForDeleteResource(rule_args, callback, rei):
     pass
 
-def acPostProcForDeleteResource(rule_args, callback):
+def acPostProcForDeleteResource(rule_args, callback, rei):
     pass
 
-def acPreProcForDeleteToken(rule_args, callback):
+def acPreProcForDeleteToken(rule_args, callback, rei):
     pass
 
-def acPostProcForDeleteToken(rule_args, callback):
+def acPostProcForDeleteToken(rule_args, callback, rei):
     pass
 
-def acPreProcForModifyResource(rule_args, callback):
+def acPreProcForModifyResource(rule_args, callback, rei):
     pass
 
-def acPostProcForModifyResource(rule_args, callback):
+def acPostProcForModifyResource(rule_args, callback, rei):
     pass
 
-def acPreProcForModifyCollMeta(rule_args, callback):
+def acPreProcForModifyCollMeta(rule_args, callback, rei):
     pass
 
-def acPostProcForModifyCollMeta(rule_args, callback):
+def acPostProcForModifyCollMeta(rule_args, callback, rei):
     pass
 
-def acPreProcForModifyDataObjMeta(rule_args, callback):
+def acPreProcForModifyDataObjMeta(rule_args, callback, rei):
     pass
 
-def acPostProcForModifyDataObjMeta(rule_args, callback):
+def acPostProcForModifyDataObjMeta(rule_args, callback, rei):
     pass
 
-def acPreProcForModifyAccessControl(rule_args, callback):
+def acPreProcForModifyAccessControl(rule_args, callback, rei):
     pass
 
-def acPostProcForModifyAccessControl(rule_args, callback):
+def acPostProcForModifyAccessControl(rule_args, callback, rei):
     pass
 
-def acPreProcForObjRename(rule_args, callback):
+def acPreProcForObjRename(rule_args, callback, rei):
     pass
 
-def acPostProcForObjRename(rule_args, callback):
+def acPostProcForObjRename(rule_args, callback, rei):
     pass
 
-def acPreProcForGenQuery(rule_args, callback):
+def acPreProcForGenQuery(rule_args, callback, rei):
     pass
 
-def acPostProcForGenQuery(rule_args, callback):
+def acPostProcForGenQuery(rule_args, callback, rei):
     pass
 
-def acRescQuotaPolicy(rule_args, callback):
+def acRescQuotaPolicy(rule_args, callback, rei):
     callback.msiSetRescQuotaPolicy('off')
 
-def acBulkPutPostProcPolicy(rule_args, callback):
+def acBulkPutPostProcPolicy(rule_args, callback, rei):
     callback.msiSetBulkPutPostProcPolicy('off')
 
-def acPostProcForTarFileReg(rule_args, callback):
+def acPostProcForTarFileReg(rule_args, callback, rei):
     pass
 
-def acPostProcForDataObjWrite(rule_args, callback):
+def acPostProcForDataObjWrite(rule_args, callback, rei):
     pass
 
-def acPostProcForDataObjRead(rule_args, callback):
+def acPostProcForDataObjRead(rule_args, callback, rei):
     pass
 
-def acPreProcForExecCmd(rule_args, callback):
+def acPreProcForExecCmd(rule_args, callback, rei):
     pass
 
-def acPreProcForServerPortal(rule_args, callback):
+def acPreProcForServerPortal(rule_args, callback, rei):
     pass
 
-def acPostProcForServerPortal(rule_args, callback):
+def acPostProcForServerPortal(rule_args, callback, rei):
     pass

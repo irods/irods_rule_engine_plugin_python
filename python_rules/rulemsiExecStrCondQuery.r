@@ -1,15 +1,12 @@
-def myTestRule(rule_args, callback):
+def myTestRule(rule_args, callback, rei):
     select = global_vars['*Select'][1:-1]
 
-    genQueryOut = {}
-    genQueryOut[PYTHON_MSPARAM_TYPE] = PYTHON_GENQUERYOUT_MS_T
+    ret_val = callback.msiExecStrCondQuery(select, irods_types.GenQueryOut())
+    genQueryOut = ret_val[PYTHON_RE_RET_ARGUMENTS][1]
 
-    ret_val = callback.msiExecStrCondQuery(select, genQueryOut)
-    genQueryOut = ret_val[PYTHON_RE_RET_OUTPUT][1]
-
-    for row in range(int(genQueryOut['rowCnt'])):
+    for row in range(genQueryOut.rowCnt):
+        data_name = genQueryOut.sqlResult[0].row(row)
         data_name_str = 'value_' + str(row) + '_0'
-        data_name = genQueryOut[data_name_str]
         callback.writeLine('stdout', data_name_str + ' = ' + data_name)
 
 INPUT *Select="SELECT DATA_NAME where DATA_NAME like 'rule%%'"

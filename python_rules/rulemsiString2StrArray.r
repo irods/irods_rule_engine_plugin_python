@@ -1,4 +1,4 @@
-def myTestRule(rule_args, callback):
+def myTestRule(rule_args, callback, rei):
     in_str = global_vars['*Str'][1:-1]
     
     callback.writeLine('stdout', 'Input string is ' + in_str)
