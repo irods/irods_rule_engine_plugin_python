@@ -4,8 +4,9 @@ find_package(IRODS 4.3.0 REQUIRED)
 
 set(CMAKE_C_COMPILER ${IRODS_EXTERNALS_FULLPATH_CLANG}/bin/clang)
 set(CMAKE_CXX_COMPILER ${IRODS_EXTERNALS_FULLPATH_CLANG}/bin/clang++)
+set(CMAKE_EXE_LINKER_FLAGS_INIT "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++")
 
-project(irods_rule_engine_plugin-python)
+project(irods_rule_engine_plugin-python CXX)
 
 include(${IRODS_TARGETS_PATH})
 
@@ -98,6 +99,11 @@ install(
 install(
   DIRECTORY ${CMAKE_SOURCE_DIR}/python_rules
   DESTINATION var/lib/irods/scripts/irods/test
+  )
+
+install(
+    FILES ${CMAKE_SOURCE_DIR}/setup_python_rule_engine_as_only_rule_engine.py
+  DESTINATION var/lib/irods/scripts
   )
 
 set(CPACK_PACKAGE_FILE_NAME "irods-rule-engine-plugin-python-${IRODS_VERSION}-${IRODS_LINUX_DISTRIBUTION_NAME}${IRODS_LINUX_DISTRIBUTION_VERSION_MAJOR}-${CMAKE_SYSTEM_PROCESSOR}")
