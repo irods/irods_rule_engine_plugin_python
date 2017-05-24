@@ -39,6 +39,8 @@ const char* getMsParamStringFromType<bytesBuf_t>() { return BUF_LEN_MS_T; }
 template<>
 const char* getMsParamStringFromType<fileLseekOut_t>() { return DataObjLseekOut_MS_T; }
 template<>
+const char* getMsParamStringFromType<rodsObjStat_t>() { return RodsObjStat_MS_T; }
+template<>
 const char* getMsParamStringFromType<int>() { return INT_MS_T; }
 template<>
 const char* getMsParamStringFromType<float>() { return FLOAT_MS_T; }
@@ -57,6 +59,8 @@ namespace {
             return boost::python::object{*static_cast<keyValPair_t*>(msParam.inOutStruct)};
         } else if ( strcmp(msParam.type, DataObjLseekOut_MS_T) == 0 ) {
             return boost::python::object{*static_cast<fileLseekOut_t*>(msParam.inOutStruct)};
+        } else if ( strcmp(msParam.type, RodsObjStat_MS_T) == 0 ) {
+            return boost::python::object{*static_cast<rodsObjStat_t*>(msParam.inOutStruct)};
         } else if ( strcmp(msParam.type, INT_MS_T) == 0 ) {
             return boost::python::object{*static_cast<int*>(msParam.inOutStruct)};
         } else if ( strcmp(msParam.type, FLOAT_MS_T) == 0 ) {
@@ -282,8 +286,8 @@ void update_argument(boost::any& cpp_arg, boost::python::object& py_arg) {
     try {
         return update_argument_function_map.at(std::type_index{cpp_arg.type()})(cpp_arg, py_arg);
     } catch (const std::out_of_range&) {
-        THROW(SYS_NOT_SUPPORTED, boost::format("Attempted to extract from a boost::python::object containing an unsupported type: %s") %
-                boost::core::scoped_demangled_name{cpp_arg.type().name()}.get());
+        //THROW(SYS_NOT_SUPPORTED, boost::format("Attempted to extract from a boost::python::object containing an unsupported type: %s") %
+                //boost::core::scoped_demangled_name{cpp_arg.type().name()}.get());
     } catch (const boost::bad_any_cast&) {
         THROW(SYS_NOT_SUPPORTED, "Failed any_cast when updating boost::any from boost:python::object");
     }
@@ -294,8 +298,18 @@ boost::python::object object_from_any(boost::any& arg) {
     try {
         return object_from_any_function_map.at(std::type_index{arg.type()})(arg);
     } catch (const std::out_of_range&) {
-        THROW(SYS_NOT_SUPPORTED, boost::format("Attempted to create a boost::python::object from a boost::any containing an unsupported type: %s") %
-                boost::core::scoped_demangled_name{arg.type().name()}.get());
+        std::map<std::string, std::string> arg_map{};
+        auto err = irods::re_serialization::serialize_parameter(arg, arg_map);
+        if ( err.ok() ) {
+            bp::dict arg_dict{};
+            for ( auto it = arg_map.begin(); it != arg_map.end(); ++it ) {
+                arg_dict[it->first] = it->second;
+            }
+            return arg_dict;
+        } else {
+            THROW(SYS_NOT_SUPPORTED, boost::format("Attempted to create a boost::python::object from a boost::any containing an unsupported type: %s") %
+                    boost::core::scoped_demangled_name{arg.type().name()}.get());
+        }
     } catch (const boost::bad_any_cast&) {
         THROW(SYS_NOT_SUPPORTED, "Failed any_cast when creating boost:python::object from boost::any");
     }

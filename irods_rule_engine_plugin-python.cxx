@@ -152,7 +152,7 @@ namespace {
                 if ( s.check() ) {
                     rule_args_cpp.push_back(s());
                 } else {
-                    msParams.push_back(msParam_from_object<genQueryInp_t, genQueryOut_t, keyValPair_t, bytesBuf_t, int, float>(rule_arg_python));
+                    msParams.push_back(msParam_from_object<genQueryInp_t, genQueryOut_t, keyValPair_t, fileLseekOut_t, rodsObjStat_t, bytesBuf_t, int, float>(rule_arg_python));
                     rule_args_cpp.emplace_back(&msParams.back());
                 }
             }
