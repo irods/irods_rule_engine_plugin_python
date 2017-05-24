@@ -106,6 +106,11 @@ install(
   DESTINATION var/lib/irods/scripts
   )
 
+install(
+    FILES ${CMAKE_SOURCE_DIR}/core.py ${CMAKE_SOURCE_DIR}/session_vars.py
+  DESTINATION etc/irods
+  )
+
 set(CPACK_PACKAGE_FILE_NAME "irods-rule-engine-plugin-python-${IRODS_VERSION}-${IRODS_LINUX_DISTRIBUTION_NAME}${IRODS_LINUX_DISTRIBUTION_VERSION_MAJOR}-${CMAKE_SYSTEM_PROCESSOR}")
 
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)

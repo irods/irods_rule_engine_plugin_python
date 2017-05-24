@@ -1,11 +1,13 @@
 def myTestRule(rule_args, callback, rei):
-    session_var_name = global_vars['*A'][1:-1]
 
-    var = session_vars[session_var_name]
+    import session_vars
+    import pprint
 
-    callback.writeLine('serverLog', session_var_name + ' = ' + var)
-    callback.writeLine('stdout', 'Variable written to log file')
+    vars = session_vars.get_map(rei)
+
+    callback.writeLine('serverLog', 'userNameClient' + ' = ' + vars['client_user']['user_name'])
+    callback.writeLine('stdout', 'Variables written to log file')
 
 
-INPUT *A="userNameClient"
+INPUT null
 OUTPUT ruleExecOut
