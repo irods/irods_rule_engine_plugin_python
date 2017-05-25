@@ -32,11 +32,10 @@ using list_of_irods_types = type_sequence<
         dataSeg_t,
         execCmdOut_t,
         execCmd_t,
-        fileCreateInp_t,
         fileCreateOut_t,
         fileLseekInp_t,
         fileLseekOut_t,
-//        fileOpenInp_t,
+        fileOpenInp_t,
         fileRenameInp_t,
         fileRenameOut_t,
         fileRestartInfo_t,
@@ -1170,90 +1169,417 @@ namespace {
             ;
 
         bp::class_<collInp_t>("CollInp", bp::no_init)
+            .def("__init__", make_init_function<collInp_t>(
+                            &collInp_t::collName,
+                            &collInp_t::flags,
+                            &collInp_t::oprType,
+                            &collInp_t::condInput))
+            .add_property("collName", +[](collInp_t *s) { return array_ref<char>{s->collName}; })
+            .add_property("flags", &collInp_t::flags)
+            .add_property("oprType", &collInp_t::oprType)
+            .add_property("condInput", &collInp_t::condInput)
         ;
 
         bp::class_<collOprStat_t>("CollOprStat", bp::no_init)
+            .def("__init__", make_init_function<collOprStat_t>(
+                        &collOprStat_t::filesCnt,
+                        &collOprStat_t::totalFileCnt,
+                        &collOprStat_t::bytesWritten,
+                        &collOprStat_t::lastObjPath))
+            .add_property("filesCnt", &collOprStat_t::filesCnt)
+            .add_property("totalFileCnt", &collOprStat_t::totalFileCnt)
+            .add_property("bytesWritten", &collOprStat_t::bytesWritten)
+            .add_property("lastObjPath", +[](collOprStat_t *s) { return array_ref<char>{s->lastObjPath}; })
         ;
 
         bp::class_<dataCopyInp_t>("DataCopyInp", bp::no_init)
+            .def("__init__", make_init_function<dataCopyInp_t>(
+                        &dataCopyInp_t::dataOprInp,
+                        &dataCopyInp_t::portalOprOut))
+            .add_property("dataOprInp", &dataCopyInp_t::dataOprInp)
+            .add_property("portalOprOut", &dataCopyInp_t::portalOprOut)
         ;
 
         bp::class_<dataOprInp_t>("DataOprInp", bp::no_init)
+            .def("__init__", make_init_function<dataOprInp_t>(
+                        &dataOprInp_t::oprType,
+                        &dataOprInp_t::numThreads,
+                        &dataOprInp_t::srcL3descInx,
+                        &dataOprInp_t::destL3descInx,
+                        &dataOprInp_t::srcRescTypeInx,
+                        &dataOprInp_t::destRescTypeInx,
+                        &dataOprInp_t::offset,
+                        &dataOprInp_t::dataSize,
+                        &dataOprInp_t::condInput))
+            .add_property("oprType", &dataOprInp_t::oprType)
+            .add_property("numThreads", &dataOprInp_t::numThreads)
+            .add_property("srcL3descInx", &dataOprInp_t::srcL3descInx)
+            .add_property("destL3descInx", &dataOprInp_t::destL3descInx)
+            .add_property("srcRescTypeInx", &dataOprInp_t::srcRescTypeInx)
+            .add_property("destRescTypeInx", &dataOprInp_t::destRescTypeInx)
+            .add_property("offset", &dataOprInp_t::offset)
+            .add_property("dataSize", &dataOprInp_t::dataSize)
+            .add_property("condInput", &dataOprInp_t::condInput)
         ;
 
         bp::class_<portalOprOut_t>("PortalOprOut", bp::no_init)
+            .def("__init__", make_init_function<portalOprOut_t>(
+                        &portalOprOut_t::status,
+                        &portalOprOut_t::l1descInx,
+                        &portalOprOut_t::numThreads,
+                        &portalOprOut_t::chksum,
+                        &portalOprOut_t::portList))
+            .add_property("status", &portalOprOut_t::status)
+            .add_property("l1descInx", &portalOprOut_t::l1descInx)
+            .add_property("numThreads", &portalOprOut_t::numThreads)
+            .add_property("chksum", +[](portalOprOut_t *s) { return array_ref<char>{s->chksum}; })
+            .add_property("portList", &portalOprOut_t::portList)
         ;
 
         bp::class_<openedDataObjInp_t>("OpenedDataObjInp", bp::no_init)
+            .def("__init__", make_init_function<openedDataObjInp_t>(
+                        &openedDataObjInp_t::l1descInx,
+                        &openedDataObjInp_t::len,
+                        &openedDataObjInp_t::whence,
+                        &openedDataObjInp_t::oprType,
+                        &openedDataObjInp_t::offset,
+                        &openedDataObjInp_t::bytesWritten,
+                        &openedDataObjInp_t::condInput))
+            .add_property("l1descInx", &openedDataObjInp_t::l1descInx)
+            .add_property("len", &openedDataObjInp_t::len)
+            .add_property("whence", &openedDataObjInp_t::whence)
+            .add_property("oprType", &openedDataObjInp_t::oprType)
+            .add_property("offset", &openedDataObjInp_t::offset)
+            .add_property("bytesWritten", &openedDataObjInp_t::bytesWritten)
+            .add_property("condInput", &openedDataObjInp_t::condInput)
         ;
 
         bp::class_<dataObjCopyInp_t>("DataObjCopyInp", bp::no_init)
+            .def("__init__", make_init_function<dataObjCopyInp_t>(
+                        &dataObjCopyInp_t::srcDataObjInp,
+                        &dataObjCopyInp_t::destDataObjInp))
+            .add_property("srcDataObjInp", &dataObjCopyInp_t::srcDataObjInp)
+            .add_property("destDataObjInp", &dataObjCopyInp_t::destDataObjInp)
+
         ;
 
         bp::class_<openStat_t>("OpenStat", bp::no_init)
+            .def("__init__", make_init_function<openStat_t>(
+                        &openStat_t::dataSize,
+                        &openStat_t::dataType,
+                        &openStat_t::dataMode,
+                        &openStat_t::l3descInx,
+                        &openStat_t::replStatus,
+                        &openStat_t::rescTypeInx,
+                        &openStat_t::replNum))
+            .add_property("dataSize", &openStat_t::dataSize)
+            .add_property("dataType", +[](openStat_t *s) { return array_ref<char>{s->dataType}; })
+            .add_property("dataMode", +[](openStat_t *s) { return array_ref<char>{s->dataMode}; })
+            .add_property("l3descInx", &openStat_t::l3descInx)
+            .add_property("replStatus", &openStat_t::replStatus)
+            .add_property("rescTypeInx", &openStat_t::rescTypeInx)
+            .add_property("replNum", &openStat_t::replNum)
         ;
 
         bp::class_<execCmd_t>("ExecCmd", bp::no_init)
+            .def("__init__", make_init_function<execCmd_t>(
+                        &execCmd_t::cmd,
+                        &execCmd_t::cmdArgv,
+                        &execCmd_t::execAddr,
+                        &execCmd_t::hintPath,
+                        &execCmd_t::addPathToArgv,
+                        &execCmd_t::dummy,
+                        &execCmd_t::condInput))
+            .add_property("cmd", +[](execCmd_t *s) { return array_ref<char>{s->cmd}; })
+            .add_property("cmdArgv", +[](execCmd_t *s) { return array_ref<char>{s->cmdArgv}; })
+            .add_property("execAddr", +[](execCmd_t *s) { return array_ref<char>{s->execAddr}; })
+            .add_property("hintPath", +[](execCmd_t *s) { return array_ref<char>{s->hintPath}; })
+            .add_property("addPathToArgv", &execCmd_t::addPathToArgv)
+            .add_property("dummy", &execCmd_t::dummy)
+            .add_property("condInput", &execCmd_t::condInput)
         ;
 
         bp::class_<execCmdOut_t>("ExecCmdOut", bp::no_init)
+            .def("__init__", make_init_function<execCmdOut_t>(
+                        &execCmdOut_t::stdoutBuf,
+                        &execCmdOut_t::stderrBuf,
+                        &execCmdOut_t::status))
+            .add_property("stdoutBuf", &execCmdOut_t::stdoutBuf)
+            .add_property("stderrBuf", &execCmdOut_t::stderrBuf)
+            .add_property("status", &execCmdOut_t::status)
+
         ;
 
-        bp::class_<fileCreateInp_t>("FileCreateInp", bp::no_init)
+        bp::class_<fileOpenInp_t>("FileOpenInp", bp::no_init)
+            .def("__init__", make_init_function<fileOpenInp_t>(
+                        &fileOpenInp_t::resc_name_,
+                        &fileOpenInp_t::resc_hier_,
+                        &fileOpenInp_t::objPath,
+                        &fileOpenInp_t::otherFlags,
+                        &fileOpenInp_t::addr,
+                        &fileOpenInp_t::fileName,
+                        &fileOpenInp_t::flags,
+                        &fileOpenInp_t::mode,
+                        &fileOpenInp_t::dataSize,
+                        &fileOpenInp_t::condInput,
+                        &fileOpenInp_t::in_pdmo))
+            .add_property("resc_name", +[](fileOpenInp_t *s) { return array_ref<char>{s->resc_name_}; })
+            .add_property("resc_hier", +[](fileOpenInp_t *s) { return array_ref<char>{s->resc_hier_}; })
+            .add_property("objPath", +[](fileOpenInp_t *s) { return array_ref<char>{s->objPath}; })
+            .add_property("otherFlags", &fileOpenInp_t::otherFlags)
+            .add_property("addr", &fileOpenInp_t::addr)
+            .add_property("fileName", +[](fileOpenInp_t *s) { return array_ref<char>{s->fileName}; })
+            .add_property("flags", &fileOpenInp_t::flags)
+            .add_property("mode", &fileOpenInp_t::mode)
+            .add_property("dataSize", &fileOpenInp_t::dataSize)
+            .add_property("condInput", &fileOpenInp_t::condInput)
+            .add_property("in_pdmo", +[](fileOpenInp_t *s) { return array_ref<char>{s->in_pdmo}; })
         ;
 
         bp::class_<fileCreateOut_t>("FileCreateOut", bp::no_init)
+            .def("__init__", make_init_function<fileCreateOut_t>(
+                        &fileCreateOut_t::file_name))
+            .add_property("file_name", +[](fileCreateOut_t *s) { return array_ref<char>{s->file_name}; })
         ;
-/*
-        bp::class_<fileOpenInp_t>("FileOpenInp", bp::no_init)
-        ;
-*/
+
         bp::class_<fileRenameInp_t>("FileRenameInp", bp::no_init)
+            .def("__init__", make_init_function<fileRenameInp_t>(
+                        &fileRenameInp_t::addr,
+                        &fileRenameInp_t::oldFileName,
+                        &fileRenameInp_t::newFileName,
+                        &fileRenameInp_t::rescHier,
+                        &fileRenameInp_t::objPath))
+            .add_property("addr", &fileRenameInp_t::addr)
+            .add_property("oldFileName", +[](fileRenameInp_t *s) { return array_ref<char>{s->oldFileName}; })
+            .add_property("newFileName", +[](fileRenameInp_t *s) { return array_ref<char>{s->newFileName}; })
+            .add_property("rescHier", +[](fileRenameInp_t *s) { return array_ref<char>{s->rescHier}; })
+            .add_property("objPath", +[](fileRenameInp_t *s) { return array_ref<char>{s->objPath}; })
         ;
 
         bp::class_<fileRenameOut_t>("FileRenameOut", bp::no_init)
+            .def("__init__", make_init_function<fileRenameOut_t>(
+                        &fileRenameOut_t::file_name))
+            .add_property("file_name", +[](fileRenameOut_t *s) { return array_ref<char>{s->file_name}; })
         ;
 
         bp::class_<rodsStat_t>("RodsStat", bp::no_init)
+            .def("__init__", make_init_function<rodsStat_t>(
+                        &rodsStat_t::st_size,
+                        &rodsStat_t::st_dev,
+                        &rodsStat_t::st_ino,
+                        &rodsStat_t::st_mode,
+                        &rodsStat_t::st_nlink,
+                        &rodsStat_t::st_uid,
+                        &rodsStat_t::st_gid,
+                        &rodsStat_t::st_rdev,
+                        &rodsStat_t::st_atim,
+                        &rodsStat_t::st_mtim,
+                        &rodsStat_t::st_ctim,
+                        &rodsStat_t::st_blksize,
+                        &rodsStat_t::st_blocks))
+            .add_property("st_size", &rodsStat_t::st_size)
+            .add_property("st_dev", &rodsStat_t::st_dev)
+            .add_property("st_ino", &rodsStat_t::st_ino)
+            .add_property("st_mode", &rodsStat_t::st_mode)
+            .add_property("st_nlink", &rodsStat_t::st_nlink)
+            .add_property("st_uid", &rodsStat_t::st_uid)
+            .add_property("st_gid", &rodsStat_t::st_gid)
+            .add_property("st_rdev", &rodsStat_t::st_rdev)
+            .add_property("st_atim", &rodsStat_t::st_atim)
+            .add_property("st_mtim", &rodsStat_t::st_mtim)
+            .add_property("st_ctim", &rodsStat_t::st_ctim)
+            .add_property("st_blksize", &rodsStat_t::st_blksize)
+            .add_property("st_blocks", &rodsStat_t::st_blocks)
         ;
 
         bp::class_<rodsHostAddr_t>("RodsHostAddr", bp::no_init)
+            .def("__init__", make_init_function<rodsHostAddr_t>(
+                        &rodsHostAddr_t::hostAddr,
+                        &rodsHostAddr_t::zoneName,
+                        &rodsHostAddr_t::portNum,
+                        &rodsHostAddr_t::dummyInt))
+            .add_property("hostAddr", +[](rodsHostAddr_t *s) { return array_ref<char>{s->hostAddr}; })
+            .add_property("zoneName", +[](rodsHostAddr_t *s) { return array_ref<char>{s->zoneName}; })
+            .add_property("portNum", &rodsHostAddr_t::portNum)
+            .add_property("dummyInt", &rodsHostAddr_t::dummyInt)
         ;
 
         bp::class_<getXmsgTicketInp_t>("GetXmsgTicketInp", bp::no_init)
+            .def("__init__", make_init_function<getXmsgTicketInp_t>(
+                        &getXmsgTicketInp_t::expireTime,
+                        &getXmsgTicketInp_t::flag))
+            .add_property("expireTime", &getXmsgTicketInp_t::expireTime)
+            .add_property("flag", &getXmsgTicketInp_t::flag)
         ;
 
         bp::class_<xmsgTicketInfo_t>("XmsgTicketInfo", bp::no_init)
+            .def("__init__", make_init_function<xmsgTicketInfo_t>(
+                        &xmsgTicketInfo_t::sendTicket,
+                        &xmsgTicketInfo_t::rcvTicket,
+                        &xmsgTicketInfo_t::expireTime,
+                        &xmsgTicketInfo_t::flag))
+            .add_property("sendTicket", &xmsgTicketInfo_t::sendTicket)
+            .add_property("rcvTicket", &xmsgTicketInfo_t::rcvTicket)
+            .add_property("expireTime", &xmsgTicketInfo_t::expireTime)
+            .add_property("flag", &xmsgTicketInfo_t::flag)
         ;
 
         bp::class_<modAccessControlInp_t>("ModAccessControlInp", bp::no_init)
+            .def("__init__", make_init_function<modAccessControlInp_t>(
+                        &modAccessControlInp_t::recursiveFlag,
+                        &modAccessControlInp_t::accessLevel,
+                        &modAccessControlInp_t::userName,
+                        &modAccessControlInp_t::zone,
+                        &modAccessControlInp_t::path))
+            .add_property("recursiveFlag", &modAccessControlInp_t::recursiveFlag)
+            .add_property("accessLevel", +[](modAccessControlInp_t *s) { return array_ref<char, true>{s->accessLevel}; })
+            .add_property("userName", +[](modAccessControlInp_t *s) { return array_ref<char, true>{s->userName}; })
+            .add_property("zone", +[](modAccessControlInp_t *s) { return array_ref<char, true>{s->zone}; })
+            .add_property("path", +[](modAccessControlInp_t *s) { return array_ref<char, true>{s->path}; })
         ;
 
         bp::class_<structFileExtAndRegInp_t>("StructFileExtAndRegInp", bp::no_init)
+            .def("__init__", make_init_function<structFileExtAndRegInp_t>(
+                        &structFileExtAndRegInp_t::objPath,
+                        &structFileExtAndRegInp_t::collection,
+                        &structFileExtAndRegInp_t::oprType,
+                        &structFileExtAndRegInp_t::flags,
+                        &structFileExtAndRegInp_t::condInput))
+            .add_property("objPath", +[](structFileExtAndRegInp_t *s) { return array_ref<char>{s->objPath}; })
+            .add_property("collection", +[](structFileExtAndRegInp_t *s) { return array_ref<char>{s->collection}; })
+            .add_property("oprType", &structFileExtAndRegInp_t::oprType)
+            .add_property("flags", &structFileExtAndRegInp_t::flags)
+            .add_property("condInput", &structFileExtAndRegInp_t::condInput)
         ;
 
         bp::class_<rcvXmsgInp_t>("RcvXmsgInp", bp::no_init)
+            .def("__init__", make_init_function<rcvXmsgInp_t>(
+                        &rcvXmsgInp_t::rcvTicket,
+                        &rcvXmsgInp_t::msgNumber,
+                        &rcvXmsgInp_t::seqNumber,
+                        &rcvXmsgInp_t::msgCondition))
+            .add_property("rcvTicket", &rcvXmsgInp_t::rcvTicket)
+            .add_property("msgNumber", &rcvXmsgInp_t::msgNumber)
+            .add_property("seqNumber", &rcvXmsgInp_t::seqNumber)
+            .add_property("msgCondition", +[](rcvXmsgInp_t *s) { return array_ref<char>{s->msgCondition}; })
+
         ;
 
         bp::class_<rcvXmsgOut_t>("RcvXmsgOut", bp::no_init)
+            .def("__init__", make_init_function<rcvXmsgOut_t>(
+                        &rcvXmsgOut_t::msgType,
+                        &rcvXmsgOut_t::sendUserName,
+                        &rcvXmsgOut_t::sendAddr,
+                        &rcvXmsgOut_t::msgNumber,
+                        &rcvXmsgOut_t::seqNumber,
+                        &rcvXmsgOut_t::msg))
+            .add_property("msgType", +[](rcvXmsgOut_t *s) { return array_ref<char>{s->msgType}; })
+            .add_property("sendUserName", +[](rcvXmsgOut_t *s) { return array_ref<char>{s->sendUserName}; })
+            .add_property("sendAddr", +[](rcvXmsgOut_t *s) { return array_ref<char>{s->sendAddr}; })
+            .add_property("msgNumber", &rcvXmsgOut_t::msgNumber)
+            .add_property("seqNumber", &rcvXmsgOut_t::seqNumber)
+            .add_property("msg", +[](rcvXmsgOut_t *s) { return array_ref<char, true>{s->msg}; })
         ;
 
         bp::class_<collEnt_t>("CollEnt", bp::no_init)
+            .def("__init__", make_init_function<collEnt_t>(
+                        &collEnt_t::objType,
+                        &collEnt_t::replNum,
+                        &collEnt_t::replStatus,
+                        &collEnt_t::dataMode,
+                        &collEnt_t::dataSize,
+                        &collEnt_t::collName,
+                        &collEnt_t::dataName,
+                        &collEnt_t::dataId,
+                        &collEnt_t::createTime,
+                        &collEnt_t::modifyTime,
+                        &collEnt_t::chksum,
+                        &collEnt_t::resource,
+                        &collEnt_t::resc_hier,
+                        &collEnt_t::phyPath,
+                        &collEnt_t::ownerName,
+                        &collEnt_t::dataType,
+                        &collEnt_t::specColl))
+            .add_property("objType", &collEnt_t::objType)
+            .add_property("replNum", &collEnt_t::replNum)
+            .add_property("replStatus", &collEnt_t::replStatus)
+            .add_property("dataMode", &collEnt_t::dataMode)
+            .add_property("dataSize", &collEnt_t::dataSize)
+            .add_property("collName", +[](collEnt_t *s) { return array_ref<char, true>{s->collName}; })
+            .add_property("dataName", +[](collEnt_t *s) { return array_ref<char, true>{s->dataName}; })
+            .add_property("dataId", +[](collEnt_t *s) { return array_ref<char, true>{s->dataId}; })
+            .add_property("createTime", +[](collEnt_t *s) { return array_ref<char, true>{s->createTime}; })
+            .add_property("modifyTime", +[](collEnt_t *s) { return array_ref<char, true>{s->modifyTime}; })
+            .add_property("chksum", +[](collEnt_t *s) { return array_ref<char, true>{s->chksum}; })
+            .add_property("resource", +[](collEnt_t *s) { return array_ref<char, true>{s->resource}; })
+            .add_property("resc_hier", +[](collEnt_t *s) { return array_ref<char, true>{s->resc_hier}; })
+            .add_property("phyPath", +[](collEnt_t *s) { return array_ref<char, true>{s->phyPath}; })
+            .add_property("ownerName", +[](collEnt_t *s) { return array_ref<char, true>{s->ownerName}; })
+            .add_property("dataType", +[](collEnt_t *s) { return array_ref<char, true>{s->dataType}; })
+            .add_property("specColl", &collEnt_t::specColl)
         ;
 
         bp::class_<ruleExecDelInp_t>("RuleExecDelInp", bp::no_init)
+            .def("__init__", make_init_function<ruleExecDelInp_t>(
+                        &ruleExecDelInp_t::ruleExecId))
+            .add_property("ruleExecId", +[](ruleExecDelInp_t *s) { return array_ref<char>{s->ruleExecId}; })
         ;
 
         bp::class_<sendXmsgInp_t>("SendXmsgInp", bp::no_init)
+            .def("__init__", make_init_function<sendXmsgInp_t>(
+                        &sendXmsgInp_t::ticket,
+                        &sendXmsgInp_t::sendAddr,
+                        &sendXmsgInp_t::sendXmsgInfo))
+            .add_property("ticket", &sendXmsgInp_t::ticket)
+            .add_property("sendAddr", +[](sendXmsgInp_t *s) { return array_ref<char>{s->sendAddr}; })
+            .add_property("sendXmsgInfo", &sendXmsgInp_t::sendXmsgInfo)
         ;
 
         bp::class_<structFileOprInp_t>("StructFileOprInp", bp::no_init)
+            .def("__init__", make_init_function<structFileOprInp_t>(
+                        &structFileOprInp_t::addr,
+                        &structFileOprInp_t::oprType,
+                        &structFileOprInp_t::flags,
+                        &structFileOprInp_t::specColl,
+                        &structFileOprInp_t::condInput))
+            .add_property("addr", &structFileOprInp_t::addr)
+            .add_property("oprType", &structFileOprInp_t::oprType)
+            .add_property("flags", &structFileOprInp_t::flags)
+            .add_property("specColl",
+                    bp::make_getter(&structFileOprInp_t::specColl, bp::return_internal_reference<1>{}),
+                    bp::make_setter(&structFileOprInp_t::specColl, bp::with_custodian_and_ward<1, 2>{}))
+            .add_property("condInput", &structFileOprInp_t::condInput)
         ;
 
         bp::class_<subStructFileFdOprInp_t>("SubStructFileFdOprInp", bp::no_init)
+            .def("__init__", make_init_function<subStructFileFdOprInp_t>(
+                        &subStructFileFdOprInp_t::addr,
+                        &subStructFileFdOprInp_t::type,
+                        &subStructFileFdOprInp_t::fd,
+                        &subStructFileFdOprInp_t::len,
+                        &subStructFileFdOprInp_t::resc_hier))
+            .add_property("addr", &subStructFileFdOprInp_t::addr)
+            .add_property("type", &subStructFileFdOprInp_t::type)
+            .add_property("fd", &subStructFileFdOprInp_t::fd)
+            .add_property("len", &subStructFileFdOprInp_t::len)
+            .add_property("resc_hier", +[](subStructFileFdOprInp_t *s) { return array_ref<char>{s->resc_hier}; })
         ;
 
         bp::class_<subFile_t>("SubFile", bp::no_init)
+            .def("__init__", make_init_function<subFile_t>(
+                        &subFile_t::addr,
+                        &subFile_t::subFilePath,
+                        &subFile_t::mode,
+                        &subFile_t::flags,
+                        &subFile_t::offset,
+                        &subFile_t::specColl))
+            .add_property("addr", &subFile_t::addr)
+            .add_property("subFilePath", +[](subFile_t *s) { return array_ref<char>{s->subFilePath}; })
+            .add_property("mode", &subFile_t::mode)
+            .add_property("flags", &subFile_t::flags)
+            .add_property("specColl",
+                    bp::make_getter(&subFile_t::specColl, bp::return_internal_reference<1>{}),
+                    bp::make_setter(&subFile_t::specColl, bp::with_custodian_and_ward<1, 2>{}))
         ;
 
         bp::class_<fileLseekInp_t>("fileLseekInp_t", bp::no_init)
