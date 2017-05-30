@@ -9,7 +9,7 @@ def main():
             {
                 'instance_name': 'irods_rule_engine_plugin-python-instance',
                 'plugin_name': 'irods_rule_engine_plugin-python',
-                'plugin_configuration': {}
+                'plugin_specific_configuration': {}
             }
         ]
     irods_config.commit(irods_config.server_config, irods_config.server_config_path, make_backup=True)
