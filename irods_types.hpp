@@ -161,11 +161,11 @@ namespace {
             .def( array_indexing_suite<array_ref<sqlResult_t>>{} )
             ;
 
-        bp::class_<array_ref<rErrMsg_t*>>("rErrMsg_pointer_array")
+        bp::class_<array_ref<rErrMsg_t*>>("RErrMsg_pointer_array")
             .def( array_indexing_suite<array_ref<rErrMsg_t*>>{} ) //, bp::return_internal_reference<1>>{} )
             ;
 
-        bp::class_<array_ref<msParam_t*>>("msParam_pointer_array")
+        bp::class_<array_ref<msParam_t*>>("MsParam_pointer_array")
             .def( array_indexing_suite<array_ref<msParam_t*>>{} ) //, bp::return_internal_reference<1>>{} )
             ;
 
@@ -326,7 +326,7 @@ namespace {
             .add_property("sqlResult", +[](genQueryOut_t *s) { return array_ref<sqlResult_t>{s->sqlResult}; })
             ;
 
-        bp::class_<collInfo_t>("collInfo", bp::no_init)
+        bp::class_<collInfo_t>("CollInfo", bp::no_init)
             .def("__init__", make_init_function<collInfo_t>(
                             &collInfo_t::collId,
                             &collInfo_t::collName,
@@ -368,7 +368,7 @@ namespace {
                     bp::make_setter(&collInfo_t::next, bp::with_custodian_and_ward<1, 2>{}))
             ;
 
-        bp::class_<dataObjInfo_t>("dataObjInfo", bp::no_init)
+        bp::class_<dataObjInfo_t>("DataObjInfo", bp::no_init)
             .def("__init__", make_init_function<dataObjInfo_t>(
                             &dataObjInfo_t::objPath,
                             &dataObjInfo_t::rescName,
@@ -446,7 +446,7 @@ namespace {
             .add_property("rescId", &dataObjInfo_t::rescId)
             ;
 
-        bp::class_<dataObjInp_t>("dataObjInp", bp::no_init)
+        bp::class_<dataObjInp_t>("DataObjInp", bp::no_init)
             .def("__init__", make_init_function<dataObjInp_t>(
                             &dataObjInp_t::objPath,
                             &dataObjInp_t::createMode,
@@ -564,7 +564,7 @@ namespace {
             .add_property("msg", +[](rErrMsg_t *s) { return array_ref<char>{s->msg}; })
             ;
 
-        bp::class_<rError_t>("rError", bp::no_init)
+        bp::class_<rError_t>("RError", bp::no_init)
             .def("__init__", make_init_function<rError_t>(
                             &rError_t::len,
                             &rError_t::errMsg))
@@ -604,7 +604,7 @@ namespace {
             .add_property("sin_addr", &sockaddr_in::sin_addr)
             ;
 
-        bp::class_<authInfo_t>("authInfo", bp::no_init)
+        bp::class_<authInfo_t>("AuthInfo", bp::no_init)
             .def("__init__", make_init_function<authInfo_t>(
                             &authInfo_t::authScheme,
                             &authInfo_t::authFlag,
@@ -620,7 +620,7 @@ namespace {
             .add_property("authStr", +[](authInfo_t *s) { return array_ref<char>{s->authStr}; })
             ;
 
-        bp::class_<userOtherInfo_t>("userOtherInfo", bp::no_init)
+        bp::class_<userOtherInfo_t>("UserOtherInfo", bp::no_init)
             .def("__init__", make_init_function<userOtherInfo_t>(
                             &userOtherInfo_t::userInfo,
                             &userOtherInfo_t::userComments,
@@ -632,7 +632,7 @@ namespace {
             .add_property("userModify", +[](userOtherInfo_t *s) { return array_ref<char>{s->userModify}; })
             ;
 
-        bp::class_<userInfo_t>("userInfo", bp::no_init)
+        bp::class_<userInfo_t>("UserInfo", bp::no_init)
             .def("__init__", make_init_function<userInfo_t>(
                             &userInfo_t::userName,
                             &userInfo_t::rodsZone,
@@ -817,7 +817,7 @@ namespace {
             .add_property("encryption_algorithm", +[](rsComm_t *s) { return array_ref<char>{s->encryption_algorithm}; })
             ;
 
-        bp::class_<operProgress_t>("operProgress", bp::no_init)
+        bp::class_<operProgress_t>("OperProgress", bp::no_init)
             .def("__init__", make_init_function<operProgress_t>(
                             &operProgress_t::oprType,
                             &operProgress_t::flag,
@@ -1582,7 +1582,7 @@ namespace {
                     bp::make_setter(&subFile_t::specColl, bp::with_custodian_and_ward<1, 2>{}))
         ;
 
-        bp::class_<fileLseekInp_t>("fileLseekInp_t", bp::no_init)
+        bp::class_<fileLseekInp_t>("FileLseekInp_t", bp::no_init)
             .def("__init__", make_init_function<fileLseekInp_t>(
                             &fileLseekInp_t::fileInx,
                             &fileLseekInp_t::offset,
@@ -1592,7 +1592,7 @@ namespace {
             .add_property("whence", &fileLseekInp_t::whence)
         ;
 
-        bp::class_<fileLseekOut_t>("fileLseekOut_t", bp::no_init)
+        bp::class_<fileLseekOut_t>("FileLseekOut_t", bp::no_init)
             .def("__init__", make_init_function<fileLseekOut_t>(
                             &fileLseekOut_t::offset))
             .add_property("offset", &fileLseekOut_t::offset)
