@@ -41,7 +41,7 @@ def get_map(rei):
                 'replica_number': rei.doi.replNum if rei.doi is not None else None,
                 'replication_status': rei.doi.replStatus if rei.doi is not None else None,
                 'write_flag': rei.doi.writeFlag if rei.doi is not None else None,
-                'owner': str(rei.doi.dataOwner) if rei.doi is not None else None,
+                'owner': str(rei.doi.dataOwnerName) if rei.doi is not None else None,
                 'owner_zone': str(rei.doi.dataOwnerZone) if rei.doi is not None else None,
                 'expiry': str(rei.doi.dataExpiry) if rei.doi is not None else None,
                 'comments': str(rei.doi.dataComments) if rei.doi is not None else None,
