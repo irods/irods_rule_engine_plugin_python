@@ -107,7 +107,7 @@ install(
   )
 
 install(
-    FILES ${CMAKE_SOURCE_DIR}/core.py ${CMAKE_SOURCE_DIR}/session_vars.py
+    FILES ${CMAKE_SOURCE_DIR}/core.py.template ${CMAKE_SOURCE_DIR}/session_vars.py
   DESTINATION etc/irods
   )
 
