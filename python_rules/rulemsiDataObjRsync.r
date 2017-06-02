@@ -4,7 +4,7 @@ def rulemsiDataObjRsync(rule_args, callback, rei):
     dest_obj = global_vars['*destObj'][1:-1]
 
     ret_val = callback.msiDataObjRsync(source_obj, 'IRODS_TO_IRODS', dest_resc, dest_obj, 0)
-    status = ret_val[PYTHON_RE_RET_ARGUMENTS][4]
+    status = ret_val['arguments'][4]
 
     callback.writeLine('stdout', 'Source object ' + source_obj + ' synchronized with destination object ' + dest_obj)
     callback.writeLine('stdout', 'status = ' + str(status))

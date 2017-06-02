@@ -8,14 +8,14 @@ def myTestRule(rule_args, callback, rei):
 
     # Initial condition for query corresponds to "COLL_NAME like '/tempZone/home/rods/%%'"
     ret_val = callback.msiMakeGenQuery(select, "COLL_NAME like '/tempZone/home/rods/%%'", irods_types.GenQueryInp())
-    genQueryInp = ret_val[PYTHON_RE_RET_ARGUMENTS][2]
+    genQueryInp = ret_val['arguments'][2]
 
     # Add condition to query "DATA_NAME like rule%%"
     ret_val = callback.msiAddConditionToGenQuery(attribute, operator, value, genQueryInp)
-    genQueryInp = ret_val[PYTHON_RE_RET_ARGUMENTS][3]
+    genQueryInp = ret_val['arguments'][3]
 
     ret_val = callback.msiExecGenQuery(genQueryInp, irods_types.GenQueryOut())
-    genQueryOut = ret_val[PYTHON_RE_RET_ARGUMENTS][1]
+    genQueryOut = ret_val['arguments'][1]
 
     for row in range(genQueryOut.rowCnt):
         data = genQueryOut.sqlResult[0].row(row)

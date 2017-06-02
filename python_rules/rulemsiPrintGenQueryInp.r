@@ -4,10 +4,10 @@ def myTestRule(rule_args, callback, rei):
     fcn = global_vars['*Function'][1:-1]
 
     ret_val = callback.msiMakeGenQuery(select, "COLL_NAME like '/tempZone/home/rods/%%'", irods_types.GenQueryInp())
-    genQueryInp = ret_val[PYTHON_RE_RET_ARGUMENTS][2]
+    genQueryInp = ret_val['arguments'][2]
 
     ret_val = callback.msiAddSelectFieldToGenQuery(select_add, fcn, genQueryInp)
-    genQueryInp = ret_val[PYTHON_RE_RET_ARGUMENTS][2]
+    genQueryInp = ret_val['arguments'][2]
 
     callback.msiPrintGenQueryInp('stdout', genQueryInp)
 

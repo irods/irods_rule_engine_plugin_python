@@ -15,7 +15,7 @@ def generateBagIt(rule_args, callback, rei):
     callback.writeLine('stdout', 'BagIt-Version: 0.96')
     callback.writeLine('stdout', 'Tag-File-Character-Encoding: UTF-8')
     ret_val = callback.msiDataObjCreate(new_bagIt_root + '/bagit.txt', 'null', 0)
-    fd = ret_val[PYTHON_RE_RET_ARGUMENTS][2]
+    fd = ret_val['arguments'][2]
     callback.msiDataObjWrite(fd, 'stdout', 0)
     callback.msiDataObjClose(fd, 0)
     callback.msiFreeBuffer('stdout')
@@ -28,9 +28,9 @@ def generateBagIt(rule_args, callback, rei):
     continue_index_old = 1
     condition = "COLL_NAME like '" + new_bagIt_data + "%%'"
     ret_val = callback.msiMakeGenQuery('DATA_ID, DATA_NAME, COLL_NAME', condition, irods_types.GenQueryInp())
-    genQueryInp = ret_val[PYTHON_RE_RET_ARGUMENTS][2]
+    genQueryInp = ret_val['arguments'][2]
     ret_val = callback.msiExecGenQuery(genQueryInp, irods_types.GenQueryOut())
-    genQueryOut = ret_val[PYTHON_RE_RET_ARGUMENTS][1]
+    genQueryOut = ret_val['arguments'][1]
 
     while continue_index_old > 0:
         for row in range(genQueryOut.rowCnt):
@@ -39,29 +39,29 @@ def generateBagIt(rule_args, callback, rei):
             full_path = coll + '/' + data
             relative_path = full_path[offset:]
             ret_val = callback.msiDataObjChksum(full_path, 'forceChksum=', 'dummy_str')
-            chksum = ret_val[PYTHON_RE_RET_ARGUMENTS][2]
+            chksum = ret_val['arguments'][2]
             callback.writeLine('stdout', relative_path + '   ' + chksum)
         continue_index_old = genQueryOut.continueInx
         if continue_index_old > 0:
             ret_val = callback.msiGetMoreRows(genQueryInp, genQueryOut, 0)
-            genQueryOut = ret_val[PYTHON_RE_RET_ARGUMENTS][1]
+            genQueryOut = ret_val['arguments'][1]
 
     # Write payload manifest to NEWBAGITROOT/manifest-md5.txt
     ret_val = callback.msiDataObjCreate(new_bagIt_root + '/manifest-md5.txt', 'null', 0)
-    fd = ret_val[PYTHON_RE_RET_ARGUMENTS][2]
+    fd = ret_val['arguments'][2]
     callback.msiDataObjWrite(fd, 'stdout', 0)
     callback.msiDataObjClose(fd, 0)
     callback.msiFreeBuffer('stdout')
 
     # Write tagmanifest file to NEWBAGITROOT/tagmanifest-md5.txt 
     ret_val = callback.msiDataObjChksum(new_bagIt_root + '/bagit.txt', 'forceChksum', 'dummy_str')
-    chksum = ret_val[PYTHON_RE_RET_ARGUMENTS][2]
+    chksum = ret_val['arguments'][2]
     callback.writeLine('stdout', 'bagit.txt   ' + chksum)
     ret_val = callback.msiDataObjChksum(new_bagIt_root + '/manifest-md5.txt', 'forceChksum', 'dummy_str')
-    chksum = ret_val[PYTHON_RE_RET_ARGUMENTS][2]
+    chksum = ret_val['arguments'][2]
     callback.writeLine('stdout', 'manifest-md5.txt   ' + chksum)
     ret_val = callback.msiDataObjCreate(new_bagIt_root + '/tagmanifest-md5.txt', 'null', 0)
-    fd = ret_val[PYTHON_RE_RET_ARGUMENTS][2]
+    fd = ret_val['arguments'][2]
     callback.msiDataObjWrite(fd, 'stdout', 0)
     callback.msiDataObjClose(fd, 0)
     callback.msiFreeBuffer('stdout')
@@ -76,9 +76,9 @@ def generateBagIt(rule_args, callback, rei):
 
     condition = "COLL_NAME like '" + coll + "%%' and DATA_NAME = '" + tar_file_name + "'"
     ret_val = callback.msiMakeGenQuery('DATA_SIZE', condition, irods_types.GenQueryInp())
-    genQueryInp = ret_val[PYTHON_RE_RET_ARGUMENTS][2]
+    genQueryInp = ret_val['arguments'][2]
     ret_val = callback.msiExecGenQuery(genQueryInp, irods_types.GenQueryOut())
-    genQueryOut = ret_val[PYTHON_RE_RET_ARGUMENTS][1]
+    genQueryOut = ret_val['arguments'][1]
 
     for row in range(genQueryOut.rowCnt):
         data_size = int(genQueryOut.sqlResult[0].row(row))

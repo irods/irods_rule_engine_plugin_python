@@ -25,19 +25,19 @@ def acPreConnect(rule_args, callback, rei):
 def acCreateUser(rule_args, callback, rei):
     ret = callback.msiCreateUser()
 
-    if not ret[PYTHON_RE_RET_STATUS]:
+    if not ret['status']:
         callback.msiRollback()
         return ret
 
     ret = acCreateDefaultCollections(rule_args, callback, rei)
 
-    if not ret[PYTHON_RE_RET_STATUS]:
+    if not ret['status']:
         callback.msiRollback()
         return ret
 
     ret = callback.msiAddUserToGroup('public')
 
-    if not ret[PYTHON_RE_RET_STATUS]:
+    if not ret['status']:
         callback.msiRollback()
         return ret
 
@@ -67,13 +67,13 @@ def acCreateCollByAdmin(rule_args, callback, rei):
 def acDeleteUser(rule_args, callback, rei):
     ret = callback.acDeleteDefaultCollections()
 
-    if not ret[PYTHON_RE_RET_STATUS]:
+    if not ret['status']:
         callback.msiRollback()
         return ret
 
     ret = callback.msiDeleteUser()
 
-    if not ret[PYTHON_RE_RET_STATUS]:
+    if not ret['status']:
         callback.msiRollback()
         return ret
 
@@ -98,9 +98,9 @@ def acDeleteUserZoneCollections(rule_args, callback, rei):
 def acDeleteCollByAdminIfPresent(rule_args, callback, rei):
     ret = callback.msiDeleteCollByAdmin(rule_args[0], rule_args[1])
 
-    if not ret[PYTHON_RE_RET_STATUS]:
-        if not ret[PYTHON_RE_RET_CODE] == -808000:
-            callback.failmsg(ret[PYTHON_RE_RET_CODE], 'error deleting collection')
+    if not ret['status']:
+        if not ret['code'] == -808000:
+            callback.failmsg(ret['code'], 'error deleting collection')
     return ret
 
 def acDeleteCollByAdmin(rule_args, callback, rei):
@@ -111,13 +111,13 @@ def acRenameLocalZone(rule_args, callback, rei):
 
     ret = callback.msiRenameCollection(coll_name, rule_args[1])
 
-    if not ret[PYTHON_RE_RET_STATUS]:
+    if not ret['status']:
         callback.msiRollback()
         return ret
 
     ret = callback.msiRenameLocalZone(rule_args[0], rule_args[1])
 
-    if not ret[PYTHON_RE_RET_STATUS]:
+    if not ret['status']:
         callback.msiRollback()
         return ret
 

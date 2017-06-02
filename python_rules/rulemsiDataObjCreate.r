@@ -4,7 +4,7 @@ def myTestRule(rule_args, callback, rei):
     oflags = global_vars['*OFlags'][1:-1]
 
     ret_val = callback.msiDataObjCreate(obj, oflags, 0)
-    file_desc = ret_val[PYTHON_RE_RET_ARGUMENTS][2]
+    file_desc = ret_val['arguments'][2]
     ret_val = callback.msiDataObjClose(file_desc, 0)
     callback.writeLine('stdout', 'Created and closed file ' + obj)
 

@@ -3,10 +3,10 @@ def myTestRule(rule_args, callback, rei):
     length = global_vars['*Len'][1:-1]
 
     ret_val = callback.msiDataObjOpen(flags, 0)
-    file_desc = ret_val[PYTHON_RE_RET_ARGUMENTS][1]
+    file_desc = ret_val['arguments'][1]
 
     ret_val = callback.msiDataObjRead(file_desc, length, irods_types.BytesBuf())
-    read_buffer = ret_val[PYTHON_RE_RET_ARGUMENTS][2]
+    read_buffer = ret_val['arguments'][2]
 
     callback.msiDataObjClose(file_desc, 0)
 

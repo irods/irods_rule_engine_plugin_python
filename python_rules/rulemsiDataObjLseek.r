@@ -8,15 +8,15 @@ def myTestRule(rule_args, callback, rei):
     length = global_vars['*Len'][1:-1]
 
     ret_val = callback.msiDataObjOpen(oflags, 0)
-    file_desc = ret_val[PYTHON_RE_RET_ARGUMENTS][1]
+    file_desc = ret_val['arguments'][1]
 
     ret_val = callback.msiDataObjCreate(obj_b, oflags_b, 0)
-    file_desc_b = ret_val[PYTHON_RE_RET_ARGUMENTS][2]
+    file_desc_b = ret_val['arguments'][2]
 
     ret_val = callback.msiDataObjLseek(file_desc, offset, loc, 0)
 
     ret_val = callback.msiDataObjRead(file_desc, length, irods_types.BytesBuf())
-    read_buf = ret_val[PYTHON_RE_RET_ARGUMENTS][2]
+    read_buf = ret_val['arguments'][2]
 
     callback.msiDataObjWrite(file_desc_b, read_buf, 0)
 

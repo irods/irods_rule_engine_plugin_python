@@ -28,8 +28,6 @@ irods::ms_table& get_microservice_table();
 // writeLine is not in the microservice table in 4.2.0 - #3408
 int writeLine(msParam_t*, msParam_t*, ruleExecInfo_t*);
 
-static std::map<std::string, std::string> PYTHON_GLOBALS {{"PYTHON_RE_RET_CODE", "code"}, {"PYTHON_RE_RET_STATUS", "status"}, {"PYTHON_RE_RET_ARGUMENTS", "arguments"}, {"PYTHON_RODSOBJSTAT_MS_T", RodsObjStat_MS_T}, {"PYTHON_INT_MS_T", INT_MS_T}, {"PYTHON_DOUBLE_MS_T", DOUBLE_MS_T}, {"PYTHON_GENQUERYINP_MS_T", GenQueryInp_MS_T}, {"PYTHON_GENQUERYOUT_MS_T", GenQueryOut_MS_T}, {"PYTHON_BUF_LEN_MS_T", BUF_LEN_MS_T}};
-
 const std::string ELEMENT_TYPE = "ELEMENT_TYPE";
 const std::string STRING_TYPE = "STRING_TYPE";
 const std::string STRING_VALUE_KEY = "STRING_VALUE_KEY";
@@ -180,9 +178,9 @@ namespace {
             }
 
             bp::dict ret;
-            ret[PYTHON_GLOBALS["PYTHON_RE_RET_CODE"]] = retVal.code();
-            ret[PYTHON_GLOBALS["PYTHON_RE_RET_STATUS"]] = retVal.status();
-            ret[PYTHON_GLOBALS["PYTHON_RE_RET_ARGUMENTS"]] = ret_list;
+            ret["code"] = retVal.code();
+            ret["status"] = retVal.status();
+            ret["arguments"] = ret_list;
             return ret;
         }
     };
@@ -240,9 +238,6 @@ start(irods::default_re_ctx&, const std::string& _instance_name) {
         // TODO Enable non core.py Python rulebases
         bp::object core_module = bp::import("core");
         bp::object core_namespace = core_module.attr("__dict__");
-        for (const auto& it : PYTHON_GLOBALS) {
-            core_namespace[it.first] = it.second;
-        }
         core_namespace["irods_types"] = irods_types;
 
         StringFromPythonUnicode::register_converter();
@@ -380,9 +375,6 @@ exec_rule(const irods::default_re_ctx&, const std::string& rule_name, std::list<
         bp::object core_namespace = core_module.attr("__dict__");
         bp::object irods_types = bp::import("irods_types");
 
-        for (const auto& it : PYTHON_GLOBALS) {
-            core_namespace[it.first] = it.second;
-        }
         core_namespace["irods_types"] = irods_types;
         bp::object rule_function = core_module.attr(rule_name.c_str());
 
@@ -497,9 +489,6 @@ exec_rule_text(const irods::default_re_ctx&, const std::string& rule_text, msPar
             main_namespace["global_vars"] = global_vars_python;
 
             // Import global constants
-            for (const auto& it : PYTHON_GLOBALS) {
-                main_namespace[it.first] = it.second;
-            }
             main_namespace["irods_types"] = irods_types;
 
             // Parse input rule_text into useable Python fcns
@@ -525,11 +514,6 @@ exec_rule_text(const irods::default_re_ctx&, const std::string& rule_text, msPar
 
             // Import global INPUT and OUTPUT variables
             core_namespace["global_vars"] = global_vars_python;
-
-            // Import global constants
-            for (const auto& it : PYTHON_GLOBALS) {
-                core_namespace[it.first] = it.second;
-            }
 
             // Delete "@external rule { " from the start of the rule_text
             std::string trimmed_rule = rule_text.substr(17);
@@ -602,9 +586,6 @@ exec_rule_expression(irods::default_re_ctx&, const std::string& rule_text, msPar
         main_namespace["global_vars"] = global_vars_python;
 
         // Import globals
-        for (const auto& it : PYTHON_GLOBALS) {
-            main_namespace[it.first] = it.second;
-        }
         main_namespace["irods_types"] = irods_types;
 
         // Add def expressionFcn(rule_args, callback):\n to start of rule text

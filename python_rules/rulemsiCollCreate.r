@@ -8,7 +8,7 @@ def myTestRule(rule_args, callback, rei):
     callback.writeLine('stdout', 'Collection created was')
 
     ret_val = callback.msiExecStrCondQuery("SELECT COLL_NAME where COLL_NAME = '" + path +"'", irods_types.GenQueryOut())
-    genQueryOut = ret_val[PYTHON_RE_RET_ARGUMENTS][1]
+    genQueryOut = ret_val['arguments'][1]
 
     for row in range(genQueryOut.rowCnt):
         coll_name = genQueryOut.sqlResult[0].row(row)

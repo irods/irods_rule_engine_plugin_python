@@ -13,7 +13,7 @@ def myTestRule(rule_args, callback, rei):
     callback.writeLine('stdout', 'Disk weight is ' + disk_weight + ', Network transfer in weight is ' + network_in_weight + ', Network transfer out weight is ' + network_out_weight)
 
     ret_val = callback.msiExecStrCondQuery('SELECT SLD_RESC_NAME, SLD_LOAD_FACTOR', irods_types.GenQueryOut())
-    genQueryOut = ret_val[PYTHON_RE_RET_ARGUMENTS][1]
+    genQueryOut = ret_val['arguments'][1]
 
     for row in range(genQueryOut.rowCnt):
         resc_name = genQueryOut.sqlResult[0].row(row)
