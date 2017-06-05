@@ -144,11 +144,13 @@ namespace {
             bp::tuple rule_args_python = bp::extract<bp::tuple>(args[bp::slice(1, bp::len(args))]);
             std::list<boost::any> rule_args_cpp;
             std::list<msParam_t> msParams;
+            std::list<std::string> strings;
 
             for ( auto&& rule_arg_python : rule_args_python ) {
                 bp::extract<std::string> s{rule_arg_python};
                 if ( s.check() ) {
-                    rule_args_cpp.push_back(s());
+                    strings.push_back(s());
+                    rule_args_cpp.emplace_back(&strings.back());
                 } else {
                     msParams.push_back(msParam_from_object<genQueryInp_t, genQueryOut_t, keyValPair_t, fileLseekOut_t, rodsObjStat_t, bytesBuf_t, int, float>(rule_arg_python));
                     rule_args_cpp.emplace_back(&msParams.back());
@@ -160,8 +162,9 @@ namespace {
             bp::list ret_list{};
             while ( !rule_args_cpp.empty() ) {
                 auto& rule_arg_cpp = rule_args_cpp.front();
-                if ( rule_arg_cpp.type() == typeid(std::string) ) {
-                    ret_list.append(boost::any_cast<std::string>(rule_arg_cpp));
+                if ( rule_arg_cpp.type() == typeid(std::string*) ) {
+                    ret_list.append(strings.front());
+                    strings.pop_front();
                 } else {
                     ret_list.append(object_from_msParam(msParams.front()));
                     msParams.pop_front();
