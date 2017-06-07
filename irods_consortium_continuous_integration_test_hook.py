@@ -19,7 +19,6 @@ def main():
     built_packages_root_directory = options.built_packages_root_directory
     plugin_dir = irods_python_ci_utilities.append_os_specific_directory(built_packages_root_directory)
     irods_python_ci_utilities.install_os_packages_from_files([os.path.join(plugin_dir, entry) for entry in os.listdir(plugin_dir)])
-    irods_python_ci_utilities.subprocess_get_output(['sudo', 'chown', 'irods:irods', '/etc/irods/core.py'], check_rc=True)
     irods_python_ci_utilities.subprocess_get_output(['sudo', 'su', '-', 'irods', '-c', 'python2 scripts/setup_python_rule_engine_as_only_rule_engine.py'], check_rc=True)
 
     test_output_file = 'log/test_output.log'
