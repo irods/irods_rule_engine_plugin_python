@@ -70,6 +70,6 @@ def get_map(rei):
             'client_user': get_map_for_user_struct(rei.uoic) if rei.uoic is not None else get_map_for_user_struct(rei.rsComm.clientUser) if rei.rsComm is not None and rei.rsComm.clientUser is not None else None,
             'proxy_user': get_map_for_user_struct(rei.uoip) if rei.uoip is not None else get_map_for_user_struct(rei.rsComm.proxyUser) if rei.rsComm is not None and rei.rsComm.proxyUser is not None else None,
             'other_user': get_map_for_user_struct(rei.uoio) if rei.uoio is not None else None,
-            'key_value_pairs': {rei.condInputData.key[i]: rei.condInputData.value[i] for i in range(0, rei.condInputData.len)} if rei.condInputData is not None else None
+            'key_value_pairs': dict((rei.condInputData.key[i], rei.condInputData.value[i]) for i in range(0, rei.condInputData.len)) if rei.condInputData is not None else None
             }
 
