@@ -24,7 +24,7 @@ def get_build_prerequisites_all():
             'irods-externals-zeromq4-14.1.3-0']
 
 def get_build_prerequisites_apt():
-    return ['make', 'python-dev', 'libssl-dev'] + get_build_prerequisites_all()
+    return ['make', 'python-dev', 'libssl-dev', 'gcc'] + get_build_prerequisites_all()
 
 def get_build_prerequisites_yum():
     return ['python-devel', 'openssl-devel'] + get_build_prerequisites_all()
