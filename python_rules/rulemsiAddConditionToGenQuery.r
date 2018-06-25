@@ -1,4 +1,4 @@
-def myTestRule(rule_args, callback, rei):
+def main(rule_args, callback, rei):
     select = global_vars['*Select'][1:-1]
     attribute = global_vars['*Attribute'][1:-1]
     operator = global_vars['*Operator'][1:-1]
