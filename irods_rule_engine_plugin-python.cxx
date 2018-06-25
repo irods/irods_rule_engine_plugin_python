@@ -20,6 +20,7 @@
 #include "irods_ms_plugin.hpp"
 #include "irods_server_properties.hpp"
 #include "msParam.h"
+#include "rsExecMyRule.hpp"
 
 #include "irods_rule_engine_plugin-python.hpp"
 
@@ -27,6 +28,82 @@ irods::ms_table& get_microservice_table();
 
 // writeLine is not in the microservice table in 4.2.0 - #3408
 int writeLine(msParam_t*, msParam_t*, ruleExecInfo_t*);
+
+
+
+static int carryOverMsParam(
+    msParamArray_t *sourceMsParamArray,
+    msParamArray_t *targetMsParamArray ) {
+
+    int i;
+    msParam_t *mP, *mPt;
+    if ( sourceMsParamArray == NULL ) {
+        return 0;
+    }
+
+    for ( i = 0; i < sourceMsParamArray->len ; i++ ) {
+        mPt = sourceMsParamArray->msParam[i];
+        if ( ( mP = getMsParamByLabel( targetMsParamArray, mPt->label ) ) != NULL ) {
+            free( mP->inpOutBuf );
+            int status = replInOutStruct(mPt->inOutStruct, &mP->inOutStruct, mPt->type);
+            if ( status < 0 ) {
+                rodsLogError( LOG_ERROR, status, "%s encountered an error when calling replInOutStruct", __PRETTY_FUNCTION__);
+            }
+            mP->inpOutBuf = replBytesBuf(mPt->inpOutBuf);
+        }
+        else
+            addMsParamToArray( targetMsParamArray,
+                               mPt->label, mPt->type, mPt->inOutStruct, mPt->inpOutBuf, 1 );
+    }
+
+    return 0;
+}
+
+static int remote_exec_msvc(
+    msParam_t*      _pd,
+    msParam_t*      _pa,
+    msParam_t*      _pb,
+    msParam_t*      _pc,
+    ruleExecInfo_t* _rei) {
+
+    execMyRuleInp_t exec_inp;
+    memset(&exec_inp, 0, sizeof(exec_inp));
+    rstrcpy(
+        exec_inp.outParamDesc,
+        ALL_MS_PARAM_KW,
+        LONG_NAME_LEN);
+
+    char tmp_str[LONG_NAME_LEN];
+    rstrcpy(
+        tmp_str,
+        static_cast<char*>(_pd->inOutStruct),
+        LONG_NAME_LEN);
+    parseHostAddrStr(
+        tmp_str,
+        &exec_inp.addr);
+
+    std::string rule_text = "@external\n";
+    rule_text += static_cast<char*>(_pb->inOutStruct);
+    snprintf(
+        exec_inp.myRule,
+        META_STR_LEN,
+        "%s", rule_text.c_str());
+
+     addKeyVal(
+         &exec_inp.condInput,
+         "execCondition",
+         static_cast<char*>(_pa->inOutStruct));
+
+    msParamArray_t *out_arr = NULL;
+    return rsExecMyRule(
+               _rei->rsComm,
+               &exec_inp,
+               &out_arr);
+} // remote_exec_msvc
+
+
+
+
 
 const std::string ELEMENT_TYPE = "ELEMENT_TYPE";
 const std::string STRING_TYPE = "STRING_TYPE";
@@ -257,6 +334,8 @@ start(irods::default_re_ctx&, const std::string& _instance_name) {
     if (!ms_table.has_entry("writeLine")) {
         ms_table["writeLine"] = new irods::ms_table_entry("writeLine", 2, std::function<int(msParam_t*, msParam_t*, ruleExecInfo_t*)>( writeLine ) );
     }
+
+    ms_table["remoteExec"] = new irods::ms_table_entry("remoteExec", 4, std::function<int(msParam_t*, msParam_t*, msParam_t*, msParam_t*, ruleExecInfo_t*)>( remote_exec_msvc ) );
 
     try {
         const auto& re_plugin_arr = irods::get_server_property< const std::vector< boost::any >& >( std::vector< std::string >{ irods::CFG_PLUGIN_CONFIGURATION_KW, irods::PLUGIN_TYPE_RULE_ENGINE } );
@@ -498,11 +577,8 @@ exec_rule_text(const irods::default_re_ctx&, const std::string& rule_text, msPar
             // Delete first line ("@external")
             std::string trimmed_rule = rule_text.substr(rule_text.find_first_of('\n')+1);
 
-            // Extract rule name ("def RULE_NAME(parameters):")
-            std::string rule_name = trimmed_rule.substr(4, trimmed_rule.find_first_of('(')-4);
-
             bp::exec(trimmed_rule.c_str(), main_namespace, main_namespace);
-            bp::object rule_function = main_module.attr(rule_name.c_str());
+            bp::object rule_function = main_module.attr("main");
 
             bp::list rule_arguments_python{};
             bp::object outVal = rule_function(rule_arguments_python, CallbackWrapper{effect_handler}, rei);
