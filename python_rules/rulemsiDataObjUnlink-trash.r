@@ -1,4 +1,4 @@
-def myTestRule(rule_args, callback, rei):
+def main(rule_args, callback, rei):
     path = global_vars['*Path'][1:-1]
 
     callback.msiDataObjUnlink('objPath=' + path + '++++irodsAdminRmTrash=', 0)

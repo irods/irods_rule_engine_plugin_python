@@ -1,4 +1,4 @@
-def myTestRule(rule_args, callback, rei):
+def main(rule_args, callback, rei):
     address = global_vars['*Address'][1:-1]
     subject = global_vars['*Subject'][1:-1]
     body = global_vars['*Body'][1:-1]

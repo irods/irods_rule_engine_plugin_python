@@ -1,4 +1,4 @@
-def myTestRule(rule_args, callback, rei):
+def main(rule_args, callback, rei):
     type = global_vars['*Type'][1:-1]
     name = global_vars['*Name'][1:-1]
     resource = global_vars['*Resource'][1:-1]

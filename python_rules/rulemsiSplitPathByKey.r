@@ -1,4 +1,4 @@
-def myTestRule(rule_args, callback, rei):
+def main(rule_args, callback, rei):
     in_str = global_vars['*string'][1:-1]
     separator = global_vars['*separator'][1:-1]
 

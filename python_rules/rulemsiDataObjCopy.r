@@ -1,4 +1,4 @@
-def myTestRule(rule_args, callback, rei):
+def main(rule_args, callback, rei):
     source_file = global_vars['*SourceFile'][1:-1]
     dest_file = global_vars['*DestFile'][1:-1]
 

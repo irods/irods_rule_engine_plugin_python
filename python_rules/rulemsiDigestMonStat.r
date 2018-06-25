@@ -1,4 +1,4 @@
-def myTestRule(rule_args, callback, rei):
+def main(rule_args, callback, rei):
     cpu_weight = global_vars['*Cpuw'][1:-1]
     mem_weight = global_vars['*Memw'][1:-1]
     swap_weight = global_vars['*Swapw'][1:-1]

@@ -1,4 +1,4 @@
-def myTestRule(rule_args, callback, rei):
+def main(rule_args, callback, rei):
     coll = global_vars['*Coll'][1:-1]
     flag = global_vars['*Flag'][1:-1]
 

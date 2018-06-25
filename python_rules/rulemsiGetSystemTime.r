@@ -1,4 +1,4 @@
-def myTestRule(rule_args, callback, rei):
+def main(rule_args, callback, rei):
     ret_val = callback.msiGetSystemTime('dummy_str', 'unix')
     time_1 = ret_val['arguments'][0]
 

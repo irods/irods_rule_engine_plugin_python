@@ -1,4 +1,4 @@
-def myTestRule(rule_args, callback, rei):
+def main(rule_args, callback, rei):
     tag = global_vars['*Tag'][1:-1]
     in_str = global_vars['*Str'][1:-1]
 

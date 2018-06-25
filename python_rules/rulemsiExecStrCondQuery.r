@@ -1,4 +1,4 @@
-def myTestRule(rule_args, callback, rei):
+def main(rule_args, callback, rei):
     select = global_vars['*Select'][1:-1]
 
     ret_val = callback.msiExecStrCondQuery(select, irods_types.GenQueryOut())

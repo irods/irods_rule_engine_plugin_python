@@ -1,4 +1,4 @@
-def myTestRule(rule_args, callback, rei):
+def main(rule_args, callback, rei):
     flags = global_vars['*Flags'][1:-1]
     length = global_vars['*Len'][1:-1]
 

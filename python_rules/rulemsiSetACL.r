@@ -1,4 +1,4 @@
-def myTestRule(rule_args, callback, rei):
+def main(rule_args, callback, rei):
     user = global_vars['*User'][1:-1]
     path = global_vars['*Path'][1:-1]
     acl = global_vars['*Acl'][1:-1]

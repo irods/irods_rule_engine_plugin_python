@@ -1,4 +1,4 @@
-def myTestRule(rule_args, callback, rei):
+def main(rule_args, callback, rei):
     select = global_vars['*Select'][1:-1]
     select_add = global_vars['*SelectAdd'][1:-1]
     fcn = global_vars['*Function'][1:-1]

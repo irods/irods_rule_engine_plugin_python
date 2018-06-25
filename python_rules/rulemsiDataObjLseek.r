@@ -1,4 +1,4 @@
-def myTestRule(rule_args, callback, rei):
+def main(rule_args, callback, rei):
     obj = global_vars['*Obj'][1:-1]
     oflags = global_vars['*OFlags'][1:-1]
     obj_b = global_vars['*ObjB'][1:-1]

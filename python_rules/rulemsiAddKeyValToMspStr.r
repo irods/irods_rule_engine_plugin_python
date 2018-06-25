@@ -1,4 +1,4 @@
-def myTestRule(rule_args, callback, rei):
+def main(rule_args, callback, rei):
     attr_name = global_vars['*AttrName'][1:-1]
     attr_value = global_vars['*AttrValue'][1:-1]
 

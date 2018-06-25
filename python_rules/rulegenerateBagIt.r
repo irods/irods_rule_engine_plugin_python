@@ -1,4 +1,4 @@
-def generateBagIt(rule_args, callback, rei):
+def main(rule_args, callback, rei):
     bagIt_data = global_vars['*BAGITDATA'][1:-1]
     new_bagIt_root = global_vars['*NEWBAGITROOT'][1:-1]
 

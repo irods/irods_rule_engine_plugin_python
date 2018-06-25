@@ -1,4 +1,4 @@
-def myTestRule(rule_args, callback, rei):
+def main(rule_args, callback, rei):
     source_file = global_vars['*SourceFile'][1:-1]
 
     callback.msiDataObjTrim(source_file, 'null', 'null', '1', 'null', 0)

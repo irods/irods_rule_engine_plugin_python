@@ -1,4 +1,4 @@
-def myTestRule(rule_args, callback, rei):
+def main(rule_args, callback, rei):
     time = global_vars['*Time'][1:-1]
     table = global_vars['*Table'][1:-1]
     cpu_weight = global_vars['*Cpuw'][1:-1]

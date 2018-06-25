@@ -1,4 +1,4 @@
-def rulemsiDataObjRsync(rule_args, callback, rei):
+def main(rule_args, callback, rei):
     source_obj = global_vars['*sourceObj'][1:-1]
     dest_resc = global_vars['*destResc'][1:-1]
     dest_obj = global_vars['*destObj'][1:-1]

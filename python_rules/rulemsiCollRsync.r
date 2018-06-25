@@ -1,4 +1,4 @@
-def myTestRule(rule_args, callback, rei):
+def main(rule_args, callback, rei):
     src_coll = global_vars['*srcColl'][1:-1]
     dest_coll = global_vars['*destColl'][1:-1]
     resource = global_vars['*Resource'][1:-1]
