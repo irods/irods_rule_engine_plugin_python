@@ -43,3 +43,17 @@ Python rules will be loaded from `core.py` (located at `/etc/irods/core.py` in a
 - The example `core.py` file in this repository contains a Python implementation of all static policy enforcement points (PEPs) from a default `core.re` rulebase.
 
 - This version of the Python Rule Engine Plugin uses the Python 2.7 interpreter.
+
+# Remote Execution
+
+There exists a requirement to for the implementation of a different ```remote``` microservice call for every rule language.  Given the possiblity of a namespace collision with more than one rule language being configured simultaneously the name of the microservice to use for the python language is ```py_remote()```.
+For example:
+```
+def main(rule_args, callback, rei):
+    rule_code = "def main(rule_args, callback, rei):\n    print('This is a test of the Python Remote Rule Execution')"
+    callback.py_remote('icat.example.org', '', rule_code, '')
+INPUT null
+OUTPUT ruleExecOut
+```
+
+
