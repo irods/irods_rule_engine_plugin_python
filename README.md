@@ -56,6 +56,16 @@ INPUT null
 OUTPUT ruleExecOut
 ```
 
+# Admin rights required for irule with Python
+
+Due to the Python language not being sandboxed (and running as the unix iRODS service account), `irule` does not allow rulefiles written in Python to be executed by non-rodsadmin user accounts.  If this is attempted, the following error message will be returned to the client:
+```
+Insufficient privileges to run irule in Python rule engine plugin
+```
+
+If Python rules are needed by non-rodsadmin users, then iRODS administrators can install those Python rules on the server side (in `core.py`, or imported by `core.py`) where they will be made available to `irule` via the `callback` mechanism (see below).
+
+
 # Calling rules across language boundaries
 
 The following example rulefiles (iRODS Rule Language and Python) demonstrate calling microservices in both directions when reacting to a simple `iput` (the acPostProcForPut rule is fired in Python).
