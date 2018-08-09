@@ -56,4 +56,46 @@ INPUT null
 OUTPUT ruleExecOut
 ```
 
+# Calling rules across language boundaries
 
+The following example rulefiles (iRODS Rule Language and Python) demonstrate calling microservices in both directions when reacting to a simple `iput` (the acPostProcForPut rule is fired in Python).
+
+The Python `acPostProcForPut` rule calls `irods_rule_language_printme` with a single string parameter via the `callback` mechanism.
+
+The iRODS Rule Language rule calls `python_printme` with a single string parameter (without using the `callback` mechanism).
+
+core.py:
+```python
+def acPostProcForPut(rule_args, callback, rei):
+    callback.writeLine('serverLog', 'PYTHON - acPostProcForPut() begin')
+    callback.irods_rule_language_printme('apples')
+    callback.writeLine('serverLog', 'PYTHON - acPostProcForPut() end')
+
+def python_printme(rule_args, callback, rei):
+    callback.writeLine('serverLog', 'PYTHON - python_printme() begin')
+    callback.writeLine('serverLog', 'python_printme [' + rule_args[0] + ']')
+    callback.writeLine('serverLog', 'PYTHON - python_printme() end')
+```
+
+example.re:
+```
+irods_rule_language_printme(*thestring){
+    writeLine("serverLog","irods_rule_language_printme [" ++ *thestring ++ "]")
+    python_printme('bananas');
+}
+```
+
+Put a file:
+```
+$ iput foo
+```
+
+The resulting rodsLog will have the following output:
+```
+Aug  8 20:57:43 pid:23802 NOTICE: writeLine: inString = PYTHON - acPostProcForPut() begin
+Aug  8 20:57:43 pid:23802 NOTICE: writeLine: inString = irods_rule_language_printme [apples]
+Aug  8 20:57:43 pid:23802 NOTICE: writeLine: inString = PYTHON - python_printme() begin
+Aug  8 20:57:43 pid:23802 NOTICE: writeLine: inString = python_printme [bananas]
+Aug  8 20:57:43 pid:23802 NOTICE: writeLine: inString = PYTHON - python_printme() end
+Aug  8 20:57:43 pid:23802 NOTICE: writeLine: inString = PYTHON - acPostProcForPut() end
+```
