@@ -46,7 +46,7 @@ Python rules will be loaded from `core.py` (located at `/etc/irods/core.py` in a
 
 # Remote Execution
 
-There exists a requirement to for the implementation of a different ```remote``` microservice call for every rule language.  Given the possiblity of a namespace collision with more than one rule language being configured simultaneously the name of the microservice to use for the python language is ```py_remote()```.
+There exists a requirement for the implementation of a different ```remote``` microservice call for every rule language.  Given the possibility of a namespace collision with more than one rule language being configured simultaneously, the name of the microservice to use for the python language is ```py_remote()```.
 For example:
 ```
 def main(rule_args, callback, rei):
