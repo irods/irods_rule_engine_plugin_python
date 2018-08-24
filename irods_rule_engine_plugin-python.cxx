@@ -335,7 +335,7 @@ start(irods::default_re_ctx&, const std::string& _instance_name) {
         ms_table["writeLine"] = new irods::ms_table_entry("writeLine", 2, std::function<int(msParam_t*, msParam_t*, ruleExecInfo_t*)>( writeLine ) );
     }
 
-    ms_table["py_remote"] = new irods::ms_table_entry("py_remote", 4, std::function<int(msParam_t*, msParam_t*, msParam_t*, msParam_t*, ruleExecInfo_t*)>( remote_exec_msvc ) );
+    ms_table["remoteExec"] = new irods::ms_table_entry("remoteExec", 4, std::function<int(msParam_t*, msParam_t*, msParam_t*, msParam_t*, ruleExecInfo_t*)>( remote_exec_msvc ) );
 
     try {
         const auto& re_plugin_arr = irods::get_server_property< const std::vector< boost::any >& >( std::vector< std::string >{ irods::CFG_PLUGIN_CONFIGURATION_KW, irods::PLUGIN_TYPE_RULE_ENGINE } );
