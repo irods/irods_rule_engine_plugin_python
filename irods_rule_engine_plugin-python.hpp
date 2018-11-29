@@ -11,8 +11,9 @@
 #include "irods_exception.hpp"
 
 #include "irods_types.hpp"
+#include "array_ref.hpp"
 
-
+namespace bp = boost::python;
 
 namespace boost {
     namespace python {
