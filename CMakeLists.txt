@@ -60,6 +60,7 @@ set(
       ${PLUGIN}
       MODULE
       ${CMAKE_PROJECT_NAME}.cxx
+      irods_types.cpp
       )
 
   target_include_directories(
@@ -85,7 +86,7 @@ set(
 	  irods_server
       )
 
-  target_compile_definitions(${PLUGIN} PRIVATE ${IRODS_RULE_ENGINE_PYTHON_PLUGIN_COMPILE_DEFINITIONS} ${IRODS_COMPILE_DEFINITIONS} BOOST_SYSTEM_NO_DEPRECATED BOOST_PYTHON_MAX_ARITY=45)
+  target_compile_definitions(${PLUGIN} PRIVATE ${IRODS_RULE_ENGINE_PYTHON_PLUGIN_COMPILE_DEFINITIONS} ${IRODS_COMPILE_DEFINITIONS})
   #target_compile_options(${PLUGIN} PRIVATE -Wno-write-strings)
   set_property(TARGET ${PLUGIN} PROPERTY CXX_STANDARD ${IRODS_CXX_STANDARD})
 

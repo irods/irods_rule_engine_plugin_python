@@ -29,8 +29,6 @@ irods::ms_table& get_microservice_table();
 // writeLine is not in the microservice table in 4.2.0 - #3408
 int writeLine(msParam_t*, msParam_t*, ruleExecInfo_t*);
 
-
-
 static int carryOverMsParam(
     msParamArray_t *sourceMsParamArray,
     msParamArray_t *targetMsParamArray ) {
@@ -116,10 +114,6 @@ const std::string DYNAMIC_PEP_RULE_REGEX = "[^ ]*pep_[^ ]*_(pre|post)";
 namespace bp = boost::python;
 
 static std::recursive_mutex python_mutex;
-
-bool operator==(const sqlResult_t& s1, const sqlResult_t& s2) {
-    return false;
-}
 
 
 void register_regexes_from_array(
@@ -314,11 +308,6 @@ start(irods::default_re_ctx&, const std::string& _instance_name) {
 
         bp::object plugin_wrappers = bp::import("plugin_wrappers");
         bp::object irods_types = bp::import("irods_types");
-
-        // TODO Enable non core.py Python rulebases
-        bp::object core_module = bp::import("core");
-        bp::object core_namespace = core_module.attr("__dict__");
-        core_namespace["irods_types"] = irods_types;
 
         StringFromPythonUnicode::register_converter();
     } catch (const bp::error_already_set&) {
