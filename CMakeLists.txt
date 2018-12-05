@@ -75,7 +75,7 @@ set(
   target_link_libraries(
       ${PLUGIN}
       PRIVATE
-	  ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_python.so
+	  ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_python27.so
 	  ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_system.so
 	  ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_date_time.so
 	  ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_filesystem.so
