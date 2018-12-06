@@ -4,7 +4,7 @@ This C++ plugin provides the iRODS platform a rule engine that allows iRODS rule
 
 # Build
 
-Building the iRODS Python Rule Engine Plugin requires version 4.2.1+ of the iRODS software from github (http://github.com/irods/irods).  The version of the irods-dev package will need to match the version defined in `CMakeLists.txt`.
+Building the iRODS Python Rule Engine Plugin requires version 4.2.1+ of the iRODS software from github (http://github.com/irods/irods).  The version of the `irods-dev` package will need to match the version defined in `CMakeLists.txt`.
 
 ```
 cd irods_rule_engine_plugin_python
