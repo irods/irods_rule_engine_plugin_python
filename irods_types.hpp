@@ -65,7 +65,6 @@ using list_of_irods_types = type_sequence<
         genQueryInp_t,
         genQueryOut_t,
         generalUpdateInp_t,
-        getXmsgTicketInp_t,
         icatSessionStruct,
         in_addr,
         int,
@@ -88,8 +87,6 @@ using list_of_irods_types = type_sequence<
         rErrMsg_t,
         rError_t,
         rcComm_t,
-        rcvXmsgInp_t,
-        rcvXmsgOut_t,
         rodsDirent_t,
         rodsEnv,
         rodsHostAddr_t,
@@ -100,7 +97,6 @@ using list_of_irods_types = type_sequence<
         ruleExecDelInp_t,
         ruleExecInfo_t,
         ruleExecSubmitInp_t,
-        sendXmsgInp_t,
         sockaddr_in,
         specColl_t,
         specificQueryInp_t,
@@ -117,8 +113,6 @@ using list_of_irods_types = type_sequence<
         transferStat_t,
         userInfo_t,
         userOtherInfo_t,
-        version_t,
-        //void*,
-        xmsgTicketInfo_t>;
+        version_t>;
 
 #endif //IRODS_TYPES_HPP__

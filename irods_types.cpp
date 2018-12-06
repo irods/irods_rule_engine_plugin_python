@@ -572,8 +572,6 @@ namespace {
                             &rodsEnv::rodsUserName,
                             &rodsEnv::rodsHost,
                             &rodsEnv::rodsPort,
-                            &rodsEnv::xmsgHost,
-                            &rodsEnv::xmsgPort,
                             &rodsEnv::rodsHome,
                             &rodsEnv::rodsCwd,
                             &rodsEnv::rodsAuthScheme,
@@ -607,8 +605,6 @@ namespace {
             .add_property("rodsUserName", +[](rodsEnv *s) { return array_ref<char>{s->rodsUserName}; })
             .add_property("rodsHost", +[](rodsEnv *s) { return array_ref<char>{s->rodsHost}; })
             .add_property("rodsPort", &rodsEnv::rodsPort)
-            .add_property("xmsgHost", +[](rodsEnv *s) { return array_ref<char>{s->xmsgHost}; })
-            .add_property("xmsgPort", &rodsEnv::xmsgPort)
             .add_property("rodsHome", +[](rodsEnv *s) { return array_ref<char>{s->rodsHome}; })
             .add_property("rodsCwd", +[](rodsEnv *s) { return array_ref<char>{s->rodsCwd}; })
             .add_property("rodsAuthScheme", +[](rodsEnv *s) { return array_ref<char>{s->rodsAuthScheme}; })
@@ -1323,26 +1319,6 @@ namespace {
             .add_property("dummyInt", &rodsHostAddr_t::dummyInt)
         ;
 
-        bp::class_<getXmsgTicketInp_t>("GetXmsgTicketInp", bp::no_init)
-            .def("__init__", make_init_function<getXmsgTicketInp_t>(
-                        &getXmsgTicketInp_t::expireTime,
-                        &getXmsgTicketInp_t::flag))
-            .add_property("expireTime", &getXmsgTicketInp_t::expireTime)
-            .add_property("flag", &getXmsgTicketInp_t::flag)
-        ;
-
-        bp::class_<xmsgTicketInfo_t>("XmsgTicketInfo", bp::no_init)
-            .def("__init__", make_init_function<xmsgTicketInfo_t>(
-                        &xmsgTicketInfo_t::sendTicket,
-                        &xmsgTicketInfo_t::rcvTicket,
-                        &xmsgTicketInfo_t::expireTime,
-                        &xmsgTicketInfo_t::flag))
-            .add_property("sendTicket", &xmsgTicketInfo_t::sendTicket)
-            .add_property("rcvTicket", &xmsgTicketInfo_t::rcvTicket)
-            .add_property("expireTime", &xmsgTicketInfo_t::expireTime)
-            .add_property("flag", &xmsgTicketInfo_t::flag)
-        ;
-
         bp::class_<modAccessControlInp_t>("ModAccessControlInp", bp::no_init)
             .def("__init__", make_init_function<modAccessControlInp_t>(
                         &modAccessControlInp_t::recursiveFlag,
@@ -1369,35 +1345,6 @@ namespace {
             .add_property("oprType", &structFileExtAndRegInp_t::oprType)
             .add_property("flags", &structFileExtAndRegInp_t::flags)
             .add_property("condInput", &structFileExtAndRegInp_t::condInput)
-        ;
-
-        bp::class_<rcvXmsgInp_t>("RcvXmsgInp", bp::no_init)
-            .def("__init__", make_init_function<rcvXmsgInp_t>(
-                        &rcvXmsgInp_t::rcvTicket,
-                        &rcvXmsgInp_t::msgNumber,
-                        &rcvXmsgInp_t::seqNumber,
-                        &rcvXmsgInp_t::msgCondition))
-            .add_property("rcvTicket", &rcvXmsgInp_t::rcvTicket)
-            .add_property("msgNumber", &rcvXmsgInp_t::msgNumber)
-            .add_property("seqNumber", &rcvXmsgInp_t::seqNumber)
-            .add_property("msgCondition", +[](rcvXmsgInp_t *s) { return array_ref<char>{s->msgCondition}; })
-
-        ;
-
-        bp::class_<rcvXmsgOut_t>("RcvXmsgOut", bp::no_init)
-            .def("__init__", make_init_function<rcvXmsgOut_t>(
-                        &rcvXmsgOut_t::msgType,
-                        &rcvXmsgOut_t::sendUserName,
-                        &rcvXmsgOut_t::sendAddr,
-                        &rcvXmsgOut_t::msgNumber,
-                        &rcvXmsgOut_t::seqNumber,
-                        &rcvXmsgOut_t::msg))
-            .add_property("msgType", +[](rcvXmsgOut_t *s) { return array_ref<char>{s->msgType}; })
-            .add_property("sendUserName", +[](rcvXmsgOut_t *s) { return array_ref<char>{s->sendUserName}; })
-            .add_property("sendAddr", +[](rcvXmsgOut_t *s) { return array_ref<char>{s->sendAddr}; })
-            .add_property("msgNumber", &rcvXmsgOut_t::msgNumber)
-            .add_property("seqNumber", &rcvXmsgOut_t::seqNumber)
-            .add_property("msg", +[](rcvXmsgOut_t *s) { return array_ref<char, true>{s->msg}; })
         ;
 
         bp::class_<collEnt_t>("CollEnt", bp::no_init)
@@ -1442,16 +1389,6 @@ namespace {
             .def("__init__", make_init_function<ruleExecDelInp_t>(
                         &ruleExecDelInp_t::ruleExecId))
             .add_property("ruleExecId", +[](ruleExecDelInp_t *s) { return array_ref<char>{s->ruleExecId}; })
-        ;
-
-        bp::class_<sendXmsgInp_t>("SendXmsgInp", bp::no_init)
-            .def("__init__", make_init_function<sendXmsgInp_t>(
-                        &sendXmsgInp_t::ticket,
-                        &sendXmsgInp_t::sendAddr,
-                        &sendXmsgInp_t::sendXmsgInfo))
-            .add_property("ticket", &sendXmsgInp_t::ticket)
-            .add_property("sendAddr", +[](sendXmsgInp_t *s) { return array_ref<char>{s->sendAddr}; })
-            .add_property("sendXmsgInfo", &sendXmsgInp_t::sendXmsgInfo)
         ;
 
         bp::class_<structFileOprInp_t>("StructFileOprInp", bp::no_init)
