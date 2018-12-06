@@ -10,8 +10,6 @@
 #include "boost/algorithm/string/classification.hpp"
 #include "boost/filesystem/operations.hpp"
 #include "boost/filesystem/operations.hpp"
-#include "boost/python/slice.hpp"
-#include "boost/python/module_init.hpp"
 
 #include "irods_error.hpp"
 #include "irods_re_plugin.hpp"
@@ -23,6 +21,11 @@
 #include "rsExecMyRule.hpp"
 
 #include "irods_rule_engine_plugin-python.hpp"
+
+#define register
+#include "boost/python/slice.hpp"
+#include "boost/python/module_init.hpp"
+#undef register
 
 irods::ms_table& get_microservice_table();
 

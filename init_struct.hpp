@@ -2,11 +2,12 @@
 #define INIT_STRUCT_HPP
 
 #include <memory>
-#include "boost/python.hpp"
-
 #include "raw_constructor.hpp"
 #include "type_sequence.hpp"
 
+#define register
+#include <boost/python.hpp>
+#undef register
 
 template<class T, typename = std::enable_if_t<std::is_pointer<T>::value>>
 T populate_helper(boost::python::tuple& args, int& index, boost::python::stl_input_iterator<boost::python::object>&, int&) {

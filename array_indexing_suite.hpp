@@ -1,11 +1,13 @@
 // From Praetorian's answer here: http://stackoverflow.com/a/27560620
-#include <boost/python.hpp>
-#include <boost/python/suite/indexing/indexing_suite.hpp>
-
 #include <algorithm>
 #include <cstddef>
 #include <iterator>
 #include <type_traits>
+
+#define register
+#include <boost/python.hpp>
+#include <boost/python/suite/indexing/indexing_suite.hpp>
+#undef register
 
 // Forward declaration
 template<

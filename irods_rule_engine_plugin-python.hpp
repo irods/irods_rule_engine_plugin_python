@@ -1,7 +1,6 @@
 #include <type_traits>
 #include <functional>
 
-#include "boost/python.hpp"
 #include "boost/any.hpp"
 #include "boost/optional.hpp"
 #include "boost/format.hpp"
@@ -12,6 +11,10 @@
 
 #include "irods_types.hpp"
 #include "array_ref.hpp"
+
+#define register
+#include "boost/python.hpp"
+#undef register
 
 namespace bp = boost::python;
 
