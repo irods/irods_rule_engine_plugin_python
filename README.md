@@ -157,7 +157,7 @@ rows at a time in the form of a Python list):
 ```
   iter = paged_iterator(
            ["sum(DATA_SIZE)"], "DATA_NAME like 'file_%.dat'",
-           False, # says we want an integer-indexed row, not key-value lookup
+           AS_LIST, # says we want an integer-indexed row, not key-value lookup
            callback , N_rows_per_page=1
   )
   for row in iter:  # ---> one row returned with sum of size of matching data objects
@@ -168,7 +168,7 @@ rows at a time in the form of a Python list):
 The `row_iterator` returns each row result via a Python generator object:
 
 ```
-  for dObj in row_iterator("DATA_NAME,DATA_SIZE" , conditions, True, callback):
+  for dObj in row_iterator("DATA_NAME,DATA_SIZE" , conditions, AS_DICT, callback):
       callback.writeLine ("serverLog",
         "name = {0} ; size = {1}" . format( dObj['DATA_NAME'], dObj['DATA_SIZE'] )
       )
