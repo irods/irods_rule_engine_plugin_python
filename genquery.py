@@ -1,6 +1,5 @@
 import itertools
 
-
 __all__ = [
     "row_iterator",
     "paged_iterator",
@@ -8,9 +7,9 @@ __all__ = [
     "AS_LIST",
 ]
 
-
 MAX_SQL_ROWS = 256
-AUTO_CLOSE_QUERIES = False
+
+AUTO_CLOSE_QUERIES = True
 Report_Exit_To_Log = False
 
 class row_return_type (object):
@@ -21,7 +20,6 @@ class AS_LIST (row_return_type): pass
 
 class bad_column_spec (RuntimeError): pass
 class bad_returntype_spec (RuntimeError): pass
-
 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # :::::              generator-style query iterator              :::::
@@ -92,18 +90,15 @@ def row_iterator(  columns,     # comma-separated string, or list, of columns
             exit_type = 'GET_ROWS_ERROR'
         else:
             exit_type = 'UNKNOWN_ERROR'
-        continue_index_old = 0 # prevent iterating through rest of results in "finally" clause
-        raise                  # --> rethrow (run the finally clause, but then propagates exception)
+        continue_index = 0 # Unanticipated source of error, preserve exception as-is
+        raise              # ('finally' clause runs, but no forced closing of query)
     else:
         exit_type = '(Normal)'
     finally:
         if Report_Exit_To_Log:
             callback.writeLine("serverLog","Python GenQuery exit type - {}".format(exit_type))
-
-        #callback.msiCloseGenQuery( genQueryInp, genQueryOut ) # prb not a good strategy from Python
-
         if AUTO_CLOSE_QUERIES:
-            while continue_index_old > 0:
+            while continue_index > 0:
                 continue_index_old = continue_index
                 ret_val = callback.msiGetMoreRows(genQueryInp , genQueryOut, 0) 
                 genQueryOut = ret_val['arguments'][1]
@@ -175,81 +170,6 @@ class paged_iterator (object):
 
 def logPrinter(callback, stream):
   return lambda logMsg : callback.writeLine( stream, logMsg )
-
-#  ###############################################################################
-#  Helper routine to set up or tear down (N*1000) AVU's on the logical collection
-#    (with N between '0' and '9' inclusive)
-#  Note -- 'imeta rum' can be used to clear the unused AVU's if necessary
-#  ###############################################################################
-
-def set_or_clear_gnx_test_meta_on_coll(collnpath , operation, N, callback,
-                                       partial_pages = True):
-    import irods_types
-    if partial_pages:
-        lower_bound = 0
-    else:
-        lower_bound = 1000 - 768
-    thousands = 0
-    meta_string = "kvp_page={}%" .format(thousands) + \
-                  "%".join("{:04d}={}".format(i,-(i%10+1)) for i in range(lower_bound,1000))
-
-    for thousands in range(int(N)):
-        kvp = callback.msiString2KeyValPair(meta_string, irods_types.KeyValPair())['arguments'][1]
-        if operation.upper() in ('ASSOC','SET','+'):
-            retval = callback.msiAssociateKeyValuePairsToObj( kvp, collnpath,  "-C")
-        elif operation.upper() in ('CLEAR', 'CLR', '-'):
-            retval = callback.msiRemoveKeyValuePairsFromObj( kvp, collnpath,  "-C")
-        meta_string = meta_string.replace(
-                       "%{}".format(thousands),"%{}".format(thousands+1)).replace(
-                       "={}".format(thousands),"={}".format(thousands+1))
-
-#  ################################################################################
-#  Test function for evaluating the auto close feature (AUTO_CLOSE_QUERIES -> True)
-#     (test cases remain to be written as this flag is an experimental feature)
-#  ################################################################################
-
-def test_generator_exit_cases_Via_Rule_Framework (rule_args, callback, rei):
-
-    test_generator_exit_cases_Via_DirectCall (*rule_args, callback_=callback, rei_=rei)
-
-def test_generator_exit_cases_Via_DirectCall (*rule_args_ , **kw):
-
-    callback = kw.get('callback_')
-    rei = kw.get('rei_')
-
-    coll_name = rule_args_[0]
-
-    rowcount_and_mode =  rule_args_[1]
-    test_params = ( rule_args_[1] ).lower().split(",")
-
-    test_param_defaults = ["ROW",     "3",   "1",            "_"*4 ]
-                          # itr_type, nQuery, nRepsPerQuery, likePattern
-
-    if len(test_params)<4: test_params += test_param_defaults[ len(rmi)-4: ] # - extend with defaults
-
-    iterType      =  test_params[0]
-    nQueries      = int(test_params[1])
-    nRepsPerQuery = int(test_params[2])
-    likePattern   = test_params[3]
-
-    if rule_args_[2:] and rule_args_[2] and (callback is not None):
-        logger = logPrinter(callback, rule_args_[2])
-    else:
-        logger = lambda logMsg: None
-
-    columns    = [ "META_COLL_ATTR_NAME", "META_COLL_ATTR_VALUE" ]
-    conditions = "COLL_NAME = '{0}' ".format( coll_name )
-
-    if test_params[3] != "":
-        conditions += " and META_COLL_ATTR_NAME like '{}'".format(test_params[3])
-
-    Iterator = (row_iterator if 'row' in iterType else paged_iterator)
-
-    for j in range(nQueries):
-        nObj = 0
-        for obj in Iterator ( columns, conditions, AS_LIST, callback ):
-            nObj += 1
-            if nObj > nRepsPerQuery: break
 
 #
 #  Test rule below takes (like_path_rhs , requested_rowcount) as arguments via "rule_args" param
