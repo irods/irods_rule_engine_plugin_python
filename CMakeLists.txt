@@ -67,7 +67,7 @@ set(
       PRIVATE
 	  ${IRODS_INCLUDE_DIRS}
       ${IRODS_EXTERNALS_FULLPATH_BOOST}/include
-      ${IRODS_EXTERNALS_FULLPATH_JANSSON}/include
+      ${IRODS_EXTERNALS_FULLPATH_JSON}/include
 	  ${PYTHON_INCLUDE_DIRS}
       )
 
@@ -78,7 +78,6 @@ set(
 	  ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_system.so
 	  ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_date_time.so
 	  ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_filesystem.so
-      ${IRODS_EXTERNALS_FULLPATH_JANSSON}/lib/libjansson.so
 	  ${PYTHON_LIBRARIES}
 	  ${CMAKE_DL_LIBS}
 	  irods_common
