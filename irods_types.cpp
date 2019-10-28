@@ -2,6 +2,8 @@
 
 #include "irods_types.hpp"
 
+#include "irods_re_serialization.hpp"
+
 #include "init_struct.hpp"
 #include "array_indexing_suite.hpp"
 #include "array_ref.hpp"
@@ -948,9 +950,19 @@ namespace {
             //prop_map contains boost::any, don't directly support that in python
             //.add_property("__getitem__", +[](irods::plugin_context* _ctx, const std::string& key) { return _ctx.prop_map().get(key) }
             //.add_property("__setitem__", +[](irods::plugin_context* _ctx, const std::string& key) { return _ctx.prop_map().set(key) }
-            .add_property("rule_results", +[](irods::plugin_context* _ctx) { return _ctx->rule_results(); } )
-            .add_property("__getitem__", +[](irods::plugin_context* _ctx, const std::string& key) { irods::rule_engine_vars_t map; _ctx->fco()->get_re_vars(map); return map[key]; })
-            ;
+            .add_property("rule_results", +[](irods::plugin_context* _ctx) { return _ctx->rule_results(); })
+
+            .def("__getitem__", +[](irods::plugin_context* _ctx, const std::string& key) {
+                 irods::rule_engine_vars_t vars_map;
+                 _ctx->fco()->get_re_vars(vars_map);
+                 if (vars_map.find(key) != vars_map.end()) { return vars_map[key]; }
+                 irods::re_serialization::serialized_parameter_t comm_map;
+                 auto err = irods::re_serialization::serialize_parameter( boost::any{ _ctx->comm() }, comm_map );
+                 if (!err.ok()) { return std::string{}; }
+                 if (comm_map.find(key) != comm_map.end()) { return comm_map[key]; }
+                 return std::string{};
+             }
+             ) ;
 
         bp::class_<irods::hierarchy_parser>("HierarchyParser", bp::no_init)
             .add_property("str", +[](irods::hierarchy_parser* _parser) { std::string ret_string; _parser->str(ret_string, ""); return ret_string; } )
@@ -1019,7 +1031,7 @@ namespace {
             ;
 
         bp::class_<std::map<std::string, std::string>>("StringToStringMap")
-            .add_property("__getitem__", +[](std::map<std::string, std::string>* m, const std::string& key) { return (*m)[key]; })
+            .def("__getitem__", +[](std::map<std::string, std::string>* m, const std::string& key) { return (*m)[key]; })
             ;
 
         boost::python::class_<std::vector<int>>("IntVector")
