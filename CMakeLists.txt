@@ -31,6 +31,7 @@ endif()
 find_package(PythonInterp ${IRODS_PYTHON_VERSION} REQUIRED)
 find_package(PythonLibs ${IRODS_PYTHON_VERSION} REQUIRED)
 
+set(IRODS_CXX_STANDARD 14)
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++")
 set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -stdlib=libc++")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -stdlib=libc++")
@@ -38,7 +39,8 @@ set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,-z,defs")
 add_compile_options(-nostdinc++)
 add_compile_options(-std=c++14)
 link_libraries(c++abi)
-include_directories(${IRODS_EXTERNALS_FULLPATH_CLANG}/include/c++/v1)
+include_directories(${IRODS_EXTERNALS_FULLPATH_CLANG}/include/c++/v1
+                    ${IRODS_EXTERNALS_FULLPATH_JSON}/include)
 
 set(
   IRODS_RULE_ENGINE_PLUGIN-PYTHON_COMPILE_DEFINITIONS
@@ -68,18 +70,16 @@ set(
       PRIVATE
 	  ${IRODS_INCLUDE_DIRS}
       ${IRODS_EXTERNALS_FULLPATH_BOOST}/include
-      ${IRODS_EXTERNALS_FULLPATH_JANSSON}/include
 	  ${PYTHON_INCLUDE_DIRS}
       )
 
   target_link_libraries(
       ${PLUGIN}
       PRIVATE
-	  ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_python.so
+	  ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_python27.so
 	  ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_system.so
 	  ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_date_time.so
 	  ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_filesystem.so
-      ${IRODS_EXTERNALS_FULLPATH_JANSSON}/lib/libjansson.so
 	  ${PYTHON_LIBRARIES}
 	  ${CMAKE_DL_LIBS}
 	  irods_common
