@@ -165,7 +165,7 @@ Previous versions of the `genquery.py` module offered the following two styles o
                                   callback):
            callback.writeLine( "serverLog", result[0] + "/" + result[1] )
    ```
-   * `paged_iterator`, an iterator class that enables paging through a total of `nResults` rows from the ICAT in lists of `1 <= n <= N` at a time , with
+   * `paged_iterator`, an iterator class that enables paging through a total of `nResults` rows from the ICAT in lists of `1 <= n <= N` at a time, with
       - `N` a specified page size in the range ``1...256`` inclusive;
       - and `n < N` only at the end of the iteration when `nResults == 0` or `nResults % N != 0`:
 
@@ -196,7 +196,7 @@ This allows for an admirable consistency of expression, as can be seen in the fo
 
 ```
     for id in Query(callback, "DATA_ID") :
-        pass ## - process data id's for iterated objects
+        pass # - process data id's for iterated objects
 ```  
 and
 ```
@@ -287,7 +287,7 @@ The above example enumerates metadata AVU's (both used and unused) having the at
 
 Strict upward compatibility mode
 ---
-As of iRODS 4.2.8 , the `genquery` module's `row_iterator` function returns a `Query` instance instead of the generator object of previous versions. This should not affect existing Python rule code that depends on the function unless its return value is expected to follow the generator interface -- allowing, for example, iteration via Python interpreter's `next()` built-in.  The great majority of Python statements and expressions availing themselves of this simple row-iterating facility will use the more convenient and succinct form:
+As of iRODS 4.2.8, the `genquery` module's `row_iterator` function returns a `Query` instance instead of the generator object of previous versions. This should not affect existing Python rule code that depends on the function unless its return value is expected to follow the generator interface -- allowing, for example, iteration via Python interpreter's `next()` built-in.  The great majority of Python statements and expressions availing themselves of this simple row-iterating facility will use the more convenient and succinct form:
 ```
   for row in row_iterator(...)
 ```
@@ -299,7 +299,7 @@ But in the event of an incompatibility, users can **modify their import declarat
      from genquery import *
      from genquery import (row_generator as row_iterator)
      ```
-     in place of the the normal
+     in place of the normal
      ```
      from genquery import *
      ```
