@@ -150,7 +150,7 @@ def get_irods_username (rule_args, callback, rei):
 ## `genquery.py`
 
 This module offers writers of Python rules a convenient facility for querying and iterating over objects in the iRODS object catalog (ICAT).
-The only declaration required within your `core.py` or other python rule file is:
+The only declaration required within your `core.py` or other Python rule file is:
 ```
 from genquery import *
 ```
@@ -165,9 +165,9 @@ Previous versions of the `genquery.py` module offered the following two styles o
                                   callback):
            callback.writeLine( "serverLog", result[0] + "/" + result[1] )
    ```
-   * `paged_iterator`, an iterator class that enables paging through a total of `nResults` ICAT objects in lists of `1 <= n <= N` at a time , with
+   * `paged_iterator`, an iterator class that enables paging through a total of `nResults` rows from the ICAT in lists of `1 <= n <= N` at a time , with
       - `N` a specified page size in the range ``1...256`` inclusive;
-      - and `n < N` only at the end of the iteration when `nResults % N != 0`:
+      - and `n < N` only at the end of the iteration when `nResults == 0` or `nResults % N != 0`:
 
    ```
    def get_users_in_group(args,callback,rei):
@@ -175,24 +175,24 @@ Previous versions of the `genquery.py` module offered the following two styles o
        users = []
        for rows in paged_iterator("USER_NAME,USER_ZONE",
                                      "USER_GROUP_NAME = '{}'".format(groupname),
-                                     AS_DICT, callback, 32):
+                                     AS_DICT, callback, 32 ):
            users += ["{USER_NAME}#{USER_ZONE}".format(**r) for r in rows]
        callback.writeLine('stdout',repr(users))
 ```
 
 As of version 4.2.8 of iRODS, there is also a class-based iterator called `Query`, which offers an enhanced set of options and behaviors for use in ICAT searches.
 
-Under the new class-based syntax, a query could be as simple as in this example:
+Under the new class-based syntax, an iRODS general query can be as simple as in this example:
 
 ```
 all_resource_names = [ r for r in Query(callback,'RESC_NAME') ]
 ```
 
-the result of which will be a list of the names of all resource nodes known to the ICAT.
+the result of which will be a Python `list` of `str` values, enumerating the names of all resource nodes known to the ICAT.
 
-`Query`'s constructor allows commonly defaulted traits (otherwise tunable via a selection of keyword arguments, listed in the reference section following this one) to take on reasonable values.  In particular, the `output` trait (specifying the type of row structure returned) -- unless specified -- will have the value AS_TUPLE, meaning that for single-column query results the iterator variable does not need to be indexed.  This explains why, in our first `Query` example, the values yielded by the iteration were strings.
+`Query`'s constructor allows commonly defaulted attributes (otherwise tunable via a selection of keyword arguments, listed in the [reference](#queryref) at the end of this section) to take on reasonable values.  In particular, the *output* attribute (dictating the type of data structure used to return individual row results) will, unless specified, default to **AS_TUPLE** -- meaning that for single-column query results the iterator variable does not need to be indexed.  That is why, in our first `Query` example, the values yielded by the iteration were strings.
 
-This allows an admirable consistency of expression. Consider:
+This allows for an admirable consistency of expression, as can be seen in the following two examples:
 
 ```
     for id in Query(callback, "DATA_ID") :
@@ -203,21 +203,21 @@ and
     for coll,data in Query(callback,("COLL_NAME", "DATA_NAME")):
         pass # - process result data objects using the logical path: (coll + "/" + data)
 ```
-**Caveat**: there is a potentially unforeseen wrinkle for anyone looking to expand on deceptively simple examples as these. On examination, it is clear that the two iterations return essentially different row types. In the first case, the iteration variable `id` is of type `str` (string); and in the second, a `tuple` is actually returned from each iteration and then automatically unpacked as the variables `coll` and `data`.
+A caveat for beginners however, when expanding on such deceptively simple syntax, is that the iterations in the above two example usages yield essentially different row types.  In the first usage, the iteration variable `id` is of type `str` (string); and in the second, a `tuple` is actually returned from each iteration and then automatically unpacked as the variables `coll` and `data`.
 
-*If the uniformity of the result rows' data structure type is desirable for a given application of `Query(...)`, then `output=AS_LIST` or `output=AS_DICT` should probably be favored to the default `output=AS_TUPLE`. For more on these, see the* ***output*** *trait in the reference section following this one.*
+*If the uniformity of the result rows' data structure type is desirable for a given application of `Query(...)`, then `output=AS_LIST` or `output=AS_DICT` should be favored to the default `output=AS_TUPLE`. For more on this and other query attributes, see the [reference](#queryref) at the end of this section.*
 
 Clones and Copies
 ---
-The `Query` class features lazy execution, meaning that only the act of iterating on a `Query` object will actually connect to the ICAT for the purpose of a query. This has some advantages, particularly those of cheap instantiation and duplication.
+The `Query` class features lazy execution, meaning that only the act of iterating on a `Query` object will actually connect to the ICAT for the purpose of a general query. This has some advantages, particularly those of cheap instantiation and duplication.
 
 Specifically, the `copy` method can be invoked on any `Query` object to instantiate a new one, and this can be done either with or without keyword arguments.  Absent any input arguments, a call to the `copy` method simply clones the original object.
 
-The keyword arguments to `copy`, if used, are identical to those used by the `Query` constructor, and allow modification of the corresponding traits within the new object. In this way a `Query` object can easily serve as a "bag" of traits variables which can be stored, transferred, modified, and reused.
+The keyword arguments to Query's `copy` method, if used, are identical to those used by the constructor, and allow modification of the corresponding attributes within the new object. In this way, a `Query` object can easily serve as a bag of *attribute* variables which can be stored, transferred, modified, and re-used.
 
-Because iteration on a `Query` object can change its state, it is definitely a best-practice to favor invoking the `copy` method wherever repeated (esp. overlapping) uses are possible for the same Query instance.  This is particularly true for any `Query` object that has been stored in a Python object or variable, so as to give it a longer lifetime than a temporary instance.
+Because iteration on a `Query` object can change its state, a best practice is to favor invoking the `copy` method wherever repeated (esp. overlapping) uses are possible for the same Query instance.  This is particularly true for a `Query` object that has been stored in a Python object or variable, so as to give it a longer lifetime than a temporary instance.
 
-To demonstrate how this will look in practice, let's incorporate a more elaborate version of the search from our first `Query` example within the following helper function:
+To demonstrate how this could look in practice, let's incorporate a more elaborate version of the search from our first `Query` example within the following helper function:
 
 ```
 def get_resource_details(callback,*args):
@@ -250,7 +250,6 @@ def my_resc_summaries(_,callback,rei):
     # -- all resources having no parent node -- (ie root resources)
     callback.writeLine('stdout', pformat(   get_resource_details(callback,
                                                                  "RESC_PARENT = ''")))
-
     #...
 ```
 
@@ -275,25 +274,25 @@ for row in q_fetch:
 Query Options
 ---
 
-The `options` Query trait is a mask of bit-field values which can be supplied via constants in the `genquery.Options` namespace, but probably the only directly useful one is the `NO_DISTINCT` option.  This option might come into play if we decide to enumerate multiple identical row matches from a query as distinct results:
+The `options` Query attribute is a mask of bit-field values which can be built up from constants in the `genquery.Options` namespace, although probably the only directly useful option is `NO_DISTINCT`.  This option might come into play in the rare case that we decide against iRODS' usual behavior of requiring all row results to be "distinct" (in other words, distinguishable combinations of values for the columns selected):
 
 ```
 from genquery import * ; from genquery import Option
 y = len([ row for row in Query(callback , 'META_DATA_ATTR_NAME',
                                """META_DATA_ATTR_NAME = 'aa' and \
-                                  META_DATA_ATTR_UNITS = '' """, 
+                                  META_DATA_ATTR_UNITS = '' """,
                                options=Option.NO_DISTINCT) ])
 ```
-The above example enumerates metadata AVU's (both used and unused) having the attribute name of 'aa' and no units and, by employing the NO_DISTINCT option, suppresses the normal de-duplicating behavior of the general query.  Without the option, any subset of row results undiscernable as being different would be collapsed into a single entry. (Another example where this might be important would be multiple data objects having the same values in the DATA_NAME and/or DATA_SIZE field, without a COLL_* or DATA_ID field also being selected to establish uniqueness some alternate way.)
+The above example enumerates metadata AVU's (both used and unused) having the attribute name of 'aa' and no units -- and, by employing the NO_DISTINCT option, suppresses the normal de-duplicating behavior of the general query.  Without the option, any subset of row results undiscernable as being different would be collapsed into a single row result.  (Another example where this might be important would be if multiple data objects had the same values in the DATA_NAME and/or DATA_SIZE columns, without a COLL_* or DATA_ID column also being selected to establish uniqueness in an alternative way.)
 
 Strict upward compatibility mode
 ---
-As of iRODS 4.2.8 , the genquery module's `row_iterator` function returns a `Query` instance instead of the `generator` object of previous versions. This should not affect existing Python rule code that depends on the function unless its return value is expected to follow the `generator` interface -- allowing, for example, iteration via Python's `next()` built-in.  The great majority of Python statements and expressions availing themselves of this simple row-iterating facility will use the more convenient and succinct form:
+As of iRODS 4.2.8 , the `genquery` module's `row_iterator` function returns a `Query` instance instead of the generator object of previous versions. This should not affect existing Python rule code that depends on the function unless its return value is expected to follow the generator interface -- allowing, for example, iteration via Python interpreter's `next()` built-in.  The great majority of Python statements and expressions availing themselves of this simple row-iterating facility will use the more convenient and succinct form:
 ```
   for row in row_iterator(...)
 ```
 
-But in the event that an incompatibility arises, users can **modify their import declarations as follows** to accommodate both new and old interfaces simultaneously:
+But in the event of an incompatibility, users can **modify their import declarations as follows** to accommodate both new and old interfaces simultaneously:
 
    - Use
      ```
@@ -304,33 +303,34 @@ But in the event that an incompatibility arises, users can **modify their import
      ```
      from genquery import *
      ```
-    
-   - In modules not using the wildcard import syntax, add
+
+   - or, in modules not using the wildcard import syntax, add
      ```
      from genquery import row_generator
      ```
-     and replace any problematic uses of `row_iterator` or `genquery.row_iterator` with `row_generator`.
+     and then replace any problematic uses of `row_iterator` or `genquery.row_iterator` with `row_generator`.
 
 This should solve the very rare issue of such dependencies.
 
-
-`genquery.py` Reference
+<a name="queryref"></a>
+`Query` object creation and attributes Reference
 ---
+A `Query` object's *attributes* (ie "columns", "conditions", ... ) set constraints on how an iRODS general query should be carried out and how the results should be enumerated.  These *attributes* are defined by keyword arguments of the same name, detailed below.
 
-Below is a summary of arguments and keyword-specified object traits for building `Query` objects.
+The `Query` object constructor requires these two arguments to be first, and in the order listed:
 
-These two arguments are mandatory when constructing a `Query` object: 
-  * *callback* (in constructor only) is just the callback argument from the enclosing Python rule function's input argument list.
-  * *columns* (in constructor or copy method) is a either a string with comma-separated column names, or a list/tuple of column names.
+  * *callback* (not really an attribute) can only be used in the constructor.  It is just the callback argument from the enclosing Python rule function's input argument list.
+  * *columns*  is a either a string with comma-separated column names, or a `list` or `tuple` of column name. If provided among the `copy` method's keyword arguments, it must however be of type `list`. 
 
-The following arguments are optional and may be used both in the constructor and in the `copy` method:
+The following arguments are strictly optional and may be used either in `Query`'s constructor or in the `copy` method:
+
   * *condition*  is the "where ..." predicate traditionally used in the general query syntax, but omitting the `where` keyword. The default (an empty string) allows for opting out of the search condition, in which case all objects of the requested type, or joined list of types,  will be returned (ie. Collections for `COLL_*`, Resources for `RESC_*`)
   * *output* is one of: `AS_TUPLE`, `AS_DICT` or `AS_LIST`. These constants are defined in the genquery module, and they specify the Python data structure type to be used for returning individual row results.
     - `AS_TUPLE`, the default, lets results of a single-column query be rendered simply as one string value per row returned; or, if multiple column names are specified, as a tuple of strings, indexed by a zero-based integer column offset. (Note that if a more programmatically consistent interface is desired, ie. indexing each row result by integer offset even for the case of a single column, then `AS_LIST` should be preferred.)
-    - `AS_LIST` forces a column value within each row to be indexed by its zero-based integer position among the corresponding entry in the ***columns*** trait .
+    - `AS_LIST` forces a column value within each row to be indexed by its zero-based integer position among the corresponding entry in the ***columns*** attribute .
     - `AS_DICT` lets column values be indexed directly using the column name itself (a string). The
       seemingly higher convenience of this approach is, however, paid for by an increased **per-row** execution overhead.
-  * *offset*: 0 by default, this `Query` trait dictates the integer position, relative to the complete set of possible rows returned, where the enumeration of query results will start.
+  * *offset*: 0 by default, this `Query` attribute dictates the integer position, relative to the complete set of possible rows returned, where the enumeration of query results will start.
   * *limit*: `None` by default (ie "no limit"), this option can be an integer >= 1 if specified, and limits the returned row enumeration to the requested number of results. Often used with *offset*, as defined above.
   * *case-sensitive* is normally `True`. If it is set to `False`, the condition string will be uppercased, and the query will be executed without regard to case.  This allows for more permissive matching on the names of resources, collections, data objects, etc.
   * *options* is a bitmask of extra options, and defaults to a value of 0. `genquery.Option.NO_DISTINCT` is one such extra option, as is RETURN_TOTAL_ROW_COUNT (although in the latter case, using the `Query` object's `row_count` method should be preferred.)
