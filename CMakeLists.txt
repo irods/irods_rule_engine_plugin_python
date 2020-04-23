@@ -10,6 +10,7 @@ project(irods_rule_engine_plugin-python CXX)
 
 include(${IRODS_TARGETS_PATH})
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 if (NOT CPACK_PACKAGING_INSTALL_PREFIX)
@@ -65,23 +66,25 @@ set(
   target_include_directories(
       ${PLUGIN}
       PRIVATE
-	  ${IRODS_INCLUDE_DIRS}
+      ${IRODS_INCLUDE_DIRS}
       ${IRODS_EXTERNALS_FULLPATH_BOOST}/include
       ${IRODS_EXTERNALS_FULLPATH_JSON}/include
-	  ${PYTHON_INCLUDE_DIRS}
+      ${IRODS_EXTERNALS_FULLPATH_FMT}/include
+      ${PYTHON_INCLUDE_DIRS}
       )
 
   target_link_libraries(
       ${PLUGIN}
       PRIVATE
-	  ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_python27.so
-	  ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_system.so
-	  ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_date_time.so
-	  ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_filesystem.so
-	  ${PYTHON_LIBRARIES}
-	  ${CMAKE_DL_LIBS}
-	  irods_common
-	  irods_server
+      ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_python27.so
+      ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_system.so
+      ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_date_time.so
+      ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_filesystem.so
+      ${IRODS_EXTERNALS_FULLPATH_FMT}/lib/libfmt.so
+      ${PYTHON_LIBRARIES}
+      ${CMAKE_DL_LIBS}
+      irods_common
+      irods_server
       )
 
   target_compile_definitions(${PLUGIN} PRIVATE ${IRODS_RULE_ENGINE_PYTHON_PLUGIN_COMPILE_DEFINITIONS} ${IRODS_COMPILE_DEFINITIONS})
@@ -101,15 +104,15 @@ install(
   )
 
 install(
-    FILES ${CMAKE_SOURCE_DIR}/setup_python_rule_engine_as_only_rule_engine.py
+  FILES ${CMAKE_SOURCE_DIR}/setup_python_rule_engine_as_only_rule_engine.py
   DESTINATION var/lib/irods/scripts
   )
 
 install(
-    FILES 
-     ${CMAKE_SOURCE_DIR}/core.py.template
-     ${CMAKE_SOURCE_DIR}/session_vars.py
-     ${CMAKE_SOURCE_DIR}/genquery.py
+  FILES 
+  ${CMAKE_SOURCE_DIR}/core.py.template
+  ${CMAKE_SOURCE_DIR}/session_vars.py
+  ${CMAKE_SOURCE_DIR}/genquery.py
   DESTINATION etc/irods
   )
 
@@ -155,23 +158,23 @@ elseif (IRODS_LINUX_DISTRIBUTION_NAME STREQUAL "opensuse")
 endif()
 
 list(APPEND
-    CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
+     CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
      "${CPACK_PACKAGING_INSTALL_PREFIX}etc/irods")
 
 list(APPEND
-    CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
+     CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
      "${CPACK_PACKAGING_INSTALL_PREFIX}var")
 
 list(APPEND
-    CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
+     CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
      "${CPACK_PACKAGING_INSTALL_PREFIX}var/lib")
 
 list(APPEND
-    CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
+     CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
      "${CPACK_PACKAGING_INSTALL_PREFIX}var/lib/irods")
 
 list(APPEND
-    CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
+     CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
      "${CPACK_PACKAGING_INSTALL_PREFIX}var/lib/irods/scripts")
 
 if (NOT CPACK_GENERATOR)
