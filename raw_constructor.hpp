@@ -4,8 +4,11 @@
 #include <memory>
 #include <functional>
 #include <initializer_list>
+
+#define register
 #include "boost/python.hpp"
 #include "boost/python/detail/api_placeholder.hpp"
+#undef register
 
 namespace boost { namespace python {
 
