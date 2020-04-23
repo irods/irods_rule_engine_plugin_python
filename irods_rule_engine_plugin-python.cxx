@@ -11,6 +11,7 @@
 #include "boost/filesystem/operations.hpp"
 #include "boost/filesystem/operations.hpp"
 
+#include "rodsErrorTable.h"
 #include "irods_error.hpp"
 #include "irods_re_plugin.hpp"
 #include "irods_re_ruleexistshelper.hpp"
@@ -27,6 +28,10 @@
 #include "boost/python/module_init.hpp"
 #undef register
 
+#include "fmt/format.h"
+
+using logger = irods::experimental::log;
+
 irods::ms_table& get_microservice_table();
 
 // writeLine is not in the microservice table in 4.2.0 - #3408
@@ -34,8 +39,8 @@ int writeLine(msParam_t*, msParam_t*, ruleExecInfo_t*);
 
 static int carryOverMsParam(
     msParamArray_t *sourceMsParamArray,
-    msParamArray_t *targetMsParamArray ) {
-
+    msParamArray_t *targetMsParamArray )
+{
     int i;
     msParam_t *mP, *mPt;
     if ( sourceMsParamArray == NULL ) {
@@ -48,7 +53,8 @@ static int carryOverMsParam(
             free( mP->inpOutBuf );
             int status = replInOutStruct(mPt->inOutStruct, &mP->inOutStruct, mPt->type);
             if ( status < 0 ) {
-                rodsLogError( LOG_ERROR, status, "%s encountered an error when calling replInOutStruct", __PRETTY_FUNCTION__);
+                char msg[] = "%s encountered an error when calling replInOutStruct";
+                rodsLogError(LOG_ERROR, status, msg, __PRETTY_FUNCTION__);
             }
             mP->inpOutBuf = replBytesBuf(mPt->inpOutBuf);
         }
@@ -65,8 +71,8 @@ static int remote_exec_msvc(
     msParam_t*      _pa,
     msParam_t*      _pb,
     msParam_t*      _pc,
-    ruleExecInfo_t* _rei) {
-
+    ruleExecInfo_t* _rei)
+{
     execMyRuleInp_t exec_inp;
     memset(&exec_inp, 0, sizeof(exec_inp));
     rstrcpy(
@@ -102,10 +108,6 @@ static int remote_exec_msvc(
                &out_arr);
 } // remote_exec_msvc
 
-
-
-
-
 const std::string ELEMENT_TYPE = "ELEMENT_TYPE";
 const std::string STRING_TYPE = "STRING_TYPE";
 const std::string STRING_VALUE_KEY = "STRING_VALUE_KEY";
@@ -118,63 +120,81 @@ namespace bp = boost::python;
 
 static std::recursive_mutex python_mutex;
 
-
-void register_regexes_from_array(
-    boost::any          _array,
-    const std::string&  _instance_name) {
-
+void register_regexes_from_array(boost::any _array,
+                                 const std::string& _instance_name)
+{
     try {
         const auto& arr = boost::any_cast< const std::vector< boost::any >& >( _array );
         for ( const auto& elem : arr ) {
             try {
                 const auto tmp = boost::any_cast< const std::string& >( elem );
                 RuleExistsHelper::Instance()->registerRuleRegex( tmp );
-                rodsLog( LOG_DEBUG, "register_regexes_from_array - regex: [%s]", tmp.c_str() );
-            } catch ( const boost::bad_any_cast& ) {
-                rodsLog( LOG_ERROR,
-                         "[%s] - failed to cast pep_regex_to_match to string",
-                         __FUNCTION__ );
+                logger::rule_engine::debug("register_regexes_from_array - regex: [{}]", tmp);
+            }
+            catch ( const boost::bad_any_cast& ) {
+                logger::rule_engine::error("[{}] - failed to cast pep_regex_to_match to string", __FUNCTION__);
                 continue;
             }
         }
-    } catch ( const boost::bad_any_cast& ) {
+    }
+    catch ( const boost::bad_any_cast& ) {
         std::stringstream msg;
         msg << "[" << _instance_name << "] failed to any_cast a std::vector<boost::any>&";
         THROW( INVALID_ANY_CAST, msg.str() );
     }
 }
 
-namespace {
-    std::string
-    extract_python_exception(void) {
+namespace
+{
+    irods::error to_irods_error_object(const bp::object& object)
+    {
+        if (bp::extract<int> result{object}; result.check()) {
+            const int ec = result();
+
+            if (ec < 0) {
+                return ERROR(ec, "");
+            }
+
+            return CODE(ec);
+        }
+
+        return SUCCESS();
+    }
+
+    std::string extract_python_exception(void)
+    {
         PyObject *exc,*val,*tb;
         PyErr_Fetch(&exc,&val,&tb);
         PyErr_NormalizeException(&exc,&val,&tb);
         bp::handle<> hexc(exc), hval(bp::allow_null(val)), htb(bp::allow_null(tb));
+
         if (!hval) {
             return bp::extract<std::string>(bp::str(hexc));
-        } else {
+        }
+        else {
             bp::object traceback(bp::import("traceback"));
             bp::object format_exception(traceback.attr("format_exception"));
             bp::object formatted_list(format_exception(hexc,hval,htb));
             bp::object formatted(bp::str("").join(formatted_list));
+
             return bp::extract<std::string>(formatted);
         }
     }
 
-    namespace StringFromPythonUnicode {
-        void*
-        convertible(PyObject* py_obj) {
+    namespace StringFromPythonUnicode
+    {
+        void* convertible(PyObject* py_obj)
+        {
             if (PyUnicode_Check(py_obj)) {
                 return py_obj;
             }
+
             return nullptr;
         }
 
-        void
-        construct(
-            PyObject *py_obj,
-            boost::python::converter::rvalue_from_python_stage1_data *data) {
+        void construct(PyObject *py_obj,
+                       boost::python::converter::rvalue_from_python_stage1_data *data)
+        {
             bp::handle<> h_encoded(PyUnicode_AsUTF8String(py_obj));
             void *storage = reinterpret_cast<boost::python::converter::rvalue_from_python_storage<std::string>*>(data)->storage.bytes;
 #if PY_VERSION_HEX < 0x03000000
@@ -185,34 +205,43 @@ namespace {
             data->convertible = storage;
         }
 
-        void
-        register_converter() {
+        void register_converter()
+        {
             bp::converter::registry::push_back(&convertible, &construct, bp::type_id<std::string>());
         }
-    }
+    } // namespace StringFromPythonUnicode
 
-    ruleExecInfo_t* get_rei_from_effect_handler(irods::callback effect_handler) {
+    ruleExecInfo_t* get_rei_from_effect_handler(irods::callback effect_handler)
+    {
         ruleExecInfo_t* rei = nullptr;
         irods::error err = effect_handler("unsafe_ms_ctx", &rei);
+
         if ( !err.ok() ) {
             rodsLog(LOG_ERROR, "Could not retrieve RuleExecInfo_t object from effect handler");
             return nullptr;
         }
-        else if ( !rei ) {
+
+        if ( !rei ) {
             rodsLog(LOG_ERROR, "RuleExecInfo object is NULL - cannot populate session vars");
             return nullptr;
         }
+
         return rei;
     }
 
-    struct RuleCallWrapper {
+    struct RuleCallWrapper
+    {
         RuleCallWrapper(irods::callback& effect_handler, std::string rule_name)
             : effect_handler{effect_handler}
             , rule_name{rule_name}
-            {}
+        {
+        }
+
         irods::callback& effect_handler;
         std::string rule_name;
-        static bp::dict call(const bp::tuple& args, const bp::dict& ) {
+
+        static bp::dict call(const bp::tuple& args, const bp::dict& )
+        {
             RuleCallWrapper& self = bp::extract<RuleCallWrapper&>(args[0]);
 
             bp::tuple rule_args_python = bp::extract<bp::tuple>(args[bp::slice(1, bp::len(args))]);
@@ -225,7 +254,8 @@ namespace {
                 if ( s.check() ) {
                     strings.push_back(s());
                     rule_args_cpp.emplace_back(&strings.back());
-                } else {
+                }
+                else {
                     msParams.push_back(msParam_from_object<genQueryInp_t, genQueryOut_t, keyValPair_t, fileLseekOut_t, rodsObjStat_t, bytesBuf_t, int, float>(rule_arg_python));
                     rule_args_cpp.emplace_back(&msParams.back());
                 }
@@ -236,13 +266,16 @@ namespace {
             bp::list ret_list{};
             while ( !rule_args_cpp.empty() ) {
                 auto& rule_arg_cpp = rule_args_cpp.front();
+
                 if ( rule_arg_cpp.type() == typeid(std::string*) ) {
                     ret_list.append(strings.front());
                     strings.pop_front();
-                } else {
+                }
+                else {
                     ret_list.append(object_from_msParam(msParams.front()));
                     msParams.pop_front();
                 }
+
                 rule_args_cpp.pop_front();
             }
 
@@ -260,15 +293,22 @@ namespace {
             ret["arguments"] = ret_list;
             return ret;
         }
-    };
+    }; // struct RuleCallWrapper
 
-    struct CallbackWrapper {
-        CallbackWrapper(irods::callback& effect_handler) : effect_handler{effect_handler} {}
+    struct CallbackWrapper
+    {
+        CallbackWrapper(irods::callback& effect_handler)
+            : effect_handler{effect_handler}
+        {
+        }
+
         irods::callback& effect_handler;
-        RuleCallWrapper getAttribute(const std::string& rule_name) {
+
+        RuleCallWrapper getAttribute(const std::string& rule_name)
+        {
             return RuleCallWrapper{effect_handler, rule_name};
         }
-    };
+    }; // struct CallbackWrapper
 
     BOOST_PYTHON_MODULE(plugin_wrappers)
     {
@@ -280,10 +320,10 @@ namespace {
             .def("__getattribute__", &CallbackWrapper::getAttribute)
             ;
     }
-}
+} // anonymous namespace
 
-irods::error
-start(irods::default_re_ctx&, const std::string& _instance_name) {
+irods::error start(irods::default_re_ctx&, const std::string& _instance_name)
+{
     // TODO Enable config-selectable Python version
 #if PY_VERSION_HEX < 0x03000000
     dlopen("libpython2.7.so", RTLD_LAZY | RTLD_GLOBAL); // https://mail.python.org/pipermail/new-bugs-announce/2008-November/003322.html
@@ -313,7 +353,8 @@ start(irods::default_re_ctx&, const std::string& _instance_name) {
         bp::object irods_types = bp::import("irods_types");
 
         StringFromPythonUnicode::register_converter();
-    } catch (const bp::error_already_set&) {
+    }
+    catch (const bp::error_already_set&) {
         const std::string formatted_python_exception = extract_python_exception();
         rodsLog(LOG_ERROR, "caught python exception: %s", formatted_python_exception.c_str());
         std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " Caught Python exception.\n" + formatted_python_exception;
@@ -355,11 +396,14 @@ start(irods::default_re_ctx&, const std::string& _instance_name) {
                 return SUCCESS();
             }
         }
-    } catch ( const irods::exception& e ) {
+    }
+    catch ( const irods::exception& e ) {
         return irods::error(e);
-    } catch ( const boost::bad_any_cast& e ) {
+    }
+    catch ( const boost::bad_any_cast& e ) {
         return ERROR( INVALID_ANY_CAST, e.what() );
-    } catch ( const std::out_of_range& e ) {
+    }
+    catch ( const std::out_of_range& e ) {
         return ERROR( KEY_NOT_FOUND, e.what() );
     }
 
@@ -370,14 +414,14 @@ start(irods::default_re_ctx&, const std::string& _instance_name) {
     return ERROR( SYS_INVALID_INPUT_PARAM, msg.str() );
 }
 
-irods::error
-stop(irods::default_re_ctx&, const std::string&) {
+irods::error stop(irods::default_re_ctx&, const std::string&)
+{
     Py_Finalize();
     return SUCCESS();
 }
 
-irods::error
-rule_exists(const irods::default_re_ctx&, const std::string& rule_name, bool& _return) {
+irods::error rule_exists(const irods::default_re_ctx&, const std::string& rule_name, bool& _return)
+{
     _return = false;
     try {
         std::lock_guard<std::recursive_mutex> lock{python_mutex};
@@ -385,7 +429,8 @@ rule_exists(const irods::default_re_ctx&, const std::string& rule_name, bool& _r
         // TODO Enable non core.py Python rulebases
         bp::object core_module = bp::import("core");
         _return = PyObject_HasAttrString(core_module.ptr(), rule_name.c_str());
-    } catch (const bp::error_already_set&) {
+    }
+    catch (const bp::error_already_set&) {
         const std::string formatted_python_exception = extract_python_exception();
         rodsLog(LOG_ERROR, "caught python exception: %s", formatted_python_exception.c_str());
         std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " Caught Python exception.\n" + formatted_python_exception;
@@ -395,8 +440,8 @@ rule_exists(const irods::default_re_ctx&, const std::string& rule_name, bool& _r
     return SUCCESS();
 }
 
-irods::error
-list_rules( const irods::default_re_ctx&, std::vector<std::string>& rule_vec ) {
+irods::error list_rules( const irods::default_re_ctx&, std::vector<std::string>& rule_vec )
+{
     try {
         std::lock_guard<std::recursive_mutex> lock{python_mutex};
 
@@ -417,7 +462,8 @@ list_rules( const irods::default_re_ctx&, std::vector<std::string>& rule_vec ) {
             rule_vec.push_back( bp::extract<std::string>( function_names[i] ) );
             std::string tmp = bp::extract<std::string>( function_names[i] );
         }
-    } catch (const bp::error_already_set&) {
+    }
+    catch (const bp::error_already_set&) {
         const std::string formatted_python_exception = extract_python_exception();
         rodsLog(LOG_ERROR, "caught python exception: %s", formatted_python_exception.c_str());
         auto start_pos = formatted_python_exception.find(IRODS_ERROR_PREFIX);
@@ -430,7 +476,8 @@ list_rules( const irods::default_re_ctx&, std::vector<std::string>& rule_vec ) {
         }
         std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " Caught Python exception.\n" + formatted_python_exception;
         return ERROR(error_code_int, err_msg);
-    } catch (const boost::bad_any_cast& e) {
+    }
+    catch (const boost::bad_any_cast& e) {
         rodsLog(LOG_ERROR, "bad any cast : %s", e.what());
         std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " bad_any_cast : " + e.what();
         return ERROR( INVALID_ANY_CAST, e.what() );
@@ -439,8 +486,11 @@ list_rules( const irods::default_re_ctx&, std::vector<std::string>& rule_vec ) {
     return SUCCESS();
 }
 
-irods::error
-exec_rule(const irods::default_re_ctx&, const std::string& rule_name, std::list<boost::any>& rule_arguments_cpp, irods::callback effect_handler) {
+irods::error exec_rule(const irods::default_re_ctx&,
+                       const std::string& rule_name,
+                       std::list<boost::any>& rule_arguments_cpp,
+                       irods::callback effect_handler)
+{
     try {
         std::lock_guard<std::recursive_mutex> lock{python_mutex};
 
@@ -457,7 +507,9 @@ exec_rule(const irods::default_re_ctx&, const std::string& rule_name, std::list<
         for (auto& cpp_argument : rule_arguments_cpp) {
             rule_arguments_python.append(object_from_any(cpp_argument));
         }
-        bp::object outVal = rule_function(rule_arguments_python, CallbackWrapper{effect_handler}, rei);
+
+        const bp::object ec = rule_function(rule_arguments_python, CallbackWrapper{effect_handler}, rei);
+
         int i = 0;
         for (auto& cpp_argument : rule_arguments_cpp) {
             bp::object py_argument = rule_arguments_python[i];
@@ -465,7 +517,9 @@ exec_rule(const irods::default_re_ctx&, const std::string& rule_name, std::list<
             ++i;
         }
 
-    } catch (const bp::error_already_set&) {
+        return to_irods_error_object(ec);
+    }
+    catch (const bp::error_already_set&) {
         const std::string formatted_python_exception = extract_python_exception();
         rodsLog(LOG_ERROR, "caught python exception: %s", formatted_python_exception.c_str());
         auto start_pos = formatted_python_exception.find(IRODS_ERROR_PREFIX);
@@ -478,18 +532,27 @@ exec_rule(const irods::default_re_ctx&, const std::string& rule_name, std::list<
         }
         std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " Caught Python exception.\n" + formatted_python_exception;
         return ERROR(error_code_int, err_msg);
-    } catch (const boost::bad_any_cast& e) {
+    }
+    catch (const boost::bad_any_cast& e) {
         rodsLog(LOG_ERROR, "bad any cast : %s", e.what());
         std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " bad_any_cast : " + e.what();
         return ERROR( INVALID_ANY_CAST, e.what() );
+    }
+    catch (...) {
+        logger::rule_engine::error("Caught unknown exception [ec={}].", SYS_UNKNOWN_ERROR);
+        return ERROR(SYS_UNKNOWN_ERROR, "Caught unknown exception.");
     }
 
     return SUCCESS();
 }
 
 //irule
-irods::error
-exec_rule_text(const irods::default_re_ctx&, const std::string& rule_text, msParamArray_t* ms_params, const std::string& out_desc, irods::callback effect_handler) {
+irods::error exec_rule_text(const irods::default_re_ctx&,
+                            const std::string& rule_text,
+                            msParamArray_t* ms_params,
+                            const std::string& out_desc,
+                            irods::callback effect_handler)
+{
     // Because Python is not sandboxed, need to restrict irule to admin users only
     const auto rei = get_rei_from_effect_handler(effect_handler);
 
@@ -501,14 +564,16 @@ exec_rule_text(const irods::default_re_ctx&, const std::string& rule_text, msPar
     int client_user_authflag = 0;
     if ( rei->uoic ) {
         client_user_authflag = rei->uoic->authInfo.authFlag;
-    } else if ( rei->rsComm ) {
+    }
+    else if ( rei->rsComm ) {
         client_user_authflag = rei->rsComm->clientUser.authInfo.authFlag;
     }
 
     int proxy_user_authflag = 0;
     if ( rei->uoip ) {
         proxy_user_authflag = rei->uoip->authInfo.authFlag;
-    } else if ( rei->rsComm ) {
+    }
+    else if ( rei->rsComm ) {
         proxy_user_authflag = rei->rsComm->proxyUser.authInfo.authFlag;
     }
 
@@ -535,17 +600,21 @@ exec_rule_text(const irods::default_re_ctx&, const std::string& rule_text, msPar
 
             if (mp->type == NULL) {
                 global_vars_python[label] = NULL;
-            } else if (strcmp(mp->type, DOUBLE_MS_T) == 0) {
+            }
+            else if (strcmp(mp->type, DOUBLE_MS_T) == 0) {
                 double* tmpDouble = (double*) mp->inOutStruct;
                 global_vars_python[label] = tmpDouble;
-            } else if (strcmp(mp->type, INT_MS_T) == 0) {
+            }
+            else if (strcmp(mp->type, INT_MS_T) == 0) {
                 int* tmpInt = (int*) mp->inOutStruct;
                 global_vars_python[label] = tmpInt;
-            } else if (strcmp(mp->type, STR_MS_T) == 0) {
+            }
+            else if (strcmp(mp->type, STR_MS_T) == 0) {
                 char* tmpChar = (char*) mp->inOutStruct;
                 std::string tmpStr(tmpChar);
                 global_vars_python[label] = tmpStr;
-            } else if (strcmp(mp->type, DATETIME_MS_T) == 0) {
+            }
+            else if (strcmp(mp->type, DATETIME_MS_T) == 0) {
                 rodsLong_t* tmpRodsLong = (rodsLong_t*) mp->inOutStruct;
                 global_vars_python[label] = tmpRodsLong;
             }
@@ -573,7 +642,7 @@ exec_rule_text(const irods::default_re_ctx&, const std::string& rule_text, msPar
             bp::object rule_function = main_module.attr("main");
 
             bp::list rule_arguments_python{};
-            bp::object outVal = rule_function(rule_arguments_python, CallbackWrapper{effect_handler}, rei);
+            return to_irods_error_object(rule_function(rule_arguments_python, CallbackWrapper{effect_handler}, rei));
         }
         else if ( strncmp( rule_text.c_str(), "@external rule", 14 ) == 0 ) {
             // If rule_text begins with "@external ", call is of form
@@ -595,28 +664,38 @@ exec_rule_text(const irods::default_re_ctx&, const std::string& rule_text, msPar
             bp::object rule_function = core_module.attr( rule_name.c_str() );
 
             bp::list rule_arguments_python{};
-            bp::object outVal = rule_function(rule_arguments_python, CallbackWrapper{effect_handler}, rei);
-        } else {
+            return to_irods_error_object(rule_function(rule_arguments_python, CallbackWrapper{effect_handler}, rei));
+        }
+        else {
             rodsLog( LOG_ERROR, "[%s:%d] Improperly formatted rule text in Python rule engine plugin", __FUNCTION__, __LINE__ );
             return ERROR( RULE_ENGINE_ERROR, "Improperly formatted rule_text" );
         }
-    } catch (const bp::error_already_set&) {
+    }
+    catch (const bp::error_already_set&) {
         const std::string formatted_python_exception = extract_python_exception();
         rodsLog(LOG_ERROR, "caught python exception: %s", formatted_python_exception.c_str());
         std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " Caught Python exception.\n" + formatted_python_exception;
         return ERROR( RULE_ENGINE_ERROR, err_msg);
-    } catch (const boost::bad_any_cast& e) {
+    }
+    catch (const boost::bad_any_cast& e) {
         rodsLog(LOG_ERROR, "bad any cast : %s", e.what());
         std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " bad_any_cast : " + e.what();
         return ERROR( INVALID_ANY_CAST, e.what() );
+    }
+    catch (...) {
+        logger::rule_engine::error("Caught unknown exception [ec={}].", SYS_UNKNOWN_ERROR);
+        return ERROR(SYS_UNKNOWN_ERROR, "Caught unknown exception.");
     }
 
     return SUCCESS();
 }
 
 //delay execution
-irods::error
-exec_rule_expression(irods::default_re_ctx&, const std::string& rule_text, msParamArray_t* ms_params, irods::callback effect_handler) {
+irods::error exec_rule_expression(irods::default_re_ctx&,
+                                  const std::string& rule_text,
+                                  msParamArray_t* ms_params,
+                                  irods::callback effect_handler)
+{
     try {
         std::lock_guard<std::recursive_mutex> lock{python_mutex};
 
@@ -630,17 +709,21 @@ exec_rule_expression(irods::default_re_ctx&, const std::string& rule_text, msPar
 
                     if (mp->type == NULL) {
                         global_vars_python[label] = boost::python::object{};
-                    } else if (strcmp(mp->type, DOUBLE_MS_T) == 0) {
+                    }
+                    else if (strcmp(mp->type, DOUBLE_MS_T) == 0) {
                         double* tmpDouble = (double*) mp->inOutStruct;
                         global_vars_python[label] = tmpDouble;
-                    } else if (strcmp(mp->type, INT_MS_T) == 0) {
+                    }
+                    else if (strcmp(mp->type, INT_MS_T) == 0) {
                         int* tmpInt = (int*) mp->inOutStruct;
                         global_vars_python[label] = tmpInt;
-                    } else if (strcmp(mp->type, STR_MS_T) == 0) {
+                    }
+                    else if (strcmp(mp->type, STR_MS_T) == 0) {
                         char* tmpChar = (char*) mp->inOutStruct;
                         std::string tmpStr(tmpChar);
                         global_vars_python[label] = tmpStr;
-                    } else if (strcmp(mp->type, DATETIME_MS_T) == 0) {
+                    }
+                    else if (strcmp(mp->type, DATETIME_MS_T) == 0) {
                         rodsLong_t* tmpRodsLong = (rodsLong_t*) mp->inOutStruct;
                         global_vars_python[label] = tmpRodsLong;
                     }
@@ -669,16 +752,22 @@ exec_rule_expression(irods::default_re_ctx&, const std::string& rule_text, msPar
 
         const auto rei = get_rei_from_effect_handler(effect_handler);
         bp::list rule_arguments_python{};
-        bp::object outVal = rule_function(rule_arguments_python, CallbackWrapper{effect_handler}, rei);
-    } catch (const bp::error_already_set&) {
+        return to_irods_error_object(rule_function(rule_arguments_python, CallbackWrapper{effect_handler}, rei));
+    }
+    catch (const bp::error_already_set&) {
         const std::string formatted_python_exception = extract_python_exception();
         rodsLog(LOG_ERROR, "caught python exception: %s", formatted_python_exception.c_str());
         std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " Caught Python exception.\n" + formatted_python_exception;
         return ERROR(RULE_ENGINE_ERROR, err_msg);
-    } catch (const boost::bad_any_cast& e) {
+    }
+    catch (const boost::bad_any_cast& e) {
         rodsLog(LOG_ERROR, "bad any cast : %s", e.what());
         std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " bad_any_cast : " + e.what();
         return ERROR( INVALID_ANY_CAST, e.what() );
+    }
+    catch (...) {
+        logger::rule_engine::error("Caught unknown exception [ec={}].", SYS_UNKNOWN_ERROR);
+        return ERROR(SYS_UNKNOWN_ERROR, "Caught unknown exception.");
     }
 
     return SUCCESS();
@@ -686,7 +775,8 @@ exec_rule_expression(irods::default_re_ctx&, const std::string& rule_text, msPar
 
 extern "C"
 irods::pluggable_rule_engine<irods::default_re_ctx>*
-plugin_factory(const std::string& _inst_name, const std::string& _context) {
+plugin_factory(const std::string& _inst_name, const std::string& _context)
+{
     irods::pluggable_rule_engine<irods::default_re_ctx>* re = new irods::pluggable_rule_engine<irods::default_re_ctx>( _inst_name , _context);
      re->add_operation<irods::default_re_ctx&,const std::string&>(
              "start",

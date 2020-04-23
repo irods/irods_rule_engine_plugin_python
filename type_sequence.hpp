@@ -1,6 +1,8 @@
 #ifndef TYPE_SEQUENCE_HPP
 #define TYPE_SEQUENCE_HPP
 
+#include <cstddef>
+
 namespace {
     template<typename T>
         struct num_elements {
