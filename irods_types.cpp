@@ -1,20 +1,20 @@
+#define BOOST_PYTHON_MAX_ARITY 45
+
 #include "irods_types.hpp"
 
-#define BOOST_SYSTEM_NO_DEPRECATED BOOST_PYTHON_MAX_ARITY 45
 #include "irods_re_serialization.hpp"
-
-
-#include <boost/python/module_init.hpp>
-#include <boost/python/detail/none.hpp>
-#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
-#include <boost/python/exception_translator.hpp>
-#include <boost/format.hpp>
-
 
 #include "init_struct.hpp"
 #include "array_indexing_suite.hpp"
 #include "array_ref.hpp"
 
+#define register
+#include <boost/python/module_init.hpp>
+#include <boost/python/detail/none.hpp>
+#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
+#include <boost/python/exception_translator.hpp>
+#include <boost/format.hpp>
+#undef register
 
 namespace bp = boost::python;
 
