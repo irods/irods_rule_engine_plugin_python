@@ -959,9 +959,11 @@ namespace {
                 "map",
                 +[](irods::plugin_context* _ctx) {
                       bp::dict x;
-                      irods::rule_engine_vars_t vars_map;
-                      _ctx->fco()->get_re_vars(vars_map);
-                      for (auto &pr : vars_map) { x[pr.first]=pr.second; }
+                      if (auto fco = _ctx->fco(); fco.get() != nullptr) {
+                          irods::rule_engine_vars_t vars_map;
+                          fco->get_re_vars(vars_map);
+                          for (auto &pr : vars_map) { x[pr.first]=pr.second; }
+                      }
                       irods::re_serialization::serialized_parameter_t comm_map;
                       auto err = irods::re_serialization::serialize_parameter( boost::any{ _ctx->comm() }, comm_map );
                       if (err.ok()) {
