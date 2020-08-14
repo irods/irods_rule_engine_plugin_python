@@ -1,5 +1,10 @@
 #define BOOST_PYTHON_MAX_ARITY 45
 
+#define MAKE_IRODS_ERROR_MAP
+#include "rodsErrorTable.h"
+#define MAKE_IRODS_STATE_MAP
+#include "irods_state_table.h"
+
 #include "irods_types.hpp"
 
 #include "irods_re_serialization.hpp"
@@ -23,6 +28,18 @@ bool operator==(const sqlResult_t& s1, const sqlResult_t& s2) {
 }
 
 namespace {
+    BOOST_PYTHON_MODULE(irods_errors)
+    {
+	    std::map <std::string, int> irods_constants;
+	    irods::fill_error_constants ( irods_constants );
+	    irods::fill_state_constants ( irods_constants );
+	    bp::scope current;
+	    for  (const auto & [k,v] : irods_constants )
+	    {
+		current.attr(k.c_str()) = v;
+	    }
+    }
+
     BOOST_PYTHON_MODULE(irods_types)
     {
         bp::enum_<specCollClass_t>("specCollClass")
