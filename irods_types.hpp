@@ -34,6 +34,8 @@
 #include "irods_threads.hpp"
 
 extern "C" void initirods_types();
+extern "C" void initirods_errors();
+
 void init_irods_types();
 
 using list_of_irods_types = type_sequence<
