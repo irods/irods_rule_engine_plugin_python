@@ -123,9 +123,52 @@ Aug  8 20:57:43 pid:23802 NOTICE: writeLine: inString = PYTHON - python_printme(
 Aug  8 20:57:43 pid:23802 NOTICE: writeLine: inString = PYTHON - acPostProcForPut() end
 ```
 
-- Some python identifiers, such as `global_vars` (a lookup for accessing variables of the form `*var` from the `INPUT` line, if present) and `irods_types` (a module containing common struct types used for communicating with microservices) are automatically imported into the python interpreter that loads `core.py`.
+# Python globals and build-in modules
+These built-in objects are set up at plugin initialization time and available in the python interpreter that loads `core.py` or, as the case may be, the Python rule file:
+   - `global_vars` - a dictionary for accessing variables of the form `*var` from the `INPUT` line, if present.
+   - `irods_types` - a module containing common struct types used for communicating with microservices.
+   - `irods_errors` - a module mapping well-known iRODS error names to their corresponding integer values.
+   
+By using the `irods_errors` built-in, policy may indicate how the framework is to continue through the use of a symbolic name, rather than a cryptic number reference:
+```
+def pep_api_data_obj_put_pre(args, callback, rei):
+  # ...local processing...
+  return irods_errors.RULE_ENGINE_CONTINUE  # compare: "return 5000000"
+```
+Finally, the following example demonstrates the use of all three of these built-ins.
+With the below rule contained anywhere in the Python rulebase:
+```
+def testRule(rule_args, callback, rei):
+  from irods_errors import USER_FILE_DOES_NOT_EXIST
+  check_err = lambda e,errcode: e.message.startswith('[iRods__Error__Code:{}]'.format(errcode))
+  try:
+    ret_val = callback.msiObjStat(rule_args[0], irods_types.RodsObjStat())
+  except RuntimeError, e:
+    if check_err(e, USER_FILE_DOES_NOT_EXIST):
+      callback.writeLine('serverLog', 'ERROR in testRule: "'+rule_args[0]+'" not found')
+    else:
+      callback.writeLine('serverLog', 'UNKNOWN error')
+    rule_args[0] = ''
+  else:
+    objstat_return = ret_val['arguments'][1]
+    rule_args[0] = 'mtime = {!s} ; objsize = {!s} '.format(objstat_return.modifyTime, objstat_return.objSize)
+```
+and a rule script file (named `call_testRule.r`) which calls `testRule` with a data path argument:
+```
+def main(_,callback,rei):
+  data_path = global_vars[ '*dataPath' ][1:-1]
+  retval = callback.testRule( data_path )
+  callback.writeLine( "stdout", retval['arguments'][0])
+INPUT *dataPath=""
+OUTPUT ruleExecOut
+```
+we can invoke the rule script and  point `*dataPath` at a trial data object path:
+```
+irule -r irods_rule_engine_plugin-python-instance -F call_testRule.r '*dataPath="/full/path/to/data/object"'
+```
+and thus determine a data object's existence, as well as its mtime and size, if it does exist.
 
-# Auxiliary Python modules
+# Auxiliary Python Modules
 
 Included with the PREP (Python Rule Engine Plugin) are some other modules that provide a solid foundation of utility for writers of Python rule code.  The plugin directly loads only the module `/etc/irods/core.py`, however any import statements in that file are honored if the modules they target are in the interpreter's import path (`sys.path`).  In addition, a `rodsadmin` irods user may use `irule` to execute Python rules within `.r` files.  By default, `/etc/irods` is included in the import path, meaning that the modules discussed in this section are accessible to all other Python modules and functions (whether or not they are "rules" proper) whether they be internal to `core.py`, or otherwise loaded by the PREP.
 
