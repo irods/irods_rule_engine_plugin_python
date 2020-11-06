@@ -13,15 +13,11 @@ include(${IRODS_TARGETS_PATH})
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
+include(GNUInstallDirs)
+
 set(IRODS_PLUGIN_VERSION "${IRODS_VERSION}.${IRODS_PLUGIN_REVISION}")
 
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-
-if (NOT CPACK_PACKAGING_INSTALL_PREFIX)
-  set(CPACK_PACKAGING_INSTALL_PREFIX "/" CACHE STRING "Package root path. \"/\" is correct for normal package builds.." FORCE)
-  message(STATUS "Setting unspecified CPACK_PACKAGING_INSTALL_PREFIX to '${CPACK_PACKAGING_INSTALL_PREFIX}'. This is the correct setting for normal builds.")
-endif()
-
 
 if (NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build {Debug, Release}." FORCE)
@@ -99,17 +95,17 @@ install(
   TARGETS
   ${PLUGIN}
   LIBRARY
-    DESTINATION usr/lib/irods/plugins/rule_engines
+    DESTINATION ${IRODS_PLUGINS_DIRECTORY}/rule_engines
   )
 
 install(
   DIRECTORY ${CMAKE_SOURCE_DIR}/python_rules
-  DESTINATION var/lib/irods/scripts/irods/test
+  DESTINATION ${IRODS_HOME_DIRECTORY}/scripts/irods/test
   )
 
 install(
   FILES ${CMAKE_SOURCE_DIR}/setup_python_rule_engine_as_only_rule_engine.py
-  DESTINATION var/lib/irods/scripts
+  DESTINATION ${IRODS_HOME_DIRECTORY}/scripts
   )
 
 install(
@@ -117,7 +113,7 @@ install(
   ${CMAKE_SOURCE_DIR}/core.py.template
   ${CMAKE_SOURCE_DIR}/session_vars.py
   ${CMAKE_SOURCE_DIR}/genquery.py
-  DESTINATION etc/irods
+  DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/irods
   )
 
 set(CPACK_PACKAGE_FILE_NAME "irods-rule-engine-plugin-python-${IRODS_PLUGIN_VERSION}-${IRODS_LINUX_DISTRIBUTION_NAME}${IRODS_LINUX_DISTRIBUTION_VERSION_MAJOR}-${CMAKE_SYSTEM_PROCESSOR}")
@@ -157,26 +153,6 @@ if (IRODS_LINUX_DISTRIBUTION_NAME STREQUAL "centos" OR IRODS_LINUX_DISTRIBUTION_
 elseif (IRODS_LINUX_DISTRIBUTION_NAME STREQUAL "opensuse")
   set(CPACK_RPM_PACKAGE_REQUIRES "${IRODS_PACKAGE_DEPENDENCIES_STRING}, irods-runtime = ${IRODS_VERSION}, libopenssl1_0_0")
 endif()
-
-list(APPEND
-     CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
-     "${CPACK_PACKAGING_INSTALL_PREFIX}etc/irods")
-
-list(APPEND
-     CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
-     "${CPACK_PACKAGING_INSTALL_PREFIX}var")
-
-list(APPEND
-     CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
-     "${CPACK_PACKAGING_INSTALL_PREFIX}var/lib")
-
-list(APPEND
-     CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
-     "${CPACK_PACKAGING_INSTALL_PREFIX}var/lib/irods")
-
-list(APPEND
-     CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
-     "${CPACK_PACKAGING_INSTALL_PREFIX}var/lib/irods/scripts")
 
 if (NOT CPACK_GENERATOR)
     set(CPACK_GENERATOR ${IRODS_CPACK_GENERATOR} CACHE STRING "CPack generator to use, e.g. {DEB, RPM, TGZ}." FORCE)
