@@ -1,3 +1,6 @@
+// include this first to fix macro redef warnings
+#include <pyconfig.h>
+
 #include <ctime>
 #include <fstream>
 #include <list>
