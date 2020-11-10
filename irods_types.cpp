@@ -1,5 +1,8 @@
 #define BOOST_PYTHON_MAX_ARITY 45
 
+// include this first to fix macro redef warnings
+#include <pyconfig.h>
+
 #define MAKE_IRODS_ERROR_MAP
 #include "rodsErrorTable.h"
 #define MAKE_IRODS_STATE_MAP
