@@ -128,6 +128,8 @@ install(
   ${CMAKE_SOURCE_DIR}/core.py.template
   ${CMAKE_SOURCE_DIR}/session_vars.py
   ${CMAKE_SOURCE_DIR}/genquery.py
+  ${CMAKE_SOURCE_DIR}/irods_query_wrapper.py
+  ${CMAKE_SOURCE_DIR}/test_irods_query.py
   DESTINATION etc/irods
   )
 
