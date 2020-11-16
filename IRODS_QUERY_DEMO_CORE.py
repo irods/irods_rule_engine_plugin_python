@@ -1,58 +1,10 @@
 import irods_query as _irods_query
 from irods_query import (query_iterator, vector_of_string, query_type)
+from irods_query_wrapper import * # --> IrodsQuery
 import re,os
 from pprint import pprint,pformat
 
-class IrodsQuery(object):
-
-    class Row( object ):
-        def keys(self): return self.columns
-        def as_dict(self): return { k : self[k] for k in self.keys() }
-        def __init__(self,values,columns):
-            self.values = values
-            self.columns = columns
-            self.columns_dict = dict(zip(columns,values))
-        def __iter__(self):
-            return iter(self.values)
-        def __getitem__(self,n):
-            if isinstance(n,int):   return self.values[n]
-            elif isinstance(n,str): return self.columns_dict[n]
-            else:                   raise KeyError
-
-    __attributes = re.split('\s+', 'comm zone_hint query_string auto_fields query_type_ query_limit row_offset bind_args')
-
-    def __init__(self, comm,
-                       query_string,
-                       auto_fields = (),
-                       zone_hint="",
-                       query_limit=0,
-                       row_offset=0,
-                       query_type_ = query_type.SPECIFIC,
-                       bind_args=() ):
-        self.__qi = None
-        for x in self.__attributes:
-            setattr(self,x,locals()[x])
-
-    def __iter__(self):
-        if self.__qi is None:
-            self.__args = vector_of_string()
-            self.__args.assign(self.bind_args)
-            self.__qi = iter( query_iterator( self.comm,
-                                              self.query_string,
-                                              self.__args, "", 0, 0, self.query_type_))
-        return self
-
-    def next(self):
-        try:
-            n = next( self.__qi )
-        except StopIteration as e:
-            self.__qi = None
-            raise
-        else:
-            return self.Row(n, self.auto_fields)
-
-    @property 
-    def args(self): return tuple(self.__args)
+#__ demo / test __
 
 def qc2gmain(arg,cbk,rei):
 
@@ -161,28 +113,3 @@ def qqmain(arg,cbk,rei):
       return
     for y in qi:
       cbk.writeLine('stderr','id = {y[0]} ; name = {y[1]}'.format(**locals()) )
-
-'''
-def eemain(arg,cbk,rei):
-    x = _irods_query.fnee( _irods_query.query_type.SPECIFIC )
-    x = str(x) 
-    cbk.writeLine('stdout','ty = '+x)
-def emain(arg,cbk,rei):
-    x = _irods_query.fne( _irods_query.mychoice.TWO )   
-    x = str(x) #  str(dir(irods_query)) #. query_iterator
-               #   x=""
-    cbk.writeLine('stdout','neg int from enum = '+x)
-
-def mmain(arg,cbk,rei):
-    args =  vector_of_string()
-    args.assign( ["-1","55"] )
-
-    y =  str(dir(irods_query)) #. query_iterator
-    cbk.writeLine('stdout',y)
-
-    pargs = const_ptr(args)
-    x = fnv(pargs);
-    x = str(x) #  str(dir(irods_query)) #. query_iterator
-               #   x=""
-    cbk.writeLine('stdout',x)
-'''
