@@ -9,6 +9,10 @@ set(CMAKE_EXE_LINKER_FLAGS_INIT "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++")
 
 project(irods_rule_engine_plugin-python CXX)
 
+include(GenerateExportHeader)
+set(CMAKE_CXX_VISIBILITY_PRESET default)
+set(CMAKE_VISIBILITY_INLINES_HIDDEN 0)
+
 include(${IRODS_TARGETS_PATH})
 
 set(IRODS_PLUGIN_VERSION "${IRODS_VERSION}.${IRODS_PLUGIN_REVISION}")
@@ -90,7 +94,15 @@ set(
       irods_server
       )
 
-  target_compile_definitions(${PLUGIN} PRIVATE ${IRODS_RULE_ENGINE_PYTHON_PLUGIN_COMPILE_DEFINITIONS} ${IRODS_COMPILE_DEFINITIONS})
+  target_compile_definitions(${PLUGIN} PRIVATE ${IRODS_RULE_ENGINE_PYTHON_PLUGIN_COMPILE_DEFINITIONS} ${IRODS_COMPILE_DEFINITIONS}
+                                             RODS_SERVER
+                                             IRODS_QUERY_ENABLE_SERVER_SIDE_API
+                                             RODS_ENABLE_SYSLOG
+                                             IRODS_FILESYSTEM_ENABLE_SERVER_SIDE_API
+                                             IRODS_IO_TRANSPORT_ENABLE_SERVER_SIDE_API
+                                             SPDLOG_FMT_EXTERNAL
+                                             SPDLOG_NO_TLS
+  )
   #target_compile_options(${PLUGIN} PRIVATE -Wno-write-strings)
   set_property(TARGET ${PLUGIN} PROPERTY CXX_STANDARD ${IRODS_CXX_STANDARD})
 
@@ -116,6 +128,8 @@ install(
   ${CMAKE_SOURCE_DIR}/core.py.template
   ${CMAKE_SOURCE_DIR}/session_vars.py
   ${CMAKE_SOURCE_DIR}/genquery.py
+  ${CMAKE_SOURCE_DIR}/irods_query_wrapper.py
+  ${CMAKE_SOURCE_DIR}/test_irods_query.py
   DESTINATION etc/irods
   )
 
