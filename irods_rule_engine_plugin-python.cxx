@@ -6,6 +6,7 @@
 #include <list>
 #include <string>
 #include <memory>
+#include <mutex>
 
 #include "boost/date_time.hpp"
 #include "boost/algorithm/string/replace.hpp"
