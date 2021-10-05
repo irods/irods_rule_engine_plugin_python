@@ -378,10 +378,9 @@ irods::error start(irods::default_re_ctx&, const std::string& _instance_name)
     ms_table["py_remote"] = new irods::ms_table_entry("py_remote", 4, std::function<int(msParam_t*, msParam_t*, msParam_t*, msParam_t*, ruleExecInfo_t*)>( remote_exec_msvc ) );
 
     try {
-        const auto& re_plugin_arr = irods::get_server_property< const std::vector< boost::any >& >( std::vector< std::string >{ irods::CFG_PLUGIN_CONFIGURATION_KW, irods::PLUGIN_TYPE_RULE_ENGINE } );
-        for ( const auto& elem : re_plugin_arr ) {
-            const auto& plugin_config = boost::any_cast< const std::unordered_map< std::string, boost::any>& >( elem );
-            const auto& inst_name = boost::any_cast< const std::string& >( plugin_config.at( irods::CFG_INSTANCE_NAME_KW ) );
+        const auto& re_plugin_arr = irods::get_server_property< const nlohmann::json& >( std::vector< std::string >{ irods::CFG_PLUGIN_CONFIGURATION_KW, irods::PLUGIN_TYPE_RULE_ENGINE } );
+        for ( const auto& plugin_config : re_plugin_arr ) {
+            const auto& inst_name = plugin_config.at( irods::CFG_INSTANCE_NAME_KW ).get_ref< const std::string& >();
             if ( inst_name == _instance_name ) {
                 const auto& plugin_spec_cfg = boost::any_cast< const std::unordered_map< std::string, boost::any >& >( plugin_config.at( irods::CFG_PLUGIN_SPECIFIC_CONFIGURATION_KW ) );
 
