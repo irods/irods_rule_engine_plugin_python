@@ -5,9 +5,13 @@
 #include "raw_constructor.hpp"
 #include "type_sequence.hpp"
 
-#define register
+#include <patchlevel.h>
+#pragma GCC diagnostic push
+#if PY_VERSION_HEX < 0x030400A2
+#pragma GCC diagnostic ignored "-Wregister"
+#endif
 #include <boost/python.hpp>
-#undef register
+#pragma GCC diagnostic pop
 
 template<class T, typename = std::enable_if_t<std::is_pointer<T>::value>>
 T populate_helper(boost::python::tuple& args, int& index, boost::python::stl_input_iterator<boost::python::object>&, int&) {
