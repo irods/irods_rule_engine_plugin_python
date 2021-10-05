@@ -16,14 +16,17 @@
 #include "array_indexing_suite.hpp"
 #include "array_ref.hpp"
 
-#define register
+#include <patchlevel.h>
+#pragma GCC diagnostic push
+#if PY_VERSION_HEX < 0x030400A2
+#pragma GCC diagnostic ignored "-Wregister"
+#endif
 #include <boost/python/module_init.hpp>
 #include <boost/python/detail/none.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <boost/python/exception_translator.hpp>
+#pragma GCC diagnostic pop
 #include <boost/format.hpp>
-#undef register
-
 
 namespace bp = boost::python;
 

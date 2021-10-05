@@ -4,10 +4,14 @@
 #include <iterator>
 #include <type_traits>
 
-#define register
+#include <patchlevel.h>
+#pragma GCC diagnostic push
+#if PY_VERSION_HEX < 0x030400A2
+#pragma GCC diagnostic ignored "-Wregister"
+#endif
 #include <boost/python.hpp>
 #include <boost/python/suite/indexing/indexing_suite.hpp>
-#undef register
+#pragma GCC diagnostic pop
 
 // Forward declaration
 template<
