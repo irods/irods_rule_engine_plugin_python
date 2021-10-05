@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include <patchlevel.h>
+
 #include "rodsUser.h"
 #include "bulkDataObjPut.h"
 #include "miscUtil.h"
@@ -33,8 +35,13 @@
 #include "type_sequence.hpp"
 #include "irods_threads.hpp"
 
+#if PY_VERSION_HEX < 0x03000000
 extern "C" void initirods_types();
 extern "C" void initirods_errors();
+#else
+extern "C" PyObject* PyInit_irods_types();
+extern "C" PyObject* PyInit_irods_errors();
+#endif
 
 void init_irods_types();
 
