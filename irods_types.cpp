@@ -17,9 +17,13 @@
 #include "array_ref.hpp"
 
 #include <patchlevel.h>
+#include <boost/version.hpp>
 #pragma GCC diagnostic push
 #if PY_VERSION_HEX < 0x030400A2
 #pragma GCC diagnostic ignored "-Wregister"
+#endif
+#if PY_VERSION_HEX >= 0x03090000 && BOOST_VERSION < 107500
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
 #include <boost/python/module_init.hpp>
 #include <boost/python/detail/none.hpp>
