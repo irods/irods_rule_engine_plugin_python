@@ -325,3 +325,6 @@ def acPreProcForServerPortal(rule_args, callback, rei):
 
 def acPostProcForServerPortal(rule_args, callback, rei):
     pass
+
+def acPostProcForDataCopyReceived(rule_args, callback, rei):
+    pass
