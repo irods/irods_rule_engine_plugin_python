@@ -1,6 +1,9 @@
 #ifndef IRODS_TYPES_HPP__
 #define IRODS_TYPES_HPP__
 
+// include this first to fix macro redef warnings
+#include <pyconfig.h>
+
 #include <map>
 #include <string>
 #include <vector>
@@ -39,6 +42,7 @@
 extern "C" void initirods_types();
 extern "C" void initirods_errors();
 #else
+#include <Python.h>
 extern "C" PyObject* PyInit_irods_types();
 extern "C" PyObject* PyInit_irods_errors();
 #endif
