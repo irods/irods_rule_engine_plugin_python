@@ -41,6 +41,7 @@ if (NOT IRODS_PYTHON_VERSION)
   message(STATUS "Setting unspecified IRODS_PYTHON_VERSION to '${IRODS_PYTHON_VERSION}'. This is the correct setting for normal builds.")
 endif()
 
+find_package(nlohmann_json "3.6.1" REQUIRED)
 find_package(PythonInterp ${IRODS_PYTHON_VERSION} REQUIRED)
 find_package(PythonLibs ${IRODS_PYTHON_VERSION} REQUIRED)
 
@@ -72,7 +73,6 @@ set(
       PRIVATE
       ${IRODS_INCLUDE_DIRS}
       ${IRODS_EXTERNALS_FULLPATH_BOOST}/include
-      ${IRODS_EXTERNALS_FULLPATH_JSON}/include
       ${IRODS_EXTERNALS_FULLPATH_FMT}/include
       ${PYTHON_INCLUDE_DIRS}
       )
@@ -89,6 +89,7 @@ set(
       ${CMAKE_DL_LIBS}
       irods_common
       irods_server
+      nlohmann_json::nlohmann_json
       )
 
   target_compile_definitions(${PLUGIN} PRIVATE ${IRODS_RULE_ENGINE_PYTHON_PLUGIN_COMPILE_DEFINITIONS} ${IRODS_COMPILE_DEFINITIONS})
