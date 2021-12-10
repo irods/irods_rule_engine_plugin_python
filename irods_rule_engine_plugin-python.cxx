@@ -132,14 +132,13 @@ namespace bp = boost::python;
 
 static std::recursive_mutex python_mutex;
 
-void register_regexes_from_array(boost::any _array,
+void register_regexes_from_array(const nlohmann::json& _array,
                                  const std::string& _instance_name)
 {
     try {
-        const auto& arr = boost::any_cast< const std::vector< boost::any >& >( _array );
-        for ( const auto& elem : arr ) {
+        for ( const auto& elem : _array ) {
             try {
-                const auto tmp = boost::any_cast< const std::string& >( elem );
+                const auto& tmp = elem.get_ref<const std::string&>();
                 RuleExistsHelper::Instance()->registerRuleRegex( tmp );
                 logger::rule_engine::debug("register_regexes_from_array - regex: [{}]", tmp);
             }
@@ -391,7 +390,7 @@ irods::error start(irods::default_re_ctx&, const std::string& _instance_name)
         for ( const auto& plugin_config : re_plugin_arr ) {
             const auto& inst_name = plugin_config.at( irods::CFG_INSTANCE_NAME_KW ).get_ref< const std::string& >();
             if ( inst_name == _instance_name ) {
-                const auto& plugin_spec_cfg = boost::any_cast< const std::unordered_map< std::string, boost::any >& >( plugin_config.at( irods::CFG_PLUGIN_SPECIFIC_CONFIGURATION_KW ) );
+                const auto& plugin_spec_cfg = plugin_config.at( irods::CFG_PLUGIN_SPECIFIC_CONFIGURATION_KW );
 
                 // TODO Enable non core.py Python rulebases
 
