@@ -23,7 +23,8 @@ def install_building_dependencies(externals_directory):
                       'irods-externals-clang6.0-0',
                       'irods-externals-cppzmq4.2.3-0',
                       'irods-externals-libarchive3.3.2-1',
-                      'irods-externals-zeromq4-14.1.6-0']
+                      'irods-externals-zeromq4-14.1.6-0',
+                      'irods-externals-json3.10.4-0']
     if externals_directory == 'None' or externals_directory is None:
         irods_python_ci_utilities.install_irods_core_dev_repository()
         irods_python_ci_utilities.install_os_packages(externals_list)
