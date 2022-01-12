@@ -263,7 +263,11 @@ namespace
                 }
             }
 
-            irods::error retVal = self.effect_handler(self.rule_name, irods::unpack(rule_args_cpp));
+            const auto err = self.effect_handler(self.rule_name, irods::unpack(rule_args_cpp));
+
+            const auto error_occurred = !err.ok() &&
+                                        err.code() != CAT_NO_ROWS_FOUND &&
+                                        err.code() != CAT_SUCCESS_BUT_WITH_NO_INFO;
 
             bp::list ret_list{};
             while ( !rule_args_cpp.empty() ) {
@@ -275,24 +279,26 @@ namespace
                 }
                 else {
                     ret_list.append(object_from_msParam(msParams.front()));
-                    clearMsParam(&msParams.front(), 1);
+
+                    if (!error_occurred) {
+                        clearMsParam(&msParams.front(), 1);
+                    }
+
                     msParams.pop_front();
                 }
 
                 rule_args_cpp.pop_front();
             }
 
-            if (!retVal.ok()) {
-                if ((retVal.code() != CAT_NO_ROWS_FOUND) && (retVal.code() != CAT_SUCCESS_BUT_WITH_NO_INFO)) {
-                    std::string returnString = IRODS_ERROR_PREFIX + boost::lexical_cast<std::string>(retVal.code()) + "] " + retVal.result().c_str();
-                    PyErr_SetString(PyExc_RuntimeError, returnString.c_str());
-                    bp::throw_error_already_set();
-                }
+            if (error_occurred) {
+                std::string returnString = IRODS_ERROR_PREFIX + boost::lexical_cast<std::string>(err.code()) + "] " + err.result().c_str();
+                PyErr_SetString(PyExc_RuntimeError, returnString.c_str());
+                bp::throw_error_already_set();
             }
 
             bp::dict ret;
-            ret["code"] = retVal.code();
-            ret["status"] = retVal.status();
+            ret["code"] = err.code();
+            ret["status"] = err.status();
             ret["arguments"] = ret_list;
             return ret;
         }
