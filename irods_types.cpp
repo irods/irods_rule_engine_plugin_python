@@ -39,6 +39,26 @@ bool operator==(const sqlResult_t& s1, const sqlResult_t& s2) {
 }
 
 namespace {
+
+    void set_buffer_2argument_form_(bytesBuf_t* self, PyObject *c, int L)
+    {
+	bp::handle<> handle{bp::borrowed(c)}; // The PyObject*c will be "borrowed" in the context of this function, meaning
+	bp::object obj {handle};              // we increment its reference count until the handle goes out of scope.
+	if (L < 0) {
+	    L = bp::len(obj);
+	}
+	self->buf = realloc(self->buf, L);
+	if (self->buf) {
+	    self->len = L;
+	    auto *buf_dest = reinterpret_cast<unsigned char *>(self->buf);
+	    for (int i=0; i<L; i++) {
+		*buf_dest++ = bp::extract<unsigned char>{ obj[i] };
+	    }
+	}
+    }
+
+    void set_buffer( bytesBuf_t* self, PyObject *c) { set_buffer_2argument_form_(self,c,-1); }
+
     BOOST_PYTHON_MODULE(irods_errors)
     {
 	    std::map <std::string, int> irods_constants;
@@ -1011,6 +1031,27 @@ namespace {
             .def("__init__", make_init_function<bytesBuf_t>(
                         &bytesBuf_t::len,
                         &bytesBuf_t::buf))
+            .def("get_byte", +[]( bytesBuf_t* s, std::size_t n)->unsigned char {
+                                      if (n >= s->len) {
+                                          PyErr_SetString(PyExc_IndexError, "BytesBuf out-of-range access");
+                                          throw bp::error_already_set();
+                                      }
+                                      return static_cast<char*>(s->buf)[n];
+                                  })
+            .def("get_bytes", +[]( bytesBuf_t* s) {
+                                                      bp::object None;
+                                                      bp::list a{};
+                                                      a.append(None);   // construct a list of length 1 and expand it...
+                                                      a *= s->len;      // ... to the desired length.
+                                                      auto buf_src = static_cast<unsigned char*>(s->buf);
+                                                      for (int j=0; j<s->len; j++) {
+                                                          a[j]=*buf_src++;
+                                                      }
+                                                      return a;
+                                                  })
+            .def("clear_buffer", clearBBuf)
+            .def("set_buffer",set_buffer)
+            .def("set_buffer",set_buffer_2argument_form_)
             .add_property("len", &bytesBuf_t::len)
             .add_property("buf", +[](bytesBuf_t *s) { return s->buf ? bp::object{array_ref<char>{static_cast<char*>(s->buf), static_cast<std::size_t>(s->len)}} : bp::object{}; })
             ;

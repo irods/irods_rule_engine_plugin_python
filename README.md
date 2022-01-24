@@ -190,6 +190,40 @@ def get_irods_username (rule_args, callback, rei):
   rule_args [0] = username
 ```
 
+## Special methods
+
+Some iRODS objects used with rules and microservices have been given utility methods.
+
+An example is the map() method of a `PluginContext` PEP argument:
+```
+    def pep_resource_resolve_hierarchy_pre(rule_args, callback, rei):
+        import pprint
+        pprint.pprint(rule_args[1].map().items())
+```
+
+In version 4.2.11.2 of the Python plugin, `BytesBuf` has methods to set and access byte content.
+These can be used to achieve true binary reads and writes, to and from data objects.
+
+For example:
+```
+    def my_rule(args, callback, rei):
+        buf = irods_types.BytesBuf()
+        buf.set_buffer( os.urandom(256) )
+        callback.msiDataObjectWrite( descriptor, buf, 0)  #-- Write the buffer.
+        # ...
+        buf.clear_buffer()
+```
+or:
+```
+    # ...
+    retv = callback.msiDataObjectRead( descriptor, "256", irods_types.BytesBuf())
+    returnbuf = retv['arguments'][2]
+    out = returnbuf.get_bytes()         #--  Returns list of integer octets.
+    start_byte = returnbuf.get_byte(0)  #--  Returns first octet
+```
+
+
+
 ## `genquery.py`
 
 This module offers writers of Python rules a convenient facility for querying and iterating over objects in the iRODS object catalog (ICAT).
