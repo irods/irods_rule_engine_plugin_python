@@ -17,6 +17,8 @@ project(irods_rule_engine_plugin-python
   VERSION "${IRODS_PLUGIN_VERSION}"
   LANGUAGES CXX)
 
+find_package(Threads REQUIRED)
+
 set(CMAKE_SKIP_BUILD_RPATH OFF)
 set(CMAKE_SKIP_INSTALL_RPATH OFF)
 set(CMAKE_SKIP_RPATH OFF)
@@ -37,7 +39,7 @@ if (NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
 endif()
 
 if (NOT IRODS_PYTHON_VERSION)
-  set(IRODS_PYTHON_VERSION "2" CACHE STRING "The version of python to link against" FORCE)
+  set(IRODS_PYTHON_VERSION "3" CACHE STRING "The version of python to link against" FORCE)
   message(STATUS "Setting unspecified IRODS_PYTHON_VERSION to '${IRODS_PYTHON_VERSION}'. This is the correct setting for normal builds.")
 endif()
 
