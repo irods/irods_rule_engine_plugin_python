@@ -95,7 +95,7 @@ set(
       nlohmann_json::nlohmann_json
       )
 
-  target_compile_definitions(${PLUGIN} PRIVATE ${IRODS_RULE_ENGINE_PYTHON_PLUGIN_COMPILE_DEFINITIONS} ${IRODS_COMPILE_DEFINITIONS})
+  target_compile_definitions(${PLUGIN} PRIVATE ${IRODS_RULE_ENGINE_PYTHON_PLUGIN_COMPILE_DEFINITIONS} ${IRODS_COMPILE_DEFINITIONS} ${IRODS_COMPILE_DEFINITIONS_PRIVATE})
   #target_compile_options(${PLUGIN} PRIVATE -Wno-write-strings)
 
 install(
