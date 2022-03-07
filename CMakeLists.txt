@@ -43,6 +43,7 @@ if (NOT IRODS_PYTHON_VERSION)
   message(STATUS "Setting unspecified IRODS_PYTHON_VERSION to '${IRODS_PYTHON_VERSION}'. This is the correct setting for normal builds.")
 endif()
 
+find_package(OpenSSL REQUIRED COMPONENTS Crypto SSL)
 find_package(nlohmann_json "3.6.1" REQUIRED)
 find_package(PythonInterp ${IRODS_PYTHON_VERSION} REQUIRED)
 find_package(PythonLibs ${IRODS_PYTHON_VERSION} REQUIRED)
