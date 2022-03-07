@@ -10,33 +10,33 @@
 
 #include <patchlevel.h>
 
-#include "rodsUser.h"
-#include "bulkDataObjPut.h"
-#include "miscUtil.h"
-#include "dataCopy.h"
-#include "dataObjCopy.h"
-#include "execCmd.h"
-#include "fileCreate.h"
-#include "fileLseek.h"
-#include "fileOpen.h"
-#include "fileRename.h"
-#include "rcConnect.h"
-#include "rodsGeneralUpdate.h"
-#include "icatStructs.hpp"
-#include "irods_hierarchy_parser.hpp"
-#include "irods_plugin_context.hpp"
-#include "modAccessControl.h"
-#include "msParam.h"
-#include "dataObjOpenAndStat.h"
-#include "ruleExecDel.h"
-#include "irods_re_structs.hpp"
-#include "ruleExecSubmit.h"
-#include "specificQuery.h"
-#include "structFileSync.h"
-#include "subStructFileRead.h"
+#include <irods/rodsUser.h>
+#include <irods/bulkDataObjPut.h>
+#include <irods/miscUtil.h>
+#include <irods/dataCopy.h>
+#include <irods/dataObjCopy.h>
+#include <irods/execCmd.h>
+#include <irods/fileCreate.h>
+#include <irods/fileLseek.h>
+#include <irods/fileOpen.h>
+#include <irods/fileRename.h>
+#include <irods/rcConnect.h>
+#include <irods/rodsGeneralUpdate.h>
+#include <irods/icatStructs.hpp>
+#include <irods/irods_hierarchy_parser.hpp>
+#include <irods/irods_plugin_context.hpp>
+#include <irods/modAccessControl.h>
+#include <irods/msParam.h>
+#include <irods/dataObjOpenAndStat.h>
+#include <irods/ruleExecDel.h>
+#include <irods/irods_re_structs.hpp>
+#include <irods/ruleExecSubmit.h>
+#include <irods/specificQuery.h>
+#include <irods/structFileSync.h>
+#include <irods/subStructFileRead.h>
 
 #include "type_sequence.hpp"
-#include "irods_threads.hpp"
+#include <irods/irods_threads.hpp>
 
 #if PY_VERSION_HEX < 0x03000000
 extern "C" void initirods_types();

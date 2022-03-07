@@ -15,15 +15,15 @@
 #include "boost/filesystem/operations.hpp"
 #include "boost/filesystem/operations.hpp"
 
-#include "rodsErrorTable.h"
-#include "irods_error.hpp"
-#include "irods_re_plugin.hpp"
-#include "irods_re_ruleexistshelper.hpp"
-#include "irods_re_serialization.hpp"
-#include "irods_ms_plugin.hpp"
-#include "irods_server_properties.hpp"
-#include "msParam.h"
-#include "rsExecMyRule.hpp"
+#include <irods/rodsErrorTable.h>
+#include <irods/irods_error.hpp>
+#include <irods/irods_re_plugin.hpp>
+#include <irods/irods_re_ruleexistshelper.hpp>
+#include <irods/irods_re_serialization.hpp>
+#include <irods/irods_ms_plugin.hpp>
+#include <irods/irods_server_properties.hpp>
+#include <irods/msParam.h>
+#include <irods/rsExecMyRule.hpp>
 
 #include "irods_rule_engine_plugin-python.hpp"
 
