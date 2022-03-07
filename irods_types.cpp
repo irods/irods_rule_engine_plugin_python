@@ -4,13 +4,13 @@
 #include <pyconfig.h>
 
 #define MAKE_IRODS_ERROR_MAP
-#include "rodsErrorTable.h"
+#include <irods/rodsErrorTable.h>
 #define MAKE_IRODS_STATE_MAP
-#include "irods_state_table.h"
+#include <irods/irods_state_table.h>
 
 #include "irods_types.hpp"
 
-#include "irods_re_serialization.hpp"
+#include <irods/irods_re_serialization.hpp>
 
 #include "init_struct.hpp"
 #include "array_indexing_suite.hpp"
