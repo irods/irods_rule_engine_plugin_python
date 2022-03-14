@@ -14,8 +14,8 @@
 #if PY_VERSION_HEX >= 0x03090000 && BOOST_VERSION < 107500
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
-#include "boost/python.hpp"
-#include "boost/python/detail/api_placeholder.hpp"
+#include <boost/python.hpp>
+#include <boost/python/detail/api_placeholder.hpp>
 #pragma GCC diagnostic pop
 
 namespace boost { namespace python {

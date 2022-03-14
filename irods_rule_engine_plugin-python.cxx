@@ -8,12 +8,12 @@
 #include <memory>
 #include <mutex>
 
-#include "boost/date_time.hpp"
-#include "boost/algorithm/string/replace.hpp"
-#include "boost/algorithm/string/split.hpp"
-#include "boost/algorithm/string/classification.hpp"
-#include "boost/filesystem/operations.hpp"
-#include "boost/filesystem/operations.hpp"
+#include <boost/date_time.hpp>
+#include <boost/algorithm/string/replace.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/operations.hpp>
 
 #include <irods/rodsErrorTable.h>
 #include <irods/irods_error.hpp>
@@ -36,11 +36,11 @@
 #if PY_VERSION_HEX >= 0x03090000 && BOOST_VERSION < 107500
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
-#include "boost/python/slice.hpp"
-#include "boost/python/module_init.hpp"
+#include <boost/python/slice.hpp>
+#include <boost/python/module_init.hpp>
 #pragma GCC diagnostic pop
 
-#include "fmt/format.h"
+#include <fmt/format.h>
 
 using logger = irods::experimental::log;
 
