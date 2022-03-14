@@ -1,10 +1,10 @@
 #include <type_traits>
 #include <functional>
 
-#include "boost/any.hpp"
-#include "boost/optional.hpp"
-#include "boost/format.hpp"
-#include "boost/core/demangle.hpp"
+#include <boost/any.hpp>
+#include <boost/optional.hpp>
+#include <boost/format.hpp>
+#include <boost/core/demangle.hpp>
 
 #include <irods/irods_re_plugin.hpp>
 #include <irods/irods_exception.hpp>
@@ -18,7 +18,7 @@
 #if PY_VERSION_HEX >= 0x03090000 && BOOST_VERSION < 107500
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
-#include "boost/python.hpp"
+#include <boost/python.hpp>
 #pragma GCC diagnostic pop
 
 #include "irods_types.hpp"
