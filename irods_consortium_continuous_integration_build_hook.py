@@ -19,8 +19,8 @@ def install_building_dependencies(externals_directory):
                       'irods-externals-avro1.9.0-0',
                       'irods-externals-boost1.67.0-0',
                       'irods-externals-catch22.3.0-0',
-                      'irods-externals-clang-runtime6.0-0',
-                      'irods-externals-clang6.0-0',
+                      'irods-externals-clang-runtime13.0.0-0',
+                      'irods-externals-clang13.0.0-0',
                       'irods-externals-cppzmq4.2.3-0',
                       'irods-externals-libarchive3.3.2-1',
                       'irods-externals-zeromq4-14.1.6-0',
@@ -39,7 +39,7 @@ def install_building_dependencies(externals_directory):
     install_os_specific_dependencies()
 
 def install_os_specific_dependencies_apt():
-    irods_python_ci_utilities.install_os_packages(['make', 'python-dev', 'libssl-dev', 'gcc'])
+    irods_python_ci_utilities.install_os_packages(['make', 'python3-dev', 'libssl-dev', 'gcc'])
 
 def install_os_specific_dependencies_yum():
     irods_python_ci_utilities.install_os_packages(['python-devel', 'openssl-devel'])
