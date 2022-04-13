@@ -156,7 +156,8 @@ class Query(object):
         incorrect = list(k for k in options if k not in self.__parameter_names)
         if incorrect:
             raise GenQuery_Options_Spec_Error('Incorrect option(s) to Query: '+', '.join(incorrect))
-        return Query(self.callback, **(dict(self.parameters.items() + options.items())))
+        # let `options' override but not duplicate `self.parameters' in the keyword argument list
+        return Query(self.callback, **{**self.parameters, **options})
 
     def exec_if_not_yet_execed(self):
         """Query execution is delayed until the first result or total row count is requested."""
