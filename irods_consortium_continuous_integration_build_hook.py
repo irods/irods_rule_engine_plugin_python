@@ -38,7 +38,7 @@ def install_os_specific_dependencies_apt():
     irods_python_ci_utilities.install_os_packages(['make', 'python3-dev', 'libssl-dev', 'gcc'])
 
 def install_os_specific_dependencies_yum():
-    irods_python_ci_utilities.install_os_packages(['python-devel', 'openssl-devel'])
+    irods_python_ci_utilities.install_os_packages(['python3-devel', 'openssl-devel'])
 
 def install_os_specific_dependencies():
     dispatch_map = {
