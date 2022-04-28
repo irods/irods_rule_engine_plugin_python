@@ -20,7 +20,7 @@ def pythonRuleEnginePluginTest(rule_args, callback, rei):
     callback.writeLine('serverLog', 'Printed to server log from python rule engine')
 
 def acPreConnect(rule_args, callback, rei):
-    rule_args[0] = 'CS_NEG_DONT_CARE'
+    rule_args[0] = 'CS_NEG_REFUSE'
 
 def acCreateUser(rule_args, callback, rei):
     ret = callback.msiCreateUser()
