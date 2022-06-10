@@ -8,5 +8,5 @@ def main(rule_args, callback, rei):
     
     callback.writeLine('stdout', 'Set quota on ' + name + ' for resource ' + resource + ' to ' + value + ' bytes')
 
-INPUT *Type="user", *Name="rods", *Resource="demoResc", *Value="1000000000"
+INPUT *Type="user", *Name="rods", *Resource="demoResc", *Value="0"
 OUTPUT ruleExecOut
