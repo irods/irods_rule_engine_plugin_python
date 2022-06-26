@@ -345,6 +345,12 @@ irods::error start(irods::default_re_ctx&, const std::string& _instance_name)
     // TODO Enable config-selectable Python version
 #if PY_VERSION_HEX < 0x03000000
     dlopen("libpython2.7.so", RTLD_LAZY | RTLD_GLOBAL); // https://mail.python.org/pipermail/new-bugs-announce/2008-November/003322.html
+#else
+    void *p = dlopen("/usr/lib/x86_64-linux-gnu/libpython3.6m.so", RTLD_LAZY | RTLD_GLOBAL);
+    rodsLog(LOG_NOTICE, "DWM - dlopen returned: [%p]", p);
+    if (!p) {
+       rodsLog(LOG_NOTICE, "    - dlerror gives : [%s]", dlerror());
+    }
 #endif
 
     try {
