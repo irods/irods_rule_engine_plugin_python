@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5.0 FATAL_ERROR) #CPACK_DEBIAN_<COMPONENT>_PACKAGE_NAME
+cmake_minimum_required(VERSION 3.12 FATAL_ERROR) #FindPython
 
 find_package(IRODS REQUIRED)
 set(IRODS_PLUGIN_REVISION "0")
@@ -45,8 +45,7 @@ endif()
 
 find_package(OpenSSL REQUIRED COMPONENTS Crypto SSL)
 find_package(nlohmann_json "3.6.1" REQUIRED)
-find_package(PythonInterp ${IRODS_PYTHON_VERSION} REQUIRED)
-find_package(PythonLibs ${IRODS_PYTHON_VERSION} REQUIRED)
+find_package(Python "${IRODS_PYTHON_VERSION}" REQUIRED COMPONENTS Development)
 
 set(
   IRODS_RULE_ENGINE_PLUGIN-PYTHON_COMPILE_DEFINITIONS
@@ -77,21 +76,20 @@ set(
       ${IRODS_INCLUDE_DIRS}
       ${IRODS_EXTERNALS_FULLPATH_BOOST}/include
       ${IRODS_EXTERNALS_FULLPATH_FMT}/include
-      ${PYTHON_INCLUDE_DIRS}
       )
 
   target_link_libraries(
       ${PLUGIN}
       PRIVATE
-      ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}.so
+      ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_python${Python_VERSION_MAJOR}${Python_VERSION_MINOR}.so
       ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_system.so
       ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_date_time.so
       ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_filesystem.so
       ${IRODS_EXTERNALS_FULLPATH_FMT}/lib/libfmt.so
-      ${PYTHON_LIBRARIES}
       ${CMAKE_DL_LIBS}
       irods_common
       irods_server
+      Python::Python
       nlohmann_json::nlohmann_json
       )
 
