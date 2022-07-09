@@ -5,6 +5,8 @@
 #include <fstream>
 #include <list>
 #include <string>
+#include <vector>
+#include <map>
 #include <memory>
 #include <mutex>
 
@@ -24,6 +26,9 @@
 #include "irods_server_properties.hpp"
 #include "msParam.h"
 #include "rsExecMyRule.hpp"
+
+// Can delete this in favor of #include <irods/reFuncDefs.hpp> , on resolution of irods/irods #6545:
+std::map<std::string, std::vector<std::string>> getTaggedValues(const char *str);
 
 #include "irods_rule_engine_plugin-python.hpp"
 
@@ -98,10 +103,21 @@ static int remote_exec_msvc(
         META_STR_LEN,
         "%s", rule_text.c_str());
 
+     // TODO:
+     // It is not yet known whether execCondition is actually used by rsExecMyRule or
+     // any functions it calls. If in resolution of [irods/irods#6567] we find it is
+     // unused, the following addKeyVal call may be unnecessary.
      addKeyVal(
          &exec_inp.condInput,
          "execCondition",
          static_cast<char*>(_pa->inOutStruct));
+
+    auto taggedValues = getTaggedValues(static_cast<char*>(_pa->inOutStruct));
+    auto it = taggedValues.find("INST_NAME");
+    if ( it != taggedValues.end() ) {
+        addKeyVal( &exec_inp.condInput, INSTANCE_NAME_KW, it->second.front().c_str());
+        taggedValues.erase(it);
+    }
 
     msParamArray_t *out_arr = NULL;
     return rsExecMyRule(
