@@ -58,13 +58,22 @@ This version of the Python Rule Engine Plugin uses the Python 2.7 interpreter.
 
 # Remote Execution
 
-There exists a requirement for the implementation of a different ```remote``` microservice call for every rule language.  Given the possibility of a namespace collision with more than one rule language being configured simultaneously, the name of the microservice to use for the python language is ```py_remote()```.
+There exists a requirement for the implementation of a different `remote` microservice call for every rule language.  Given the possibility of a namespace collision with more than one rule language being configured simultaneously, the name of the microservice to use for the python language is `py_remote()`.  As with remote execution via the native rule engine, this microservice runs the given rule text on the remote host using `exec_rule_text`.   This can be done on any iRODS host (inside or outside the local zone) where the invoking user is authenticated.
+
+The microservice's signature is: `py_remote(hostname, hints, code, recovery)`.
+
+Its four parameters are strings:
+   - `hostname`. The name of the iRODS server where the code is to be executed.
+   - `hints`.  A string containing optional XML tags. Currently scanned only for the `INST_NAME` tag, and other tags - if used - will be ignored. This
+      includes <ZONE>, since the zone (whether remote or local) is inferred from the `hostname` parameter.
+   - `code`. The Python source code to be executed, in the form of a complete rule, i.e.: `def main(rule_args,callback,rei): ...`
+   - `recovery`.  This is currently unused.
 
 For example:
 ```
 def main(rule_args, callback, rei):
     rule_code = "def main(rule_args, callback, rei):\n    print('This is a test of the Python Remote Rule Execution')"
-    callback.py_remote('icat.example.org', '', rule_code, '')
+    callback.py_remote('icat.example.org', '<INST_NAME>irods_rule_engine_plugin-python-instance</INST_NAME>', rule_code, '')
 INPUT null
 OUTPUT ruleExecOut
 ```
