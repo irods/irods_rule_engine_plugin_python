@@ -45,7 +45,7 @@
 
 #include <fmt/format.h>
 
-using logger = irods::experimental::log;
+namespace logger = irods::experimental::log;
 
 irods::ms_table& get_microservice_table();
 
