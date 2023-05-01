@@ -8,5 +8,5 @@ def main(rule_args, callback, rei):
 
     callback.writeLine('stdout', 'Replica number ' + replica_number + 'of file ' + source_file + ' is moved from resource ' + source_resource + ' to resource ' + dest_resource)
 
-INPUT *SourceFile="/tempZone/home/rods/forphymv/phymvfile", *DestResource="testallrulesResc", *SourceResource="demoResc", *ReplicaNumber="0"
+INPUT *SourceFile="/tempZone/home/rods/forphymv/phymvfile", *DestResource="testallrulesResc", *SourceResource="demoResc", *ReplicaNumber="null"
 OUTPUT ruleExecOut
