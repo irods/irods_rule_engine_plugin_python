@@ -72,6 +72,7 @@ set(
       "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/init_struct.hpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/raw_constructor.hpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/type_sequence.hpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/config.hpp"
       )
   target_sources(${PLUGIN} PRIVATE ${${PLUGIN}_HEADERS})
 
