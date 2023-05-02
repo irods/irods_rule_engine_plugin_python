@@ -35,7 +35,7 @@
 #include <irods/structFileSync.h>
 #include <irods/subStructFileRead.h>
 
-#include "type_sequence.hpp"
+#include "irods/private/re/python/types/type_sequence.hpp"
 #include <irods/irods_threads.hpp>
 
 #if PY_VERSION_HEX < 0x03000000

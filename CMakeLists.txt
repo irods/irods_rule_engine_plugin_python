@@ -66,13 +66,25 @@ set(
   add_library(
       ${PLUGIN}
       MODULE
-      ${CMAKE_PROJECT_NAME}.cxx
-      irods_types.cpp
+      "${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/src/irods_types.cpp"
       )
+  set(
+      ${PLUGIN}_HEADERS
+      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python.hpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/irods_types.hpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/array_indexing_suite.hpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/array_ref.hpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/init_struct.hpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/raw_constructor.hpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/type_sequence.hpp"
+      )
+  target_sources(${PLUGIN} PRIVATE ${${PLUGIN}_HEADERS})
 
   target_include_directories(
       ${PLUGIN}
       PRIVATE
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
       ${IRODS_INCLUDE_DIRS}
       ${IRODS_EXTERNALS_FULLPATH_BOOST}/include
       ${IRODS_EXTERNALS_FULLPATH_FMT}/include

@@ -28,7 +28,7 @@
 #include <irods/msParam.h>
 #include <irods/rsExecMyRule.hpp>
 
-#include "irods_rule_engine_plugin-python.hpp"
+#include "irods/private/re/python.hpp"
 
 #include <patchlevel.h>
 #include <boost/version.hpp>
