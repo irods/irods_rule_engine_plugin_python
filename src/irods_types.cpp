@@ -1,7 +1,5 @@
-#define BOOST_PYTHON_MAX_ARITY 45
-
-// include this first to fix macro redef warnings
-#include <pyconfig.h>
+// include this first for defines and pyconfig
+#include "irods/private/re/python/types/config.hpp"
 
 // include boost/any.hpp before system irods includes to silence boost-caused deprecation warnings
 #include <boost/version.hpp>
