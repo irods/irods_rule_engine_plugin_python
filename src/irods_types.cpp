@@ -8,13 +8,13 @@
 #define MAKE_IRODS_STATE_MAP
 #include <irods/irods_state_table.h>
 
-#include "irods_types.hpp"
+#include "irods/private/re/python/irods_types.hpp"
 
 #include <irods/irods_re_serialization.hpp>
 
-#include "init_struct.hpp"
-#include "array_indexing_suite.hpp"
-#include "array_ref.hpp"
+#include "irods/private/re/python/types/init_struct.hpp"
+#include "irods/private/re/python/types/array_indexing_suite.hpp"
+#include "irods/private/re/python/types/array_ref.hpp"
 
 #include <patchlevel.h>
 #include <boost/version.hpp>

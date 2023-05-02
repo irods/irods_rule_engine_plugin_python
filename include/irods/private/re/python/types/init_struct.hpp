@@ -2,8 +2,8 @@
 #define INIT_STRUCT_HPP
 
 #include <memory>
-#include "raw_constructor.hpp"
-#include "type_sequence.hpp"
+#include "irods/private/re/python/types/raw_constructor.hpp"
+#include "irods/private/re/python/types/type_sequence.hpp"
 
 #include <patchlevel.h>
 #include <boost/version.hpp>
