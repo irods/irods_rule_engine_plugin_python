@@ -61,11 +61,13 @@ set(
       ${PLUGIN}
       MODULE
       "${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/src/irods_errors.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/src/irods_types.cpp"
       )
   set(
       ${PLUGIN}_HEADERS
       "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python.hpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/irods_errors.hpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/irods_types.hpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/array_indexing_suite.hpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/array_ref.hpp"

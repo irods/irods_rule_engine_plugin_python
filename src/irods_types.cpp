@@ -10,9 +10,7 @@
 #pragma GCC diagnostic pop
 #endif
 
-#define MAKE_IRODS_ERROR_MAP
 #include <irods/rodsErrorTable.h>
-#define MAKE_IRODS_STATE_MAP
 #include <irods/irods_state_table.h>
 
 #include "irods/private/re/python/irods_types.hpp"
@@ -64,18 +62,6 @@ namespace {
     }
 
     void set_buffer( bytesBuf_t* self, PyObject *c) { set_buffer_2argument_form_(self,c,-1); }
-
-    BOOST_PYTHON_MODULE(irods_errors)
-    {
-	    std::map <std::string, int> irods_constants;
-	    irods::fill_error_constants ( irods_constants );
-	    irods::fill_state_constants ( irods_constants );
-	    bp::scope current;
-	    for  (const auto & [k,v] : irods_constants )
-	    {
-		current.attr(k.c_str()) = v;
-	    }
-    }
 
     BOOST_PYTHON_MODULE(irods_types)
     {

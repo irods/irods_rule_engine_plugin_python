@@ -23,6 +23,7 @@
 #pragma GCC diagnostic pop
 
 #include "irods/private/re/python/irods_types.hpp"
+#include "irods/private/re/python/irods_errors.hpp"
 #include "irods/private/re/python/types/array_ref.hpp"
 
 namespace bp = boost::python;
