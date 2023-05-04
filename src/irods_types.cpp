@@ -3,6 +3,15 @@
 // include this first to fix macro redef warnings
 #include <pyconfig.h>
 
+// include boost/any.hpp before system irods includes to silence boost-caused deprecation warnings
+#include <boost/version.hpp>
+#if BOOST_VERSION < 108100
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#include <boost/any.hpp>
+#pragma GCC diagnostic pop
+#endif
+
 #define MAKE_IRODS_ERROR_MAP
 #include <irods/rodsErrorTable.h>
 #define MAKE_IRODS_STATE_MAP
@@ -17,7 +26,6 @@
 #include "irods/private/re/python/types/array_ref.hpp"
 
 #include <patchlevel.h>
-#include <boost/version.hpp>
 #pragma GCC diagnostic push
 #if PY_VERSION_HEX < 0x030400A2
 #pragma GCC diagnostic ignored "-Wregister"

@@ -11,7 +11,7 @@
 #if PY_VERSION_HEX < 0x030400A2
 #pragma GCC diagnostic ignored "-Wregister"
 #endif
-#if PY_VERSION_HEX >= 0x03090000 && BOOST_VERSION < 107500
+#if BOOST_VERSION < 108100
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
 #include <boost/python.hpp>
