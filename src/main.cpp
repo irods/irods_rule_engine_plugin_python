@@ -10,12 +10,18 @@
 #include <memory>
 #include <mutex>
 
+#include <boost/version.hpp>
+#pragma GCC diagnostic push
+#if BOOST_VERSION < 108100
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
 #include <boost/date_time.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/operations.hpp>
+#pragma GCC diagnostic pop
 
 #include <irods/rodsErrorTable.h>
 #include <irods/irods_error.hpp>
@@ -31,7 +37,6 @@
 #include "irods/private/re/python.hpp"
 
 #include <patchlevel.h>
-#include <boost/version.hpp>
 #pragma GCC diagnostic push
 #if PY_VERSION_HEX < 0x030400A2
 #pragma GCC diagnostic ignored "-Wregister"
