@@ -6,6 +6,7 @@
 #include <boost/format.hpp>
 #include <boost/core/demangle.hpp>
 
+#include <irods/irods_re_serialization.hpp>
 #include <irods/irods_re_plugin.hpp>
 #include <irods/irods_exception.hpp>
 
