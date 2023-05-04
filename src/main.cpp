@@ -20,7 +20,6 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/operations.hpp>
 #pragma GCC diagnostic pop
 
 #include <irods/rodsErrorTable.h>
