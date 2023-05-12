@@ -42,17 +42,6 @@ find_package(nlohmann_json "3.6.1" REQUIRED)
 find_package(Python "${IRODS_PYTHON_VERSION}" REQUIRED COMPONENTS Development)
 
 set(
-  IRODS_RULE_ENGINE_PLUGIN-PYTHON_COMPILE_DEFINITIONS
-  RODS_SERVER
-  ENABLE_RE
-  )
-
-set(
-  IRODS_RULE_ENGINE_PLUGIN-PYTHON_LINK_LIBRARIES
-  irods_server
-  )
-
-set(
   PLUGIN
   irods_rule_engine_plugin-python
   )
@@ -184,7 +173,15 @@ set(
       nlohmann_json::nlohmann_json
       )
 
-  target_compile_definitions(${PLUGIN} PRIVATE ${IRODS_RULE_ENGINE_PYTHON_PLUGIN_COMPILE_DEFINITIONS} ${IRODS_COMPILE_DEFINITIONS} ${IRODS_COMPILE_DEFINITIONS_PRIVATE})
+  target_compile_definitions(
+      ${PLUGIN}
+      PRIVATE
+      RODS_SERVER
+      ENABLE_RE
+      ${IRODS_COMPILE_DEFINITIONS}
+      ${IRODS_COMPILE_DEFINITIONS_PRIVATE}
+      )
+  
   target_compile_options(${PLUGIN} PRIVATE -Wno-deprecated-volatile -Wmissing-field-initializers)
 
 install(
