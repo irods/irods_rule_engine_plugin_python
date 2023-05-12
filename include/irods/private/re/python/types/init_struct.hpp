@@ -14,7 +14,12 @@
 #if BOOST_VERSION < 108100
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
-#include <boost/python.hpp>
+#include <boost/python/dict.hpp>
+#include <boost/python/errors.hpp>
+#include <boost/python/extract.hpp>
+#include <boost/python/object.hpp>
+#include <boost/python/stl_iterator.hpp>
+#include <boost/python/tuple.hpp>
 #pragma GCC diagnostic pop
 
 template<class T, typename = std::enable_if_t<std::is_pointer<T>::value>>
