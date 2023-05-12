@@ -176,7 +176,7 @@ msParam_t msParam_from_object(boost::python::object& obj) {
 //for value types
 template<typename T,
     typename std::enable_if_t<!std::is_pointer<T>{}>* = nullptr>
-void update_argument_impl(boost::any& cpp_arg, boost::python::object& py_arg) {}
+void update_argument_impl([[maybe_unused]] boost::any& cpp_arg, [[maybe_unused]] boost::python::object& py_arg) {}
 
 //for non-const single-pointer types
 template<typename T,
@@ -205,10 +205,10 @@ void update_argument_impl(boost::any& cpp_arg, boost::python::object& py_arg) {
 
 //for const single-pointer types
 template<typename T, typename std::enable_if_t<std::is_pointer<T>{}>* = nullptr, typename std::enable_if_t<std::is_const<std::remove_pointer_t<T>>{}>* = nullptr>
-void update_argument_impl(boost::any& cpp_arg, boost::python::object& py_arg) {}
+void update_argument_impl([[maybe_unused]] boost::any& cpp_arg, [[maybe_unused]] boost::python::object& py_arg) {}
 
 template<>
-void update_argument_impl<const char*>(boost::any& cpp_arg, boost::python::object& py_arg) {}
+void update_argument_impl<const char*>([[maybe_unused]] boost::any& cpp_arg, [[maybe_unused]] boost::python::object& py_arg) {}
 
 template<>
 void update_argument_impl<char*>(boost::any& cpp_arg, boost::python::object& py_arg) {
@@ -222,7 +222,7 @@ void update_argument_impl<char*>(boost::any& cpp_arg, boost::python::object& py_
 }
 
 template<>
-void update_argument_impl<void*>(boost::any& cpp_arg, boost::python::object& py_arg) {}
+void update_argument_impl<void*>([[maybe_unused]] boost::any& cpp_arg, [[maybe_unused]] boost::python::object& py_arg) {}
 
 //for value types
 template<typename T, typename std::enable_if_t<!std::is_pointer<T>{}>* = nullptr>
@@ -261,7 +261,7 @@ boost::python::object object_from_specific<char*>(boost::any& arg) {
 }
 
 template<>
-boost::python::object object_from_specific<void*>(boost::any& arg) {
+boost::python::object object_from_specific<void*>([[maybe_unused]] boost::any& arg) {
     return boost::python::object{};
 }
 
