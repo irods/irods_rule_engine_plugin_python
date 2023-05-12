@@ -56,35 +56,6 @@ irods::ms_table& get_microservice_table();
 // writeLine is not in the microservice table in 4.2.0 - #3408
 int writeLine(msParam_t*, msParam_t*, ruleExecInfo_t*);
 
-static int carryOverMsParam(
-    msParamArray_t *sourceMsParamArray,
-    msParamArray_t *targetMsParamArray )
-{
-    int i;
-    msParam_t *mP, *mPt;
-    if ( sourceMsParamArray == NULL ) {
-        return 0;
-    }
-
-    for ( i = 0; i < sourceMsParamArray->len ; i++ ) {
-        mPt = sourceMsParamArray->msParam[i];
-        if ( ( mP = getMsParamByLabel( targetMsParamArray, mPt->label ) ) != NULL ) {
-            free( mP->inpOutBuf );
-            int status = replInOutStruct(mPt->inOutStruct, &mP->inOutStruct, mPt->type);
-            if ( status < 0 ) {
-                char msg[] = "%s encountered an error when calling replInOutStruct";
-                rodsLogError(LOG_ERROR, status, msg, __PRETTY_FUNCTION__);
-            }
-            mP->inpOutBuf = replBytesBuf(mPt->inpOutBuf);
-        }
-        else
-            addMsParamToArray( targetMsParamArray,
-                               mPt->label, mPt->type, mPt->inOutStruct, mPt->inpOutBuf, 1 );
-    }
-
-    return 0;
-}
-
 static int remote_exec_msvc(
     msParam_t*      _pd,
     msParam_t*      _pa,
