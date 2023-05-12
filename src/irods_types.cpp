@@ -4,10 +4,10 @@
 // include boost/any.hpp before system irods includes to silence boost-caused deprecation warnings
 #include <boost/version.hpp>
 #if BOOST_VERSION < 108100
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#include <boost/any.hpp>
-#pragma GCC diagnostic pop
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#  include <boost/any.hpp>
+#  pragma GCC diagnostic pop
 #endif
 
 #include "irods/private/re/python/irods_types.hpp"
@@ -56,10 +56,10 @@
 #include <patchlevel.h>
 #pragma GCC diagnostic push
 #if PY_VERSION_HEX < 0x030400A2
-#pragma GCC diagnostic ignored "-Wregister"
+#  pragma GCC diagnostic ignored "-Wregister"
 #endif
 #if PY_VERSION_HEX >= 0x03090000 && BOOST_VERSION < 107500
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#  pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
 #include <boost/python/module.hpp>
 #pragma GCC diagnostic pop
@@ -67,10 +67,11 @@
 namespace bp = boost::python;
 namespace py_types = irods::re::python::types;
 
-namespace {
+namespace
+{
 
-    BOOST_PYTHON_MODULE(irods_types)
-    {
+	BOOST_PYTHON_MODULE(irods_types)
+	{
 		py_types::export_specCollClass();
 		py_types::export_structFileType();
 
@@ -225,5 +226,5 @@ namespace {
 
 		py_types::export_FileLseekInp_t();
 		py_types::export_FileLseekOut_t();
-    }
-}
+	}
+} //namespace

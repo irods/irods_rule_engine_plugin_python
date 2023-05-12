@@ -9,7 +9,7 @@
 #if PY_VERSION_HEX < 0x03000000
 extern "C" void initirods_errors();
 #else
-#include <Python.h>
+#  include <Python.h>
 extern "C" PyObject* PyInit_irods_errors();
 #endif
 

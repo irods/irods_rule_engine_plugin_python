@@ -7,6 +7,6 @@ namespace irods::re::python::types
 	void export_SqlResult();
 	void export_SqlResult_array();
 	void export_GenQueryOut();
-}
+} //namespace irods::re::python::types
 
 #endif // RE_PYTHON_TYPES_IRODS_RODSGENQUERY_HPP

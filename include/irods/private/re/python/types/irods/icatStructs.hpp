@@ -4,6 +4,6 @@
 namespace irods::re::python::types
 {
 	void export_IcatSessionStruct();
-}
+} //namespace irods::re::python::types
 
 #endif // RE_PYTHON_TYPES_IRODS_ICATSTRUCTS_HPP

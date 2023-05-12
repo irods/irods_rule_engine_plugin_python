@@ -6,6 +6,6 @@ namespace irods::re::python::types
 	void export_RErrMsg();
 	void export_RErrMsg_pointer_array();
 	void export_RError();
-}
+} //namespace irods::re::python::types
 
 #endif // RE_PYTHON_TYPES_IRODS_RODSERROR_HPP

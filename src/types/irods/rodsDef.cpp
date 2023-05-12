@@ -29,29 +29,30 @@ namespace irods::re::python::types
 {
 	namespace
 	{
-		static inline void set_buffer_2argument_form_(bytesBuf_t* self, PyObject *c, int L)
+		static inline void set_buffer_2argument_form_(bytesBuf_t* self, PyObject* c, int L)
 		{
 			// The PyObject*c will be "borrowed" in the context of this function, meaning
 			// we increment its reference count until the handle goes out of scope.
 			bp::handle<> handle{bp::borrowed(c)};
-			bp::object obj {handle};
+			bp::object obj{handle};
 			if (L < 0) {
 				L = bp::len(obj);
 			}
 			self->buf = realloc(self->buf, L);
 			if (self->buf) {
 				self->len = L;
-				auto *buf_dest = reinterpret_cast<unsigned char *>(self->buf);
-				for (int i=0; i<L; i++) {
-					*buf_dest++ = bp::extract<unsigned char>{ obj[i] };
+				auto* buf_dest = reinterpret_cast<unsigned char*>(self->buf);
+				for (int i = 0; i < L; i++) {
+					*buf_dest++ = bp::extract<unsigned char>{obj[i]};
 				}
 			}
 		}
 
-		static inline void set_buffer( bytesBuf_t* self, PyObject *c) {
+		static inline void set_buffer(bytesBuf_t* self, PyObject* c)
+		{
 			set_buffer_2argument_form_(self, c, -1);
 		}
-	}
+	} //namespace
 
 	__attribute__((visibility("hidden"))) void export_irodsProt()
 	{
@@ -153,4 +154,4 @@ namespace irods::re::python::types
 			;
 		// clang-format on
 	}
-}
+} //namespace irods::re::python::types

@@ -5,6 +5,6 @@ namespace irods::re::python::types
 {
 	void export_FileLseekInp_t();
 	void export_FileLseekOut_t();
-}
+} //namespace irods::re::python::types
 
 #endif // RE_PYTHON_TYPES_IRODS_FILELSEEK_HPP
