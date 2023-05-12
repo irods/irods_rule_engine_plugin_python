@@ -61,4 +61,4 @@ namespace irods::re::python::types
 			;
 		// clang-format on
 	}
-}
+} //namespace irods::re::python::types

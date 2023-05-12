@@ -10,6 +10,6 @@ namespace irods::re::python::types
 	void export_DataOprInp();
 	void export_CollInp();
 	void export_PortalOpr();
-}
+} //namespace irods::re::python::types
 
 #endif // RE_PYTHON_TYPES_IRODS_DATAOBJINPOUT_HPP

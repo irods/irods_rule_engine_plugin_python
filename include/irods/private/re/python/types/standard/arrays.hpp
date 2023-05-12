@@ -8,6 +8,6 @@ namespace irods::re::python::types
 	void export_unsigned_char_array();
 	void export_c_string();
 	void export_c_string_array();
-}
+} //namespace irods::re::python::types
 
 #endif // RE_PYTHON_TYPES_STANDARD_ARRAYS_HPP

@@ -6,10 +6,10 @@
 // include boost/container_hash/hash.hpp before system irods includes to silence boost-caused deprecation warnings
 #include <boost/version.hpp>
 #if BOOST_VERSION < 108100
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#include <boost/container_hash/hash.hpp>
-#pragma GCC diagnostic pop
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#  include <boost/container_hash/hash.hpp>
+#  pragma GCC diagnostic pop
 #endif
 
 #include <irods/irods_hierarchy_parser.hpp>
@@ -38,4 +38,4 @@ namespace irods::re::python::types
 			;
 		// clang-format on
 	}
-}
+} //namespace irods::re::python::types

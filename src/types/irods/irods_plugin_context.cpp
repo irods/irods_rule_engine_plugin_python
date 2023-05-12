@@ -6,10 +6,10 @@
 // include boost/any.hpp before system irods includes to silence boost-caused deprecation warnings
 #include <boost/version.hpp>
 #if BOOST_VERSION < 108100
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#include <boost/any.hpp>
-#pragma GCC diagnostic pop
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#  include <boost/any.hpp>
+#  pragma GCC diagnostic pop
 #endif
 
 #include <irods/irods_plugin_context.hpp>
@@ -57,4 +57,4 @@ namespace irods::re::python::types
 			;
 		// clang-format on
 	}
-}
+} //namespace irods::re::python::types

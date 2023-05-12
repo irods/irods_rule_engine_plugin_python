@@ -14,6 +14,6 @@ namespace irods::re::python::types
 	void export_TransferStat();
 	void export_CollOprStat();
 	void export_SubFile();
-}
+} //namespace irods::re::python::types
 
 #endif // RE_PYTHON_TYPES_IRODS_OBJINFO_HPP

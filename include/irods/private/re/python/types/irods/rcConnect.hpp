@@ -13,6 +13,6 @@ namespace irods::re::python::types
 	void export_RcComm();
 	void export_PerfStat();
 	void export_RsComm();
-}
+} //namespace irods::re::python::types
 
 #endif // RE_PYTHON_TYPES_IRODS_RCCONNECT_HPP

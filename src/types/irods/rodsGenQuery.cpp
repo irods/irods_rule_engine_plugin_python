@@ -23,7 +23,8 @@
 
 namespace bp = boost::python;
 
-bool operator==([[maybe_unused]] const sqlResult_t& s1, [[maybe_unused]] const sqlResult_t& s2) {
+bool operator==([[maybe_unused]] const sqlResult_t& s1, [[maybe_unused]] const sqlResult_t& s2)
+{
 	return false;
 }
 
@@ -98,4 +99,4 @@ namespace irods::re::python::types
 			;
 		// clang-format on
 	}
-}
+} //namespace irods::re::python::types

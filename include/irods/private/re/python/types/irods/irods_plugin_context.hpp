@@ -4,6 +4,6 @@
 namespace irods::re::python::types
 {
 	void export_PluginContext();
-}
+} //namespace irods::re::python::types
 
 #endif // RE_PYTHON_TYPES_IRODS_IRODS_PLUGIN_CONTEXT_HPP
