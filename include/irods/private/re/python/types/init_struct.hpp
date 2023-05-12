@@ -76,7 +76,7 @@ struct init_c_struct<T, type_sequence<MemberTypes...>, type_sequence<ExpandedTyp
 };
 
 template<class T, typename... MemberTypes>
-boost::python::object make_init_function( MemberTypes T::* ...members ) {
+boost::python::object make_init_function([[maybe_unused]] MemberTypes T::* ...members) {
     return raw_constructor(&init_c_struct<T, type_sequence<MemberTypes...>, make_expanded_sequence_for<MemberTypes...>>::fn, 0);
 }
 
