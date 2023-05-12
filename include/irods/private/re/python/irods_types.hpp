@@ -8,8 +8,6 @@
 #include <string>
 #include <vector>
 
-#include <patchlevel.h>
-
 #include <irods/rodsUser.h>
 #include <irods/bulkDataObjPut.h>
 #include <irods/miscUtil.h>
@@ -34,9 +32,9 @@
 #include <irods/specificQuery.h>
 #include <irods/structFileSync.h>
 #include <irods/subStructFileRead.h>
+#include <irods/irods_threads.hpp>
 
 #include "irods/private/re/python/types/type_sequence.hpp"
-#include <irods/irods_threads.hpp>
 
 #if PY_VERSION_HEX < 0x03000000
 extern "C" void initirods_types();

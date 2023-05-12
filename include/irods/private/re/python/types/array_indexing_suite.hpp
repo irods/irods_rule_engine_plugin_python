@@ -13,7 +13,9 @@
 #if BOOST_VERSION < 108100
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
-#include <boost/python.hpp>
+#include <boost/python/errors.hpp>
+#include <boost/python/extract.hpp>
+#include <boost/python/object_core.hpp>
 #include <boost/python/suite/indexing/indexing_suite.hpp>
 #pragma GCC diagnostic pop
 
