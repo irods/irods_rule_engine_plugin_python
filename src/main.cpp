@@ -60,7 +60,7 @@ static int remote_exec_msvc(
     msParam_t*      _pd,
     msParam_t*      _pa,
     msParam_t*      _pb,
-    msParam_t*      _pc,
+    msParam_t*    /*_pc*/,
     ruleExecInfo_t* _rei)
 {
     execMyRuleInp_t exec_inp;
