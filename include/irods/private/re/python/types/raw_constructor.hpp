@@ -1,5 +1,5 @@
-#ifndef RAW_CONSTRUCTOR_HPP
-#define RAW_CONSTRUCTOR_HPP
+#ifndef RE_PYTHON_TYPES_RAW_CONSTRUCTOR_HPP
+#define RE_PYTHON_TYPES_RAW_CONSTRUCTOR_HPP
 
 #include <memory>
 #include <functional>
@@ -72,4 +72,4 @@ namespace boost::python
 	}
 } //namespace boost::python
 
-#endif //RAW_CONSTRUCTOR_HPP
+#endif // RE_PYTHON_TYPES_RAW_CONSTRUCTOR_HPP

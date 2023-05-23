@@ -1,3 +1,6 @@
+#ifndef IRODS_RE_PYTHON_HPP
+#define IRODS_RE_PYTHON_HPP
+
 #include <type_traits>
 #include <functional>
 
@@ -429,3 +432,5 @@ boost::python::object object_from_any(boost::any& arg)
 		THROW(SYS_NOT_SUPPORTED, "Failed any_cast when creating boost:python::object from boost::any");
 	}
 }
+
+#endif // IRODS_RE_PYTHON_HPP

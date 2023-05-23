@@ -1,5 +1,5 @@
-#ifndef INIT_STRUCT_HPP
-#define INIT_STRUCT_HPP
+#ifndef RE_PYTHON_TYPES_INIT_STRUCT_HPP
+#define RE_PYTHON_TYPES_INIT_STRUCT_HPP
 
 #include <memory>
 #include "irods/private/re/python/types/raw_constructor.hpp"
@@ -99,4 +99,4 @@ boost::python::object make_init_function([[maybe_unused]] MemberTypes T::*... me
 		&init_c_struct<T, type_sequence<MemberTypes...>, make_expanded_sequence_for<MemberTypes...>>::fn, 0);
 }
 
-#endif // INIT_STRUCT_HPP
+#endif // RE_PYTHON_TYPES_INIT_STRUCT_HPP

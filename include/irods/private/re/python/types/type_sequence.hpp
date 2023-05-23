@@ -1,5 +1,5 @@
-#ifndef TYPE_SEQUENCE_HPP
-#define TYPE_SEQUENCE_HPP
+#ifndef RE_PYTHON_TYPES_TYPE_SEQUENCE_HPP
+#define RE_PYTHON_TYPES_TYPE_SEQUENCE_HPP
 
 #include <cstddef>
 
@@ -89,4 +89,4 @@ namespace
 	using UseFirstType = T1;
 } //namespace
 
-#endif //TYPE_SEQUENCE_HPP
+#endif // RE_PYTHON_TYPES_TYPE_SEQUENCE_HPP
