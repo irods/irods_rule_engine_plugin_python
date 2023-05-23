@@ -1,5 +1,5 @@
-#ifndef IRODS_TYPES_HPP__
-#define IRODS_TYPES_HPP__
+#ifndef RE_PYTHON_IRODS_TYPES_HPP
+#define RE_PYTHON_IRODS_TYPES_HPP
 
 // include this first to fix macro redef warnings
 #include <pyconfig.h>
@@ -127,4 +127,4 @@ using list_of_irods_types = type_sequence<
 >;
 // clang-format on
 
-#endif //IRODS_TYPES_HPP__
+#endif // RE_PYTHON_IRODS_TYPES_HPP

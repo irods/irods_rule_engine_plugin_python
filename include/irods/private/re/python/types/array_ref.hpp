@@ -1,3 +1,6 @@
+#ifndef RE_PYTHON_TYPES_ARRAY_REF_HPP
+#define RE_PYTHON_TYPES_ARRAY_REF_HPP
+
 // From Praetorian's answer here: http://stackoverflow.com/a/27560620
 #include <cstddef>
 #include <iterator>
@@ -880,3 +883,5 @@ class array_ref<array_ref<T, b>> : public array_ref_base<array_ref<T, b>>
 //{
 //	return &ref1 == &ref2;
 //}
+
+#endif // RE_PYTHON_TYPES_ARRAY_REF_HPP

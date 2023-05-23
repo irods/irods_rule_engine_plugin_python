@@ -1,3 +1,6 @@
+#ifndef RE_PYTHON_TYPES_ARRAY_INDEXING_SUITE_HPP
+#define RE_PYTHON_TYPES_ARRAY_INDEXING_SUITE_HPP
+
 // From Praetorian's answer here: http://stackoverflow.com/a/27560620
 #include <algorithm>
 #include <cstddef>
@@ -160,3 +163,5 @@ class array_indexing_suite : public boost::python::indexing_suite<Array, Derived
 		boost::python::throw_error_already_set();
 	}
 };
+
+#endif // RE_PYTHON_TYPES_ARRAY_INDEXING_SUITE_HPP
