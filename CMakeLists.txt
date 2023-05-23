@@ -46,143 +46,144 @@ set(
   irods_rule_engine_plugin-python
   )
 
-  add_library(
-      ${PLUGIN}
-      MODULE
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/irods_errors.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/irods_types.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/standard/arrays.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/standard/containers.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/standard/pointers.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/system/netinet/in.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/system/sys/stat.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/system/sys/time.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/bulkDataObjPut.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/dataCopy.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/dataObjCopy.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/dataObjInpOut.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/dataObjOpenAndStat.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/execCmd.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/fileCreate.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/fileLseek.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/fileOpen.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/fileRename.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/getRodsEnv.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/guiProgressCallback.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/icatStructs.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/irods_hierarchy_parser.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/irods_plugin_context.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/irods_re_structs.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/irods_threads.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/miscUtil.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/msParam.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/modAccessControl.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/objInfo.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/objStat.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/rcConnect.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/rodsDef.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/rodsError.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/rodsGeneralUpdate.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/rodsGenQuery.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/rodsType.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/rodsUser.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/ruleExecSubmit.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/ruleExecDel.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/specificQuery.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/structFileExtAndReg.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/structFileSync.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/subStructFileRead.cpp"
-      )
-  set(
-      ${PLUGIN}_HEADERS
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/irods_errors.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/irods_types.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/array_indexing_suite.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/array_ref.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/init_struct.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/raw_constructor.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/type_sequence.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/config.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/standard/arrays.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/standard/containers.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/standard/pointers.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/system/netinet/in.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/system/sys/stat.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/system/sys/time.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/bulkDataObjPut.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/dataCopy.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/dataObjCopy.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/dataObjInpOut.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/dataObjOpenAndStat.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/execCmd.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/fileCreate.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/fileLseek.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/fileOpen.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/fileRename.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/getRodsEnv.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/guiProgressCallback.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/icatStructs.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/irods_hierarchy_parser.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/irods_plugin_context.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/irods_re_structs.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/irods_threads.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/miscUtil.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/msParam.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/modAccessControl.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/objInfo.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/objStat.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/rcConnect.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/rodsDef.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/rodsError.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/rodsGeneralUpdate.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/rodsGenQuery.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/rodsType.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/rodsUser.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/ruleExecDel.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/ruleExecSubmit.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/specificQuery.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/structFileExtAndReg.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/structFileSync.hpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/subStructFileRead.hpp"
-      )
-  target_sources(${PLUGIN} PRIVATE ${${PLUGIN}_HEADERS})
+add_library(
+  ${PLUGIN}
+  MODULE
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/irods_errors.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/irods_types.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/standard/arrays.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/standard/containers.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/standard/pointers.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/system/netinet/in.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/system/sys/stat.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/system/sys/time.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/bulkDataObjPut.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/dataCopy.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/dataObjCopy.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/dataObjInpOut.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/dataObjOpenAndStat.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/execCmd.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/fileCreate.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/fileLseek.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/fileOpen.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/fileRename.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/getRodsEnv.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/guiProgressCallback.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/icatStructs.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/irods_hierarchy_parser.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/irods_plugin_context.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/irods_re_structs.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/irods_threads.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/miscUtil.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/msParam.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/modAccessControl.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/objInfo.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/objStat.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/rcConnect.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/rodsDef.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/rodsError.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/rodsGeneralUpdate.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/rodsGenQuery.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/rodsType.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/rodsUser.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/ruleExecSubmit.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/ruleExecDel.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/specificQuery.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/structFileExtAndReg.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/structFileSync.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/types/irods/subStructFileRead.cpp"
+  )
 
-  target_include_directories(
-      ${PLUGIN}
-      PRIVATE
-      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-      ${IRODS_INCLUDE_DIRS}
-      ${IRODS_EXTERNALS_FULLPATH_BOOST}/include
-      ${IRODS_EXTERNALS_FULLPATH_FMT}/include
-      )
+set(
+  ${PLUGIN}_HEADERS
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/irods_errors.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/irods_types.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/array_indexing_suite.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/array_ref.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/init_struct.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/raw_constructor.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/type_sequence.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/config.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/standard/arrays.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/standard/containers.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/standard/pointers.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/system/netinet/in.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/system/sys/stat.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/system/sys/time.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/bulkDataObjPut.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/dataCopy.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/dataObjCopy.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/dataObjInpOut.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/dataObjOpenAndStat.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/execCmd.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/fileCreate.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/fileLseek.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/fileOpen.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/fileRename.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/getRodsEnv.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/guiProgressCallback.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/icatStructs.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/irods_hierarchy_parser.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/irods_plugin_context.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/irods_re_structs.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/irods_threads.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/miscUtil.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/msParam.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/modAccessControl.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/objInfo.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/objStat.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/rcConnect.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/rodsDef.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/rodsError.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/rodsGeneralUpdate.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/rodsGenQuery.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/rodsType.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/rodsUser.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/ruleExecDel.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/ruleExecSubmit.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/specificQuery.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/structFileExtAndReg.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/structFileSync.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/types/irods/subStructFileRead.hpp"
+  )
+target_sources(${PLUGIN} PRIVATE ${${PLUGIN}_HEADERS})
 
-  target_link_libraries(
-      ${PLUGIN}
-      PRIVATE
-      ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_python${Python_VERSION_MAJOR}${Python_VERSION_MINOR}.so
-      ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_system.so
-      ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_date_time.so
-      ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_filesystem.so
-      ${IRODS_EXTERNALS_FULLPATH_FMT}/lib/libfmt.so
-      ${CMAKE_DL_LIBS}
-      irods_common
-      irods_server
-      Python::Python
-      nlohmann_json::nlohmann_json
-      )
+target_include_directories(
+  ${PLUGIN}
+  PRIVATE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  ${IRODS_INCLUDE_DIRS}
+  ${IRODS_EXTERNALS_FULLPATH_BOOST}/include
+  ${IRODS_EXTERNALS_FULLPATH_FMT}/include
+  )
 
-  target_compile_definitions(
-      ${PLUGIN}
-      PRIVATE
-      RODS_SERVER
-      ENABLE_RE
-      ${IRODS_COMPILE_DEFINITIONS}
-      ${IRODS_COMPILE_DEFINITIONS_PRIVATE}
-      )
+target_link_libraries(
+  ${PLUGIN}
+  PRIVATE
+  ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_python${Python_VERSION_MAJOR}${Python_VERSION_MINOR}.so
+  ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_system.so
+  ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_date_time.so
+  ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_filesystem.so
+  ${IRODS_EXTERNALS_FULLPATH_FMT}/lib/libfmt.so
+  ${CMAKE_DL_LIBS}
+  irods_common
+  irods_server
+  nlohmann_json::nlohmann_json
+  Python::Python
+  )
+
+target_compile_definitions(
+  ${PLUGIN}
+  PRIVATE
+  RODS_SERVER
+  ENABLE_RE
+  ${IRODS_COMPILE_DEFINITIONS}
+  ${IRODS_COMPILE_DEFINITIONS_PRIVATE}
+  )
   
-  target_compile_options(${PLUGIN} PRIVATE -Wno-deprecated-volatile -Wmissing-field-initializers)
+target_compile_options(${PLUGIN} PRIVATE -Wno-deprecated-volatile -Wmissing-field-initializers)
 
 install(
   TARGETS
@@ -254,8 +255,8 @@ elseif (IRODS_LINUX_DISTRIBUTION_NAME STREQUAL "opensuse")
 endif()
 
 if (NOT CPACK_GENERATOR)
-    set(CPACK_GENERATOR ${IRODS_CPACK_GENERATOR} CACHE STRING "CPack generator to use, e.g. {DEB, RPM, TGZ}." FORCE)
-    message(STATUS "Setting unspecified CPACK_GENERATOR to ${CPACK_GENERATOR}. This is the correct setting for normal builds.")
+  set(CPACK_GENERATOR ${IRODS_CPACK_GENERATOR} CACHE STRING "CPack generator to use, e.g. {DEB, RPM, TGZ}." FORCE)
+  message(STATUS "Setting unspecified CPACK_GENERATOR to ${CPACK_GENERATOR}. This is the correct setting for normal builds.")
 endif()
 
 include(CPack)
