@@ -1,4 +1,6 @@
-cmake_minimum_required(VERSION 3.12 FATAL_ERROR) #FindPython
+cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
+# 3.12: FindPython
+# 3.13: target_link_options
 
 find_package(IRODS REQUIRED)
 set(IRODS_PLUGIN_REVISION "1")
@@ -41,10 +43,10 @@ find_package(OpenSSL REQUIRED COMPONENTS Crypto SSL)
 find_package(nlohmann_json "3.6.1" REQUIRED)
 find_package(Python "${IRODS_PYTHON_VERSION}" REQUIRED COMPONENTS Development)
 
+get_target_property(__PYTHON_IMPORTED_LOCATION Python::Python IMPORTED_LOCATION)
 if (NOT IRODS_PYTHON_SONAME)
   get_target_property(IRODS_PYTHON_SONAME Python::Python IMPORTED_SONAME)
   if (NOT IRODS_PYTHON_SONAME)
-    get_target_property(__PYTHON_IMPORTED_LOCATION Python::Python IMPORTED_LOCATION)
     if (__PYTHON_IMPORTED_LOCATION)
       if (IS_SYMLINK "${__PYTHON_IMPORTED_LOCATION}")
         file(READ_SYMLINK "${__PYTHON_IMPORTED_LOCATION}" __PYTHON_LIBRARY_PATH)
@@ -203,8 +205,39 @@ target_link_libraries(
   irods_common
   irods_server
   nlohmann_json::nlohmann_json
-  Python::Python
   )
+
+# Since we are embedding Python rather than just creating extension modules, we must link to
+# libpython. However, the build-time linker will silently drop libpython unless we pass
+# --no-as-needed just before libpython. Furthermore, Python::Python might specify multiple
+# libraries, and other libraries may be passed after libpython. To mitigate this, we toggle off
+# --as-needed just for Python::Python's IMPORTED_LOCATION. If we can't fetch IMPORTED_LOCATION, we
+# just toggle it for Python::Python.
+if (__PYTHON_IMPORTED_LOCATION)
+  target_link_libraries(
+    ${PLUGIN}
+    PRIVATE
+    Python::Python
+    -Wl,--no-as-needed
+    "${__PYTHON_IMPORTED_LOCATION}"
+    -Wl,--as-needed
+    )
+else()
+  target_link_libraries(
+    ${PLUGIN}
+    PRIVATE
+    -Wl,--no-as-needed
+    Python::Python
+    -Wl,--as-needed
+    )
+endif()
+
+# Disable lazy-loading
+target_link_options(
+  ${PLUGIN}
+  PRIVATE
+  -Wl,-z,now
+   )
 
 target_compile_definitions(
   ${PLUGIN}
