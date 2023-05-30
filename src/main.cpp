@@ -421,7 +421,9 @@ irods::error start(irods::default_re_ctx&, const std::string& _instance_name)
 
 irods::error stop(irods::default_re_ctx&, const std::string&)
 {
-	Py_Finalize();
+	// Boost.Python's documentation advises not to call Py_Finalize
+	// https://www.boost.org/doc/libs/1_78_0/libs/python/doc/html/tutorial/tutorial/embedding.html
+	//Py_Finalize();
 	return SUCCESS();
 }
 
