@@ -23,6 +23,7 @@
 #pragma GCC diagnostic pop
 
 #include <irods/rodsErrorTable.h>
+#include <irods/irods_default_paths.hpp>
 #include <irods/irods_error.hpp>
 #include <irods/irods_re_plugin.hpp>
 #include <irods/irods_re_structs.hpp>
@@ -339,10 +340,7 @@ irods::error start(irods::default_re_ctx&, const std::string& _instance_name)
 #endif
 		Py_InitializeEx(0);
 		std::lock_guard<std::recursive_mutex> lock{python_mutex};
-		boost::filesystem::path full_path(boost::filesystem::current_path());
-		boost::filesystem::path etc_irods_path = full_path.parent_path().parent_path();
-		etc_irods_path /= "etc";
-		etc_irods_path /= "irods";
+		boost::filesystem::path etc_irods_path = irods::get_irods_config_directory();
 		std::string exec_str = "import sys\nsys.path.append('" + etc_irods_path.generic_string() + "')";
 
 		bp::object main_module = bp::import("__main__");
