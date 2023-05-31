@@ -1,6 +1,7 @@
 // include this first to fix macro redef warnings
 #include <pyconfig.h>
 
+#include <cstdint>
 #include <ctime>
 #include <fstream>
 #include <list>
@@ -25,6 +26,7 @@
 #include <irods/rodsErrorTable.h>
 #include <irods/irods_default_paths.hpp>
 #include <irods/irods_error.hpp>
+#include <irods/irods_logger.hpp>
 #include <irods/irods_re_plugin.hpp>
 #include <irods/irods_re_structs.hpp>
 #include <irods/irods_re_ruleexistshelper.hpp>
@@ -50,8 +52,6 @@
 #pragma GCC diagnostic pop
 
 #include <fmt/format.h>
-
-namespace logger = irods::experimental::log;
 
 irods::ms_table& get_microservice_table();
 
@@ -101,6 +101,12 @@ namespace bp = boost::python;
 
 static std::recursive_mutex python_mutex;
 
+namespace
+{
+	const char* const rule_engine_name = "python";
+	using log_re = irods::experimental::log::rule_engine;
+}
+
 void register_regexes_from_array(const nlohmann::json& _array, const std::string& _instance_name)
 {
 	try {
@@ -108,10 +114,22 @@ void register_regexes_from_array(const nlohmann::json& _array, const std::string
 			try {
 				const auto& tmp = elem.get_ref<const std::string&>();
 				RuleExistsHelper::Instance()->registerRuleRegex(tmp);
-				logger::rule_engine::debug("register_regexes_from_array - regex: [{}]", tmp);
+				// clang-format off
+				log_re::debug({
+					{"rule_engine_plugin", rule_engine_name},
+					{"instance_name", _instance_name},
+					{"regex", tmp},
+				});
+				// clang-format on
 			}
 			catch (const boost::bad_any_cast&) {
-				logger::rule_engine::error("[{}] - failed to cast pep_regex_to_match to string", __FUNCTION__);
+				// clang-format off
+				log_re::error({
+					{"rule_engine_plugin", rule_engine_name},
+					{"instance_name", _instance_name},
+					{"log_message", "failed to cast pep_regex_to_match to string"},
+				});
+				// clang-format on
 				continue;
 			}
 		}
@@ -196,12 +214,22 @@ namespace
 		irods::error err = effect_handler("unsafe_ms_ctx", &rei);
 
 		if (!err.ok()) {
-			rodsLog(LOG_ERROR, "Could not retrieve RuleExecInfo_t object from effect handler");
+			// clang-format off
+			log_re::error({
+				{"rule_engine_plugin", rule_engine_name},
+				{"log_message", "Could not retrieve RuleExecInfo_t object from effect handler"},
+			});
+			// clang-format on
 			return nullptr;
 		}
 
 		if (!rei) {
-			rodsLog(LOG_ERROR, "RuleExecInfo object is NULL - cannot populate session vars");
+			// clang-format off
+			log_re::error({
+				{"rule_engine_plugin", rule_engine_name},
+				{"log_message", "RuleExecInfo object is NULL - cannot populate session vars"},
+			});
+			// clang-format on
 			return nullptr;
 		}
 
@@ -318,9 +346,20 @@ irods::error start(irods::default_re_ctx&, const std::string& _instance_name)
 #ifdef IRODS_PYTHON_SONAME
 	// Force python library to be loaded
 	void* p = dlopen(IRODS_PYTHON_SONAME, RTLD_LAZY | RTLD_GLOBAL);
-	rodsLog(LOG_DEBUG, "dlopen returned: [%p]", p);
+
+	// clang-format off
+	log_re::debug({
+		{"rule_engine_plugin", rule_engine_name},
+		{"dlopen_return_value", std::to_string(reinterpret_cast<std::uintptr_t>(p))},
+	});
+	// clang-format on
 	if (!p) {
-		rodsLog(LOG_DEBUG, "dlerror gives : [%s]", dlerror());
+		// clang-format off
+		log_re::debug({
+			{"rule_engine_plugin", rule_engine_name},
+			{"dlerror_return_value", dlerror()},
+		});
+		// clang-format on
 	}
 #endif
 
@@ -351,7 +390,14 @@ irods::error start(irods::default_re_ctx&, const std::string& _instance_name)
 	}
 	catch (const bp::error_already_set&) {
 		const std::string formatted_python_exception = extract_python_exception();
-		rodsLog(LOG_ERROR, "caught python exception: %s", formatted_python_exception.c_str());
+		// clang-format off
+		log_re::error({
+			{"rule_engine_plugin", rule_engine_name},
+			{"instance_name", _instance_name},
+			{"log_message", "caught python exception"},
+			{"python_exception", formatted_python_exception},
+		});
+		// clang-format on
 		std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ +
 		                      " Caught Python exception.\n" + formatted_python_exception;
 		return ERROR(RULE_ENGINE_ERROR, err_msg);
@@ -387,10 +433,15 @@ irods::error start(irods::default_re_ctx&, const std::string& _instance_name)
 					RuleExistsHelper::Instance()->registerRuleRegex(STATIC_PEP_RULE_REGEX);
 					RuleExistsHelper::Instance()->registerRuleRegex(DYNAMIC_PEP_RULE_REGEX);
 
-					rodsLog(LOG_DEBUG,
-					        "No regexes found in server_config for Python RE - using default regexes: [%s], [%s]",
-					        STATIC_PEP_RULE_REGEX.c_str(),
-					        DYNAMIC_PEP_RULE_REGEX.c_str());
+					// clang-format off
+					log_re::debug({
+						{"rule_engine_plugin", rule_engine_name},
+						{"instance_name", _instance_name},
+						{"log_message", "No regexes found in server_config for Python RE - using default regexes"},
+						{"static_pep_rule_regex", STATIC_PEP_RULE_REGEX},
+						{"dynamic_pep_rule_regex", DYNAMIC_PEP_RULE_REGEX},
+					});
+					// clang-format on
 				}
 
 				return SUCCESS();
@@ -407,9 +458,15 @@ irods::error start(irods::default_re_ctx&, const std::string& _instance_name)
 		return ERROR(KEY_NOT_FOUND, e.what());
 	}
 
+	// clang-format off
+	log_re::error({
+		{"rule_engine_plugin", rule_engine_name},
+		{"instance_name", _instance_name},
+		{"log_message", "failed to find configuration for plugin"},
+	});
+	// clang-format on
 	std::stringstream msg;
 	msg << "failed to find configuration for re-python plugin [" << _instance_name << "]";
-	rodsLog(LOG_ERROR, "%s", msg.str().c_str());
 	return ERROR(SYS_INVALID_INPUT_PARAM, msg.str());
 }
 
@@ -433,7 +490,13 @@ irods::error rule_exists(const irods::default_re_ctx&, const std::string& rule_n
 	}
 	catch (const bp::error_already_set&) {
 		const std::string formatted_python_exception = extract_python_exception();
-		rodsLog(LOG_ERROR, "caught python exception: %s", formatted_python_exception.c_str());
+		// clang-format off
+		log_re::error({
+			{"rule_engine_plugin", rule_engine_name},
+			{"log_message", "caught python exception"},
+			{"python_exception", formatted_python_exception},
+		});
+		// clang-format on
 		std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ +
 		                      " Caught Python exception.\n" + formatted_python_exception;
 		return ERROR(RULE_ENGINE_ERROR, err_msg);
@@ -467,7 +530,13 @@ irods::error list_rules(const irods::default_re_ctx&, std::vector<std::string>& 
 	}
 	catch (const bp::error_already_set&) {
 		const std::string formatted_python_exception = extract_python_exception();
-		rodsLog(LOG_ERROR, "caught python exception: %s", formatted_python_exception.c_str());
+		// clang-format off
+		log_re::error({
+			{"rule_engine_plugin", rule_engine_name},
+			{"log_message", "caught python exception"},
+			{"python_exception", formatted_python_exception},
+		});
+		// clang-format on
 		auto start_pos = formatted_python_exception.find(IRODS_ERROR_PREFIX);
 		int error_code_int = -1;
 		if (start_pos != std::string::npos) {
@@ -481,7 +550,13 @@ irods::error list_rules(const irods::default_re_ctx&, std::vector<std::string>& 
 		return ERROR(error_code_int, err_msg);
 	}
 	catch (const boost::bad_any_cast& e) {
-		rodsLog(LOG_ERROR, "bad any cast : %s", e.what());
+		// clang-format off
+		log_re::error({
+			{"rule_engine_plugin", rule_engine_name},
+			{"log_message", "bad any cast"},
+			{"exception", e.what()},
+		});
+		// clang-format on
 		std::string err_msg =
 			std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " bad_any_cast : " + e.what();
 		return ERROR(INVALID_ANY_CAST, e.what());
@@ -528,7 +603,13 @@ irods::error exec_rule(const irods::default_re_ctx&,
 	}
 	catch (const bp::error_already_set&) {
 		const std::string formatted_python_exception = extract_python_exception();
-		rodsLog(LOG_ERROR, "caught python exception: %s", formatted_python_exception.c_str());
+		// clang-format off
+		log_re::error({
+			{"rule_engine_plugin", rule_engine_name},
+			{"log_message", "caught python exception"},
+			{"python_exception", formatted_python_exception},
+		});
+		// clang-format on
 		auto start_pos = formatted_python_exception.find(IRODS_ERROR_PREFIX);
 		int error_code_int = -1;
 		if (start_pos != std::string::npos) {
@@ -542,13 +623,24 @@ irods::error exec_rule(const irods::default_re_ctx&,
 		return ERROR(error_code_int, err_msg);
 	}
 	catch (const boost::bad_any_cast& e) {
-		rodsLog(LOG_ERROR, "bad any cast : %s", e.what());
+		// clang-format off
+		log_re::error({
+			{"rule_engine_plugin", rule_engine_name},
+			{"log_message", "bad any cast"},
+			{"exception", e.what()},
+		});
+		// clang-format on
 		std::string err_msg =
 			std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " bad_any_cast : " + e.what();
 		return ERROR(INVALID_ANY_CAST, e.what());
 	}
 	catch (...) {
-		logger::rule_engine::error("Caught unknown exception [ec={}].", SYS_UNKNOWN_ERROR);
+		// clang-format off
+		log_re::error({
+			{"rule_engine_plugin", rule_engine_name},
+			{"log_message", "Caught unknown exception"},
+		});
+		// clang-format on
 		return ERROR(SYS_UNKNOWN_ERROR, "Caught unknown exception.");
 	}
 
@@ -566,7 +658,12 @@ irods::error exec_rule_text(const irods::default_re_ctx&,
 	const auto rei = get_rei_from_effect_handler(effect_handler);
 
 	if (!rei) {
-		rodsLog(LOG_ERROR, "RuleExecInfo object is NULL - cannot authenticate user");
+		// clang-format off
+		log_re::error({
+			{"rule_engine_plugin", rule_engine_name},
+			{"log_message", "RuleExecInfo object is NULL - cannot authenticate user"},
+		});
+		// clang-format on
 		return ERROR(NULL_VALUE_ERR, "Null rei pointer in exec_rule_text");
 	}
 
@@ -587,7 +684,12 @@ irods::error exec_rule_text(const irods::default_re_ctx&,
 	}
 
 	if ((client_user_authflag < REMOTE_PRIV_USER_AUTH) || (proxy_user_authflag < REMOTE_PRIV_USER_AUTH)) {
-		rodsLog(LOG_DEBUG, "Insufficient privileges to run irule in Python rule engine plugin");
+		// clang-format off
+		log_re::debug({
+			{"rule_engine_plugin", rule_engine_name},
+			{"log_message", "Insufficient privileges to run irule in Python rule engine plugin"},
+		});
+		// clang-format on
 		return ERROR(SYS_NO_API_PRIV, "Insufficient privileges to run irule in Python rule engine plugin");
 	}
 
@@ -678,28 +780,47 @@ irods::error exec_rule_text(const irods::default_re_ctx&,
 			return to_irods_error_object(rule_function(rule_arguments_python, CallbackWrapper{effect_handler}, rei));
 		}
 		else {
-			rodsLog(LOG_ERROR,
-			        "[%s:%d] Improperly formatted rule text in Python rule engine plugin",
-			        __FUNCTION__,
-			        __LINE__);
+			// clang-format off
+			log_re::error({
+				{"rule_engine_plugin", rule_engine_name},
+				{"log_message", "Improperly formatted rule text"},
+			});
+			// clang-format on
 			return ERROR(RULE_ENGINE_ERROR, "Improperly formatted rule_text");
 		}
 	}
 	catch (const bp::error_already_set&) {
 		const std::string formatted_python_exception = extract_python_exception();
-		rodsLog(LOG_ERROR, "caught python exception: %s", formatted_python_exception.c_str());
+		// clang-format off
+		log_re::error({
+			{"rule_engine_plugin", rule_engine_name},
+			{"log_message", "caught python exception"},
+			{"python_exception", formatted_python_exception},
+		});
+		// clang-format on
 		std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ +
 		                      " Caught Python exception.\n" + formatted_python_exception;
 		return ERROR(RULE_ENGINE_ERROR, err_msg);
 	}
 	catch (const boost::bad_any_cast& e) {
-		rodsLog(LOG_ERROR, "bad any cast : %s", e.what());
+		// clang-format off
+		log_re::error({
+			{"rule_engine_plugin", rule_engine_name},
+			{"log_message", "bad any cast"},
+			{"exception", e.what()},
+		});
+		// clang-format on
 		std::string err_msg =
 			std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " bad_any_cast : " + e.what();
 		return ERROR(INVALID_ANY_CAST, e.what());
 	}
 	catch (...) {
-		logger::rule_engine::error("Caught unknown exception [ec={}].", SYS_UNKNOWN_ERROR);
+		// clang-format off
+		log_re::error({
+			{"rule_engine_plugin", rule_engine_name},
+			{"log_message", "Caught unknown exception"},
+		});
+		// clang-format on
 		return ERROR(SYS_UNKNOWN_ERROR, "Caught unknown exception.");
 	}
 
@@ -774,19 +895,36 @@ irods::error exec_rule_expression(irods::default_re_ctx&,
 	}
 	catch (const bp::error_already_set&) {
 		const std::string formatted_python_exception = extract_python_exception();
-		rodsLog(LOG_ERROR, "caught python exception: %s", formatted_python_exception.c_str());
+		// clang-format off
+		log_re::error({
+			{"rule_engine_plugin", rule_engine_name},
+			{"log_message", "caught python exception"},
+			{"python_exception", formatted_python_exception},
+		});
+		// clang-format on
 		std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ +
 		                      " Caught Python exception.\n" + formatted_python_exception;
 		return ERROR(RULE_ENGINE_ERROR, err_msg);
 	}
 	catch (const boost::bad_any_cast& e) {
-		rodsLog(LOG_ERROR, "bad any cast : %s", e.what());
+		// clang-format off
+		log_re::error({
+			{"rule_engine_plugin", rule_engine_name},
+			{"log_message", "bad any cast"},
+			{"exception", e.what()},
+		});
+		// clang-format on
 		std::string err_msg =
 			std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ + " bad_any_cast : " + e.what();
 		return ERROR(INVALID_ANY_CAST, e.what());
 	}
 	catch (...) {
-		logger::rule_engine::error("Caught unknown exception [ec={}].", SYS_UNKNOWN_ERROR);
+		// clang-format off
+		log_re::error({
+			{"rule_engine_plugin", rule_engine_name},
+			{"log_message", "Caught unknown exception"},
+		});
+		// clang-format on
 		return ERROR(SYS_UNKNOWN_ERROR, "Caught unknown exception.");
 	}
 
