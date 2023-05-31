@@ -191,6 +191,7 @@ target_include_directories(
   ${IRODS_INCLUDE_DIRS}
   ${IRODS_EXTERNALS_FULLPATH_BOOST}/include
   ${IRODS_EXTERNALS_FULLPATH_FMT}/include
+  ${IRODS_EXTERNALS_FULLPATH_SPDLOG}/include
   )
 
 target_link_libraries(
@@ -246,6 +247,7 @@ target_compile_definitions(
   ENABLE_RE
   ${IRODS_COMPILE_DEFINITIONS}
   ${IRODS_COMPILE_DEFINITIONS_PRIVATE}
+  IRODS_ENABLE_SYSLOG
   )
   
 target_compile_options(${PLUGIN} PRIVATE -Wno-deprecated-volatile -Wmissing-field-initializers)
