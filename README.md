@@ -132,7 +132,7 @@ Aug  8 20:57:43 pid:23802 NOTICE: writeLine: inString = PYTHON - python_printme(
 Aug  8 20:57:43 pid:23802 NOTICE: writeLine: inString = PYTHON - acPostProcForPut() end
 ```
 
-# Python globals and build-in modules
+# Python globals and built-in modules
 These built-in objects are set up at plugin initialization time and available in the python interpreter that loads `core.py` or, as the case may be, the Python rule file:
    - `global_vars` - a dictionary for accessing variables of the form `*var` from the `INPUT` line, if present.
    - `irods_types` - a module containing common struct types used for communicating with microservices.
