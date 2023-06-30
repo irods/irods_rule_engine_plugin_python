@@ -43,37 +43,6 @@ find_package(OpenSSL REQUIRED COMPONENTS Crypto SSL)
 find_package(nlohmann_json "3.6.1" REQUIRED)
 find_package(Python "${IRODS_PYTHON_VERSION}" REQUIRED COMPONENTS Development)
 
-get_target_property(__PYTHON_IMPORTED_LOCATION Python::Python IMPORTED_LOCATION)
-if (NOT IRODS_PYTHON_SONAME)
-  get_target_property(IRODS_PYTHON_SONAME Python::Python IMPORTED_SONAME)
-  if (NOT IRODS_PYTHON_SONAME)
-    if (__PYTHON_IMPORTED_LOCATION)
-      if (IS_SYMLINK "${__PYTHON_IMPORTED_LOCATION}")
-        file(READ_SYMLINK "${__PYTHON_IMPORTED_LOCATION}" __PYTHON_LIBRARY_PATH)
-      else()
-        set(__PYTHON_LIBRARY_PATH "${__PYTHON_IMPORTED_LOCATION}")
-      endif()
-      get_filename_component(IRODS_PYTHON_SONAME "${__PYTHON_LIBRARY_PATH}" NAME)
-    else()
-      # We might be able to use python-config before falling back to guessing like this.
-      if (Python_VERSION_MAJOR EQUAL "3" AND Python_VERSION_MINOR LESS "8")
-        set(__PYTHON_VERSION_SUFFIX "m")
-      else()
-        set(__PYTHON_VERSION_SUFFIX "")
-      endif()
-      set(IRODS_PYTHON_SONAME "${CMAKE_SHARED_LIBRARY_PREFIX}python${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}${__PYTHON_VERSION_SUFFIX}${CMAKE_SHARED_LIBRARY_SUFFIX}.1.0")
-    endif()
-  endif()
-  message("Python SONAME detected as ${IRODS_PYTHON_SONAME}")
-endif()
-
-file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include/irods/private/re/python")
-configure_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/include/irods/private/re/python/config.hpp.in"
-  "${CMAKE_CURRENT_BINARY_DIR}/include/irods/private/re/python/config.hpp"
-  @ONLY
-)
-
 set(
   PLUGIN
   irods_rule_engine_plugin-python
@@ -214,6 +183,7 @@ target_link_libraries(
 # libraries, and other libraries may be passed after libpython. To mitigate this, we toggle off
 # --as-needed just for Python::Python's IMPORTED_LOCATION. If we can't fetch IMPORTED_LOCATION, we
 # just toggle it for Python::Python.
+get_target_property(__PYTHON_IMPORTED_LOCATION Python::Python IMPORTED_LOCATION)
 if (__PYTHON_IMPORTED_LOCATION)
   target_link_libraries(
     ${PLUGIN}
