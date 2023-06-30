@@ -37,7 +37,6 @@
 #include <irods/rsExecMyRule.hpp>
 
 #include "irods/private/re/python.hpp"
-#include "irods/private/re/python/config.hpp"
 
 #include <patchlevel.h>
 #pragma GCC diagnostic push
@@ -343,26 +342,6 @@ namespace
 
 irods::error start(irods::default_re_ctx&, const std::string& _instance_name)
 {
-#ifdef IRODS_PYTHON_SONAME
-	// Force python library to be loaded
-	void* p = dlopen(IRODS_PYTHON_SONAME, RTLD_LAZY | RTLD_GLOBAL);
-
-	// clang-format off
-	log_re::debug({
-		{"rule_engine_plugin", rule_engine_name},
-		{"dlopen_return_value", std::to_string(reinterpret_cast<std::uintptr_t>(p))},
-	});
-	// clang-format on
-	if (!p) {
-		// clang-format off
-		log_re::debug({
-			{"rule_engine_plugin", rule_engine_name},
-			{"dlerror_return_value", dlerror()},
-		});
-		// clang-format on
-	}
-#endif
-
 	try {
 #if PY_VERSION_HEX < 0x03000000
 		PyImport_AppendInittab("plugin_wrappers", &initplugin_wrappers);

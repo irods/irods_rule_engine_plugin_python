@@ -1,9 +1,0 @@
-#ifndef IRODS_RE_PYTHON_CONFIG_HPP
-#define IRODS_RE_PYTHON_CONFIG_HPP
-
-// include this first to fix macro redef warnings
-#include <pyconfig.h>
-
-#cmakedefine IRODS_PYTHON_SONAME "@IRODS_PYTHON_SONAME"
-
-#endif // IRODS_RE_PYTHON_CONFIG_HPP
