@@ -233,11 +233,13 @@ else()
     )
 endif()
 
-# Disable lazy-loading
 target_link_options(
   ${PLUGIN}
   PRIVATE
+  # Disable lazy-loading
   -Wl,-z,now
+  # Tell iRODS server to load with RTLD_GLOBAL (for libpython)
+  -Wl,-z,global
    )
 
 target_compile_definitions(
