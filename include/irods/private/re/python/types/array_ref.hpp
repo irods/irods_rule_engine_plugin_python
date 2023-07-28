@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <iterator>
 #include <stdexcept>
+#include <vector>
 
 template <typename T, bool NullTerminated = false>
 class array_ref;
