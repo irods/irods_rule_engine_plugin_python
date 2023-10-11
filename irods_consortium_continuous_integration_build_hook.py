@@ -46,7 +46,8 @@ def install_os_specific_dependencies():
         'Debian gnu_linux': install_os_specific_dependencies_apt,
         'Centos': install_os_specific_dependencies_yum,
         'Centos linux': install_os_specific_dependencies_yum,
-        'Almalinux': install_os_specific_dependencies_yum
+        'Almalinux': install_os_specific_dependencies_yum,
+        'Rocky linux': install_os_specific_dependencies_yum
     }
     try:
         return dispatch_map[irods_python_ci_utilities.get_distribution()]()
