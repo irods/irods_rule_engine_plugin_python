@@ -41,10 +41,16 @@ namespace irods::re::python::types
 			.def("__init__", make_init_function<sockaddr_in>(
 					&sockaddr_in::sin_family,
 					&sockaddr_in::sin_port,
-					&sockaddr_in::sin_addr))
+					&sockaddr_in::sin_addr,
+					&sockaddr_in::sin_zero))
 			.add_property("sin_family", &sockaddr_in::sin_family)
 			.add_property("sin_port", &sockaddr_in::sin_port)
 			.add_property("sin_addr", &sockaddr_in::sin_addr)
+			// sin_zero is intentionally omitted here because the member is not part of the standard. It is included
+			// above in the list of members for sockaddr_in because all currently supported platforms include the
+			// sin_zero member. As such, the struct member is included for make_init_function, but it is not exposed
+			// as a property in the event that it must be removed in the future. For more information, see bwg2001-004
+			// here: http://www.opengroup.org/platform/resolutions/bwg2001-many.html
 			;
 		// clang-format on
 	}

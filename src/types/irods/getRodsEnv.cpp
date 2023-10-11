@@ -61,7 +61,11 @@ namespace irods::re::python::types
 					&rodsEnv::irodsMaxSizeForSingleBuffer,
 					&rodsEnv::irodsDefaultNumberTransferThreads,
 					&rodsEnv::irodsTransBufferSizeForParaTrans,
-					&rodsEnv::irodsPluginHome))
+					&rodsEnv::irodsConnectionPoolRefreshTime,
+					&rodsEnv::irodsPluginHome,
+					&rodsEnv::tcp_keepalive_intvl,
+					&rodsEnv::tcp_keepalive_probes,
+					&rodsEnv::tcp_keepalive_time))
 			.add_property("rodsUserName", +[](rodsEnv *s) { return array_ref<char>{s->rodsUserName}; })
 			.add_property("rodsHost", +[](rodsEnv *s) { return array_ref<char>{s->rodsHost}; })
 			.add_property("rodsPort", &rodsEnv::rodsPort)
@@ -94,7 +98,11 @@ namespace irods::re::python::types
 			.add_property("irodsMaxSizeForSingleBuffer", &rodsEnv::irodsMaxSizeForSingleBuffer)
 			.add_property("irodsDefaultNumberTransferThreads", &rodsEnv::irodsDefaultNumberTransferThreads)
 			.add_property("irodsTransBufferSizeForParaTrans", &rodsEnv::irodsTransBufferSizeForParaTrans)
+			.add_property("irodsConnectionPoolRefreshTime", &rodsEnv::irodsConnectionPoolRefreshTime)
 			.add_property("irodsPluginHome", +[](rodsEnv *s) { return array_ref<char>{s->irodsPluginHome}; })
+			.add_property("tcp_keepalive_intvl", &rodsEnv::tcp_keepalive_intvl)
+			.add_property("tcp_keepalive_probes", &rodsEnv::tcp_keepalive_probes)
+			.add_property("tcp_keepalive_time", &rodsEnv::tcp_keepalive_time)
 			;
 		// clang-format on
 	}
