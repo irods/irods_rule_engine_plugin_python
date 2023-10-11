@@ -166,7 +166,8 @@ namespace irods::re::python::types
 					&rcComm_t::ssl_on,
 					&rcComm_t::ssl_ctx,
 					&rcComm_t::ssl,
-					&rcComm_t::fileRestart))
+					&rcComm_t::fileRestart,
+					&rcComm_t::session_signature))
 			.add_property("irodsProt", &rcComm_t::irodsProt)
 			.add_property("host", +[](rcComm_t *s) { return array_ref<char>{s->host}; })
 			.add_property("sock", &rcComm_t::sock)
@@ -212,6 +213,7 @@ namespace irods::re::python::types
 			//              bp::make_getter(&rcComm_t::ssl, bp::return_internal_reference<1>{}),
 			//              bp::make_setter(&rcComm_t::ssl, bp::with_custodian_and_ward<1, 2>{}))
 			.add_property("fileRestart", &rcComm_t::fileRestart)
+			.add_property("session_signature", +[](rcComm_t *s) { return array_ref<char>{s->session_signature}; })
 			;
 		// clang-format on
 	}
@@ -274,7 +276,8 @@ namespace irods::re::python::types
 					&rsComm_t::key_size,
 					&rsComm_t::salt_size,
 					&rsComm_t::num_hash_rounds,
-					&rsComm_t::encryption_algorithm))
+					&rsComm_t::encryption_algorithm,
+					&rsComm_t::session_props))
 			.add_property("irodsProt", &rsComm_t::irodsProt)
 			.add_property("sock", &rsComm_t::sock)
 			.add_property("connectCnt", &rsComm_t::connectCnt)
@@ -325,6 +328,7 @@ namespace irods::re::python::types
 			.add_property("salt_size", &rsComm_t::salt_size)
 			.add_property("num_hash_rounds", &rsComm_t::num_hash_rounds)
 			.add_property("encryption_algorithm", +[](rsComm_t *s) { return array_ref<char>{s->encryption_algorithm}; })
+			.add_property("session_props", &rsComm_t::session_props)
 			;
 		// clang-format on
 	}

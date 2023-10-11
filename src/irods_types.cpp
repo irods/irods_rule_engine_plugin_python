@@ -18,6 +18,7 @@
 #include "irods/private/re/python/types/system/sys/stat.hpp"
 #include "irods/private/re/python/types/system/sys/time.hpp"
 #include "irods/private/re/python/types/irods/bulkDataObjPut.hpp"
+#include "irods/private/re/python/types/irods/check_auth_credentials.hpp"
 #include "irods/private/re/python/types/irods/dataCopy.hpp"
 #include "irods/private/re/python/types/irods/dataObjCopy.hpp"
 #include "irods/private/re/python/types/irods/dataObjInpOut.hpp"
@@ -226,5 +227,7 @@ namespace
 
 		py_types::export_FileLseekInp_t();
 		py_types::export_FileLseekOut_t();
+
+		py_types::export_CheckAuthCredentialsInput();
 	}
 } //namespace
