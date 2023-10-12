@@ -29,6 +29,18 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 include(GNUInstallDirs)
 include(UseLibCXX)
 
+if (CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
+  set(IRODS_BUILD_WITH_WERROR_DEFAULT ON)
+else()
+  set(IRODS_BUILD_WITH_WERROR_DEFAULT OFF)
+endif()
+
+set(IRODS_BUILD_WITH_WERROR ${IRODS_BUILD_WITH_WERROR_DEFAULT} CACHE BOOL "Choose whether to compile with -Werror.")
+
+if (IRODS_BUILD_WITH_WERROR)
+  add_compile_options(-Werror)
+endif()
+
 if (NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build {Debug, Release}." FORCE)
   message(STATUS "Setting unspecified CMAKE_BUILD_TYPE to '${CMAKE_BUILD_TYPE}'")
