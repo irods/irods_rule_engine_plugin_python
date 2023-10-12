@@ -21,6 +21,11 @@
 #endif
 #if BOOST_VERSION < 108100
 #  pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#elif BOOST_VERSION == 108100
+// Newer versions of Python have new members in some types which have not yet been added to the Boost Python
+// implementation. Ignore -Wmissing-field-initializers until this has been resolved.
+// See https://github.com/boostorg/python/issues/418
+#  pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 #endif
 #include <boost/python.hpp>
 #pragma GCC diagnostic pop
