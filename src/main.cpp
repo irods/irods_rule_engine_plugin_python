@@ -340,7 +340,7 @@ namespace
 	}
 } // anonymous namespace
 
-irods::error start(irods::default_re_ctx&, const std::string& _instance_name)
+static irods::error start(irods::default_re_ctx&, const std::string& _instance_name)
 {
 	try {
 #if PY_VERSION_HEX < 0x03000000
@@ -449,7 +449,7 @@ irods::error start(irods::default_re_ctx&, const std::string& _instance_name)
 	return ERROR(SYS_INVALID_INPUT_PARAM, msg.str());
 }
 
-irods::error stop(irods::default_re_ctx&, const std::string&)
+static irods::error stop(irods::default_re_ctx&, const std::string&)
 {
 	// Boost.Python's documentation advises not to call Py_Finalize
 	// https://www.boost.org/doc/libs/1_78_0/libs/python/doc/html/tutorial/tutorial/embedding.html
@@ -457,7 +457,7 @@ irods::error stop(irods::default_re_ctx&, const std::string&)
 	return SUCCESS();
 }
 
-irods::error rule_exists(const irods::default_re_ctx&, const std::string& rule_name, bool& _return)
+static irods::error rule_exists(const irods::default_re_ctx&, const std::string& rule_name, bool& _return)
 {
 	_return = false;
 	try {
@@ -484,7 +484,7 @@ irods::error rule_exists(const irods::default_re_ctx&, const std::string& rule_n
 	return SUCCESS();
 }
 
-irods::error list_rules(const irods::default_re_ctx&, std::vector<std::string>& rule_vec)
+static irods::error list_rules(const irods::default_re_ctx&, std::vector<std::string>& rule_vec)
 {
 	try {
 		std::lock_guard<std::recursive_mutex> lock{python_mutex};
@@ -544,10 +544,10 @@ irods::error list_rules(const irods::default_re_ctx&, std::vector<std::string>& 
 	return SUCCESS();
 }
 
-irods::error exec_rule(const irods::default_re_ctx&,
-                       const std::string& rule_name,
-                       std::list<boost::any>& rule_arguments_cpp,
-                       irods::callback effect_handler)
+static irods::error exec_rule(const irods::default_re_ctx&,
+                              const std::string& rule_name,
+                              std::list<boost::any>& rule_arguments_cpp,
+                              irods::callback effect_handler)
 {
 	try {
 		std::lock_guard<std::recursive_mutex> lock{python_mutex};
@@ -627,11 +627,11 @@ irods::error exec_rule(const irods::default_re_ctx&,
 }
 
 //irule
-irods::error exec_rule_text(const irods::default_re_ctx&,
-                            const std::string& rule_text,
-                            msParamArray_t* ms_params,
-                            const std::string& out_desc,
-                            irods::callback effect_handler)
+static irods::error exec_rule_text(const irods::default_re_ctx&,
+                                   const std::string& rule_text,
+                                   msParamArray_t* ms_params,
+                                   const std::string& out_desc,
+                                   irods::callback effect_handler)
 {
 	// Because Python is not sandboxed, need to restrict irule to admin users only
 	const auto rei = get_rei_from_effect_handler(effect_handler);
@@ -807,10 +807,10 @@ irods::error exec_rule_text(const irods::default_re_ctx&,
 }
 
 //delay execution
-irods::error exec_rule_expression(irods::default_re_ctx&,
-                                  const std::string& rule_text,
-                                  msParamArray_t* ms_params,
-                                  irods::callback effect_handler)
+static irods::error exec_rule_expression(irods::default_re_ctx&,
+                                         const std::string& rule_text,
+                                         msParamArray_t* ms_params,
+                                         irods::callback effect_handler)
 {
 	try {
 		std::lock_guard<std::recursive_mutex> lock{python_mutex};
