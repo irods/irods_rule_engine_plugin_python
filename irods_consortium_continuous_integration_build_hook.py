@@ -4,6 +4,8 @@ import glob
 import multiprocessing
 import optparse
 import os
+import shutil
+import subprocess
 import sys
 import tempfile
 
@@ -14,13 +16,34 @@ def add_cmake_to_front_of_path():
     cmake_path = '/opt/irods-externals/cmake3.21.4-0/bin'
     os.environ['PATH'] = os.pathsep.join([cmake_path, os.environ['PATH']])
 
+def is_system_cmake_newer_than_externals_cmake():
+    cmake_exe = shutil.which('cmake')
+    if cmake_exe is None:
+        return False
+
+    try:
+        cmake_ver_out = subprocess.check_output(['cmake', '--version']).decode('utf-8')
+        cmake_ver_line = cmake_ver_out.splitlines()[0]
+        cmake_ver_str = cmake_ver_line.split()[2]
+
+        from packaging import version
+        cmake_sys_ver = version.parse(cmake_ver_str)
+        cmake_ext_ver = version.parse('3.21.4')
+        return cmake_sys_ver > cmake_ext_ver
+
+    except:
+        return False
+
 def install_building_dependencies(externals_directory):
 
-    externals_list = ['irods-externals-cmake3.21.4-0',
-                      'irods-externals-boost1.81.0-0',
+    use_system_cmake = is_system_cmake_newer_than_externals_cmake()
+
+    externals_list = ['irods-externals-boost1.81.0-0',
                       'irods-externals-clang-runtime13.0.0-0',
                       'irods-externals-clang13.0.0-0',
                       'irods-externals-json3.10.4-0']
+    if not use_system_cmake:
+        externals_list.append('irods-externals-cmake3.21.4-0')
     if externals_directory == 'None' or externals_directory is None:
         irods_python_ci_utilities.install_irods_core_dev_repository()
         irods_python_ci_utilities.install_os_packages(externals_list)
@@ -31,7 +54,8 @@ def install_building_dependencies(externals_directory):
         for irods_externals in externals_list:
             externals.append(glob.glob(os.path.join(os_specific_directory, irods_externals + '*.{0}'.format(package_suffix)))[0])
         irods_python_ci_utilities.install_os_packages_from_files(externals)
-    add_cmake_to_front_of_path()
+    if not use_system_cmake:
+        add_cmake_to_front_of_path()
     install_os_specific_dependencies()
 
 def install_os_specific_dependencies_apt():
