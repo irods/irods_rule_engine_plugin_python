@@ -34,7 +34,7 @@ To activate the plugin, add a new stanza to the "rule_engines" array within `ser
 }
 ```
 
-Adding the Python Rule Engine Plugin stanza above the default "irods_rule_engine_plugin-irods_rule_language" stanza will allow any defined Python rules to take precedence over any similarly named rules in the iRODS Rule Language.
+Adding the Python Rule Engine Plugin stanza above the default "irods_rule_engine_plugin-irods_rule_language" stanza will allow any defined Python rules to take precedence over any similarly named rules in the iRODS Rule Language. Placing the "irods_rule_engine_plugin-python-instance" stanza before the "irods_rule_engine_plugin-cpp_default_policy-instance" stanza will ensure that any default C++ policies will not cancel out any similarly named Python rules.
 
 As soon as the stanza is inserted, the iRODS server expects a Python source code module to exist at the path `/etc/irods/core.py`. Once imported by the iRODS server and successfully compiled to a Python byte-code file bearing the ".pyc" extension, any functions in the module will be callable as rules as long as they conform to a calling convention
 ```
@@ -50,7 +50,7 @@ When the plugin is freshly installed, a template file is located at `/etc/irods/
 
 # Default PEPs
 
-The example `core.py.template` file in this repository contains a Python implementation of all static policy enforcement points (PEPs), equivalent to the default `core.re` rulebase.
+The example `core.py.template` file in this repository contains a Python implementation of all static policy enforcement points (PEPs), equivalent to the default `core.re` rulebase. Placing the "irods_rule_engine_plugin-python-instance" stanza before the "irods_rule_engine_plugin-cpp_default_policy-instance" stanza in `/etc/irods/server_config.json` will ensure that any default C++ policies will not cancel out any similarly named Python rules copied from the example `core.py.template` file.
 
 # Python Version
 
