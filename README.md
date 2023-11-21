@@ -420,3 +420,21 @@ The following arguments are strictly optional and may be used either in `Query`'
   * *limit*: `None` by default (ie "no limit"), this option can be an integer >= 1 if specified, and limits the returned row enumeration to the requested number of results. Often used with *offset*, as defined above.
   * *case-sensitive* is normally `True`. If it is set to `False`, the condition string will be uppercased, and the query will be executed without regard to case.  This allows for more permissive matching on the names of resources, collections, data objects, etc.
   * *options* is a bitmask of extra options, and defaults to a value of 0. `genquery.Option.NO_DISTINCT` is one such extra option, as is RETURN_TOTAL_ROW_COUNT (although in the latter case, using the `Query` object's `row_count` method should be preferred.)
+
+## Questions and Answers
+
+### What happened to my `print` output?
+
+In iRODS server versions 4.3.0 and later, all standard streams are redirected to `/dev/null` in the server. This means that any data sent to `stdout` such as via a `print` statement in a rule run inside the server will be discarded.
+
+Here is some example code which would print a message to the `rodsLog` in servers from the 4.2.x series and earlier when run with the Python Rule Engine Plugin:
+```python
+print('hello, server log!')
+```
+
+In order to achieve a similar effect on server versions 4.3.0 and later, you can replace such a call like this:
+```python
+callback.writeLine('serverLog', 'hello, server log!')
+```
+
+Note that the `writeLine` microservice can also target `stdout` in addition to `serverLog`. `callback.writeLine('stdout', ...)` will have the same effect as running `print`. The output will be discarded.
