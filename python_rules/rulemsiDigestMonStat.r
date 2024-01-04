@@ -1,11 +1,11 @@
 def main(rule_args, callback, rei):
-    cpu_weight = global_vars['*Cpuw'][1:-1]
-    mem_weight = global_vars['*Memw'][1:-1]
-    swap_weight = global_vars['*Swapw'][1:-1]
-    run_queue_weight = global_vars['*Runw'][1:-1]
-    disk_weight = global_vars['*Diskw'][1:-1]
-    network_in_weight = global_vars['*Netinw'][1:-1]
-    network_out_weight = global_vars['*Netow'][1:-1]
+    cpu_weight = irods_rule_vars['*Cpuw'][1:-1]
+    mem_weight = irods_rule_vars['*Memw'][1:-1]
+    swap_weight = irods_rule_vars['*Swapw'][1:-1]
+    run_queue_weight = irods_rule_vars['*Runw'][1:-1]
+    disk_weight = irods_rule_vars['*Diskw'][1:-1]
+    network_in_weight = irods_rule_vars['*Netinw'][1:-1]
+    network_out_weight = irods_rule_vars['*Netow'][1:-1]
 
     callback.msiDigestMonStat(cpu_weight, mem_weight, swap_weight, run_queue_weight, disk_weight, network_in_weight, network_out_weight)
 

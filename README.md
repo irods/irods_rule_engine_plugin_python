@@ -134,9 +134,10 @@ Aug  8 20:57:43 pid:23802 NOTICE: writeLine: inString = PYTHON - acPostProcForPu
 
 # Python globals and built-in modules
 These built-in objects are set up at plugin initialization time and available in the python interpreter that loads `core.py` or, as the case may be, the Python rule file:
-   - `global_vars` - a dictionary for accessing variables of the form `*var` from the `INPUT` line, if present.
+   - `irods_rule_vars` - a dictionary for accessing variables of the form `*var` from the `INPUT` line, if present.
    - `irods_types` - a module containing common struct types used for communicating with microservices.
    - `irods_errors` - a module mapping well-known iRODS error names to their corresponding integer values.
+   - `global_vars` - deprecated alias for `irods_rule_vars`; only available in some contexts. Will be removed in a future release.
    
 By using the `irods_errors` built-in, policy may indicate how the framework is to continue through the use of a symbolic name, rather than a cryptic number reference:
 ```
@@ -165,7 +166,7 @@ def testRule(rule_args, callback, rei):
 and a rule script file (named `call_testRule.r`) which calls `testRule` with a data path argument:
 ```
 def main(_,callback,rei):
-  data_path = global_vars[ '*dataPath' ][1:-1]
+  data_path = irods_rule_vars[ '*dataPath' ][1:-1]
   retval = callback.testRule( data_path )
   callback.writeLine( "stdout", retval['arguments'][0])
 INPUT *dataPath=""

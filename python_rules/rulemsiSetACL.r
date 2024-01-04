@@ -1,7 +1,7 @@
 def main(rule_args, callback, rei):
-    user = global_vars['*User'][1:-1]
-    path = global_vars['*Path'][1:-1]
-    acl = global_vars['*Acl'][1:-1]
+    user = irods_rule_vars['*User'][1:-1]
+    path = irods_rule_vars['*Path'][1:-1]
+    acl = irods_rule_vars['*Acl'][1:-1]
 
     callback.msiSetACL('default', acl, user, path)
 

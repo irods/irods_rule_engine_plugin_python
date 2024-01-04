@@ -1,6 +1,6 @@
 def main(rule_args, callback, rei):
-    bagIt_data = global_vars['*BAGITDATA'][1:-1]
-    new_bagIt_root = global_vars['*NEWBAGITROOT'][1:-1]
+    bagIt_data = irods_rule_vars['*BAGITDATA'][1:-1]
+    new_bagIt_root = irods_rule_vars['*NEWBAGITROOT'][1:-1]
 
     print_size = 0
     print_unit = ''

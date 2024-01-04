@@ -1,5 +1,5 @@
 def main(rule_args, callback, rei):
-    select = global_vars['*Select'][1:-1]
+    select = irods_rule_vars['*Select'][1:-1]
 
     ret_val = callback.msiExecStrCondQuery(select, irods_types.GenQueryOut())
     genQueryOut = ret_val['arguments'][1]

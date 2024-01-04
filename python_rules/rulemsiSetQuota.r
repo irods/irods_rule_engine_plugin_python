@@ -1,8 +1,8 @@
 def main(rule_args, callback, rei):
-    type = global_vars['*Type'][1:-1]
-    name = global_vars['*Name'][1:-1]
-    resource = global_vars['*Resource'][1:-1]
-    value = global_vars['*Value'][1:-1]
+    type = irods_rule_vars['*Type'][1:-1]
+    name = irods_rule_vars['*Name'][1:-1]
+    resource = irods_rule_vars['*Resource'][1:-1]
+    value = irods_rule_vars['*Value'][1:-1]
 
     callback.msiSetQuota(type, name, resource, value)
     

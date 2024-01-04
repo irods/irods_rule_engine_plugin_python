@@ -1,8 +1,8 @@
 def main(rule_args, callback, rei):
-    select = global_vars['*Select'][1:-1]
-    attribute = global_vars['*Attribute'][1:-1]
-    operator = global_vars['*Operator'][1:-1]
-    value = global_vars['*Value'][1:-1]
+    select = irods_rule_vars['*Select'][1:-1]
+    attribute = irods_rule_vars['*Attribute'][1:-1]
+    operator = irods_rule_vars['*Operator'][1:-1]
+    value = irods_rule_vars['*Value'][1:-1]
 
     ret_val = {}
 

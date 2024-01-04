@@ -1,5 +1,5 @@
 def main(rule_args, callback, rei):
-    data_object = global_vars['*dataObject'][1:-1]
+    data_object = irods_rule_vars['*dataObject'][1:-1]
 
     callback.writeLine('stdout', 'Object is ' + data_object)
 

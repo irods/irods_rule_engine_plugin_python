@@ -1,6 +1,6 @@
 def main(rule_args, callback, rei):
-    source_file = global_vars['*SourceFile'][1:-1]
-    comment = global_vars['*Comment'][1:-1]
+    source_file = irods_rule_vars['*SourceFile'][1:-1]
+    comment = irods_rule_vars['*Comment'][1:-1]
 
     callback.msiSetReplComment('null', source_file, '0', comment)
 

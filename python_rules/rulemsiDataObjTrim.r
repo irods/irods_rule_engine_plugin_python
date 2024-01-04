@@ -1,5 +1,5 @@
 def main(rule_args, callback, rei):
-    source_file = global_vars['*SourceFile'][1:-1]
+    source_file = irods_rule_vars['*SourceFile'][1:-1]
 
     callback.msiDataObjTrim(source_file, 'null', 'null', '1', 'null', 0)
 

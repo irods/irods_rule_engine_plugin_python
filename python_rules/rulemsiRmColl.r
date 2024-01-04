@@ -1,6 +1,6 @@
 def main(rule_args, callback, rei):
-    coll = global_vars['*Coll'][1:-1]
-    flag = global_vars['*Flag'][1:-1]
+    coll = irods_rule_vars['*Coll'][1:-1]
+    flag = irods_rule_vars['*Flag'][1:-1]
 
     callback.msiRmColl(coll, flag, 0)
     

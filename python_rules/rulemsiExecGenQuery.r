@@ -1,6 +1,6 @@
 def main(rule_args, callback, rei):
-    coll = global_vars['*Coll'][1:-1]
-    condition = global_vars['*Condition'][1:-1]
+    coll = irods_rule_vars['*Coll'][1:-1]
+    condition = irods_rule_vars['*Condition'][1:-1]
 
     continue_index_old = 1
     count = 0

@@ -1,7 +1,7 @@
 def main(rule_args, callback, rei):
-    src_coll = global_vars['*srcColl'][1:-1]
-    dest_coll = global_vars['*destColl'][1:-1]
-    resource = global_vars['*Resource'][1:-1]
+    src_coll = irods_rule_vars['*srcColl'][1:-1]
+    dest_coll = irods_rule_vars['*destColl'][1:-1]
+    resource = irods_rule_vars['*Resource'][1:-1]
 
     callback.msiCollRsync(src_coll, dest_coll, resource, 'IRODS_TO_IRODS', 0)
 

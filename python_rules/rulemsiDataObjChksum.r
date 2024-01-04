@@ -1,6 +1,6 @@
 def main(rule_args, callback, rei):
-    data_object = global_vars['*dataObject'][1:-1]
-    flags = global_vars['*Flags'][1:-1]
+    data_object = irods_rule_vars['*dataObject'][1:-1]
+    flags = irods_rule_vars['*Flags'][1:-1]
 
     import os
     (coll, file) = os.path.split(data_object)
