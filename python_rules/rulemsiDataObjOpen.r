@@ -1,11 +1,11 @@
 def main(rule_args, callback, rei):
-    obj = global_vars['*Obj'][1:-1]
-    oflags = global_vars['*OFlags'][1:-1]
-    obj_b = global_vars['*ObjB'][1:-1]
-    oflags_b = global_vars['*OFlagsB'][1:-1]
-    offset = global_vars['*Offset'][1:-1]
-    loc = global_vars['*Loc'][1:-1]
-    length = global_vars['*Len'][1:-1]
+    obj = irods_rule_vars['*Obj'][1:-1]
+    oflags = irods_rule_vars['*OFlags'][1:-1]
+    obj_b = irods_rule_vars['*ObjB'][1:-1]
+    oflags_b = irods_rule_vars['*OFlagsB'][1:-1]
+    offset = irods_rule_vars['*Offset'][1:-1]
+    loc = irods_rule_vars['*Loc'][1:-1]
+    length = irods_rule_vars['*Len'][1:-1]
 
     ret_val = callback.msiDataObjOpen(oflags, 0)
     file_desc = ret_val['arguments'][1]

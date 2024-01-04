@@ -1,7 +1,7 @@
 def main(rule_args, callback, rei):
-    source_obj = global_vars['*sourceObj'][1:-1]
-    dest_resc = global_vars['*destResc'][1:-1]
-    dest_obj = global_vars['*destObj'][1:-1]
+    source_obj = irods_rule_vars['*sourceObj'][1:-1]
+    dest_resc = irods_rule_vars['*destResc'][1:-1]
+    dest_obj = irods_rule_vars['*destObj'][1:-1]
 
     ret_val = callback.msiDataObjRsync(source_obj, 'IRODS_TO_IRODS', dest_resc, dest_obj, 0)
     status = ret_val['arguments'][4]

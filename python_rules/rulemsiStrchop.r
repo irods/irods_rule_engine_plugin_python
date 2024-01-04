@@ -1,5 +1,5 @@
 def main(rule_args, callback, rei):
-    in_str = global_vars['*StringIn'][1:-1]
+    in_str = irods_rule_vars['*StringIn'][1:-1]
 
     new_str = in_str[:-1]
     callback.writeLine('stdout', 'The input string is :  ' + in_str)

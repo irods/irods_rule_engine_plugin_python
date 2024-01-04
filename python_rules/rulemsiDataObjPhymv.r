@@ -1,8 +1,8 @@
 def main(rule_args, callback, rei):
-    source_file = global_vars['*SourceFile'][1:-1]
-    source_resource = global_vars['*SourceResource'][1:-1]
-    dest_resource = global_vars['*DestResource'][1:-1]
-    replica_number = global_vars['*ReplicaNumber'][1:-1]
+    source_file = irods_rule_vars['*SourceFile'][1:-1]
+    source_resource = irods_rule_vars['*SourceResource'][1:-1]
+    dest_resource = irods_rule_vars['*DestResource'][1:-1]
+    replica_number = irods_rule_vars['*ReplicaNumber'][1:-1]
 
     callback.msiDataObjPhymv(source_file, dest_resource, source_resource, replica_number, 'null', 0)
 

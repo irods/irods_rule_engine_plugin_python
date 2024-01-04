@@ -1,5 +1,5 @@
 def main(rule_args, callback, rei):
-    message = global_vars['*Message'][1:-1]
+    message = irods_rule_vars['*Message'][1:-1]
 
     callback.writeLine('stdout', 'Message is ' + message)
 

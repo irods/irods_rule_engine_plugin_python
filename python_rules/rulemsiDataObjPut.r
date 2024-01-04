@@ -1,7 +1,7 @@
 def main(rule_args, callback, rei):
-    dest_file = global_vars['*DestFile'][1:-1]
-    dest_resource = global_vars['*DestResource'][1:-1]
-    local_file = global_vars['*LocalFile'][1:-1]
+    dest_file = irods_rule_vars['*DestFile'][1:-1]
+    dest_resource = irods_rule_vars['*DestResource'][1:-1]
+    local_file = irods_rule_vars['*LocalFile'][1:-1]
 
     callback.msiDataObjPut(dest_file, dest_resource, 'localPath=' + local_file + '++++forceFlag=', 0)
 

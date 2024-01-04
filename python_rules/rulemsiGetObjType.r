@@ -1,6 +1,6 @@
 def main(rule_args, callback, rei):
-    source_file = global_vars['*SourceFile'][1:-1]
-    resource = global_vars['*Resource'][1:-1]
+    source_file = irods_rule_vars['*SourceFile'][1:-1]
+    resource = irods_rule_vars['*Resource'][1:-1]
 
     ret_val = callback.msiGetObjType(source_file, 'dummy_str')
     type_file = ret_val['arguments'][1]

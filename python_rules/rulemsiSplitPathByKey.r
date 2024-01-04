@@ -1,6 +1,6 @@
 def main(rule_args, callback, rei):
-    in_str = global_vars['*string'][1:-1]
-    separator = global_vars['*separator'][1:-1]
+    in_str = irods_rule_vars['*string'][1:-1]
+    separator = irods_rule_vars['*separator'][1:-1]
 
     callback.writeLine('stdout', 'string is ' + in_str)
     (head, tail) = in_str.rsplit(separator, 1)

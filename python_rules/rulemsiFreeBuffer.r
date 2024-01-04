@@ -1,6 +1,6 @@
 def main(rule_args, callback, rei):
-    flags = global_vars['*Flags'][1:-1]
-    length = global_vars['*Len'][1:-1]
+    flags = irods_rule_vars['*Flags'][1:-1]
+    length = irods_rule_vars['*Len'][1:-1]
 
     ret_val = callback.msiDataObjOpen(flags, 0)
     file_desc = ret_val['arguments'][1]

@@ -1,6 +1,6 @@
 def main(rule_args, callback, rei):
-    attr_name = global_vars['*AttrName'][1:-1]
-    attr_value = global_vars['*AttrValue'][1:-1]
+    attr_name = irods_rule_vars['*AttrName'][1:-1]
+    attr_value = irods_rule_vars['*AttrValue'][1:-1]
 
     out_str = '='.join([attr_name, attr_value])
 

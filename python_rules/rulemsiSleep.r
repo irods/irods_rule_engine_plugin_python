@@ -1,6 +1,6 @@
 def main(rule_args, callback, rei):
-    sec = global_vars['*Sec'][1:-1]
-    microsec = global_vars['*MicroSec'][1:-1]
+    sec = irods_rule_vars['*Sec'][1:-1]
+    microsec = irods_rule_vars['*MicroSec'][1:-1]
 
     import time
     callback.writeLine('stdout', time.ctime())

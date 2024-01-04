@@ -1,6 +1,6 @@
 def main(rule_args, callback, rei):
-    tag = global_vars['*Tag'][1:-1]
-    in_str = global_vars['*Str'][1:-1]
+    tag = irods_rule_vars['*Tag'][1:-1]
+    in_str = irods_rule_vars['*Str'][1:-1]
 
     callback.writeLine('stdout', 'String that is tested is')
     callback.writeLine('stdout', in_str)

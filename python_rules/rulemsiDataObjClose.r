@@ -1,7 +1,7 @@
 def main(rule_args, callback, rei):
-    resc = global_vars['*Resc'][1:-1]
-    obj = global_vars['*Obj'][1:-1]
-    oflags = global_vars['*OFlags'][1:-1]
+    resc = irods_rule_vars['*Resc'][1:-1]
+    obj = irods_rule_vars['*Obj'][1:-1]
+    oflags = irods_rule_vars['*OFlags'][1:-1]
 
     ret_val = callback.msiDataObjCreate(obj, oflags, 0)
     file_desc = ret_val['arguments'][2]

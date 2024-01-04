@@ -1,6 +1,6 @@
 def main(rule_args, callback, rei):
-    source_file = global_vars['*SourceFile'][1:-1]
-    new_file_path = global_vars['*NewFilePath'][1:-1]
+    source_file = irods_rule_vars['*SourceFile'][1:-1]
+    new_file_path = irods_rule_vars['*NewFilePath'][1:-1]
 
     callback.msiDataObjRename(source_file, new_file_path, '0', 0)
 

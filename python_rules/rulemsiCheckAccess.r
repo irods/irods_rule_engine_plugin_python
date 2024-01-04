@@ -1,6 +1,6 @@
 def main(rule_args, callback, rei):
-    path = global_vars['*Path'][1:-1]
-    acl = global_vars['*Acl'][1:-1]
+    path = irods_rule_vars['*Path'][1:-1]
+    acl = irods_rule_vars['*Acl'][1:-1]
 
     ret_val = callback.msiCheckAccess(path, acl, 0)
     result = ret_val['arguments'][2]

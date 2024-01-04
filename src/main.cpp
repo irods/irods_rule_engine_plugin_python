@@ -680,8 +680,8 @@ static irods::error exec_rule_text(const irods::default_re_ctx&,
 
 		addMsParam(ms_params, out_desc.c_str(), ExecCmdOut_MS_T, myExecCmdOut, NULL);
 
-		// Convert INPUT and OUTPUT global vars to Python dict
-		bp::dict global_vars_python;
+		// Convert INPUT and OUTPUT rule vars to Python dict
+		bp::dict rule_vars_python;
 
 		int i = 0;
 		for (i = 0; i < ms_params->len; i++) {
@@ -689,24 +689,24 @@ static irods::error exec_rule_text(const irods::default_re_ctx&,
 			std::string label(mp->label);
 
 			if (mp->type == NULL) {
-				global_vars_python[label] = NULL;
+				rule_vars_python[label] = NULL;
 			}
 			else if (strcmp(mp->type, DOUBLE_MS_T) == 0) {
 				double* tmpDouble = (double*) mp->inOutStruct;
-				global_vars_python[label] = tmpDouble;
+				rule_vars_python[label] = tmpDouble;
 			}
 			else if (strcmp(mp->type, INT_MS_T) == 0) {
 				int* tmpInt = (int*) mp->inOutStruct;
-				global_vars_python[label] = tmpInt;
+				rule_vars_python[label] = tmpInt;
 			}
 			else if (strcmp(mp->type, STR_MS_T) == 0) {
 				char* tmpChar = (char*) mp->inOutStruct;
 				std::string tmpStr(tmpChar);
-				global_vars_python[label] = tmpStr;
+				rule_vars_python[label] = tmpStr;
 			}
 			else if (strcmp(mp->type, DATETIME_MS_T) == 0) {
 				rodsLong_t* tmpRodsLong = (rodsLong_t*) mp->inOutStruct;
-				global_vars_python[label] = tmpRodsLong;
+				rule_vars_python[label] = tmpRodsLong;
 			}
 		}
 
@@ -714,13 +714,17 @@ static irods::error exec_rule_text(const irods::default_re_ctx&,
 			// If rule_text begins with "@external\n", call is of form
 			//  irule -F inputFile ...
 
+			// Import rule INPUT and OUTPUT variables
+			bp::object builtin_module = bp::import("builtins");
+			builtin_module.attr("irods_rule_vars") = rule_vars_python;
+
 			bp::object main_module = bp::import("__main__");
 			bp::object main_namespace = main_module.attr("__dict__");
 			bp::object irods_types = bp::import("irods_types");
 			bp::object irods_errors = bp::import("irods_errors");
 
-			// Import global INPUT and OUTPUT variables
-			main_namespace["global_vars"] = global_vars_python;
+			// deprecated alias for irods_rule_vars
+			main_namespace["global_vars"] = rule_vars_python;
 
 			// Import global constants
 			main_namespace["irods_types"] = irods_types;
@@ -740,12 +744,16 @@ static irods::error exec_rule_text(const irods::default_re_ctx&,
 			// If rule_text begins with "@external ", call is of form
 			//  irule rule ...
 
+			// Import rule INPUT and OUTPUT variables
+			bp::object builtin_module = bp::import("builtins");
+			builtin_module.attr("irods_rule_vars") = rule_vars_python;
+
 			// TODO Enable non core.py Python rulebases
 			bp::object core_module = bp::import("core");
 			bp::object core_namespace = core_module.attr("__dict__");
 
-			// Import global INPUT and OUTPUT variables
-			core_namespace["global_vars"] = global_vars_python;
+			// deprecated alias for irods_rule_vars
+			core_namespace["global_vars"] = rule_vars_python;
 
 			// Delete "@external rule { " from the start of the rule_text
 			std::string trimmed_rule = rule_text.substr(17);
@@ -815,37 +823,41 @@ static irods::error exec_rule_expression(irods::default_re_ctx&,
 	try {
 		std::lock_guard<std::recursive_mutex> lock{python_mutex};
 
-		bp::dict global_vars_python;
+		bp::dict rule_vars_python;
 
-		// Convert INPUT/OUTPUT global vars to Python dict
+		// Convert INPUT/OUTPUT rule vars to Python dict
 		if (ms_params) {
 			for (int i = 0; i < ms_params->len; i++) {
 				if (msParam_t* mp = ms_params->msParam[i]) {
 					std::string label(mp->label);
 
 					if (mp->type == NULL) {
-						global_vars_python[label] = boost::python::object{};
+						rule_vars_python[label] = boost::python::object{};
 					}
 					else if (strcmp(mp->type, DOUBLE_MS_T) == 0) {
 						double* tmpDouble = (double*) mp->inOutStruct;
-						global_vars_python[label] = tmpDouble;
+						rule_vars_python[label] = tmpDouble;
 					}
 					else if (strcmp(mp->type, INT_MS_T) == 0) {
 						int* tmpInt = (int*) mp->inOutStruct;
-						global_vars_python[label] = tmpInt;
+						rule_vars_python[label] = tmpInt;
 					}
 					else if (strcmp(mp->type, STR_MS_T) == 0) {
 						char* tmpChar = (char*) mp->inOutStruct;
 						std::string tmpStr(tmpChar);
-						global_vars_python[label] = tmpStr;
+						rule_vars_python[label] = tmpStr;
 					}
 					else if (strcmp(mp->type, DATETIME_MS_T) == 0) {
 						rodsLong_t* tmpRodsLong = (rodsLong_t*) mp->inOutStruct;
-						global_vars_python[label] = tmpRodsLong;
+						rule_vars_python[label] = tmpRodsLong;
 					}
 				}
 			}
 		}
+
+		// Import rule INPUT and OUTPUT variables
+		bp::object builtin_module = bp::import("builtins");
+		builtin_module.attr("irods_rule_vars") = rule_vars_python;
 
 		// Parse input rule_text into useable Python fcns
 		bp::object main_module = bp::import("__main__");
@@ -853,8 +865,8 @@ static irods::error exec_rule_expression(irods::default_re_ctx&,
 		bp::object irods_errors = bp::import("irods_errors");
 		bp::object main_namespace = main_module.attr("__dict__");
 
-		// Import global INPUT and OUTPUT variables
-		main_namespace["global_vars"] = global_vars_python;
+		// deprecated alias for irods_rule_vars
+		main_namespace["global_vars"] = rule_vars_python;
 
 		// Import globals
 		main_namespace["irods_types"] = irods_types;

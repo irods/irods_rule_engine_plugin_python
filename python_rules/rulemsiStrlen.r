@@ -1,5 +1,5 @@
 def main(rule_args, callback, rei):
-    in_str = global_vars['*StringIn'][1:-1]
+    in_str = irods_rule_vars['*StringIn'][1:-1]
 
     length = len(in_str)
 
