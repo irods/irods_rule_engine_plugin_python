@@ -53,6 +53,8 @@ endif()
 
 find_package(OpenSSL REQUIRED COMPONENTS Crypto SSL)
 find_package(nlohmann_json "3.6.1" REQUIRED)
+find_package(fmt "8.1.1"
+  HINTS "${IRODS_EXTERNALS_FULLPATH_FMT}")
 find_package(Python "${IRODS_PYTHON_VERSION}" REQUIRED COMPONENTS Development)
 
 set(
@@ -173,7 +175,6 @@ target_include_directories(
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
   ${IRODS_INCLUDE_DIRS}
   ${IRODS_EXTERNALS_FULLPATH_BOOST}/include
-  ${IRODS_EXTERNALS_FULLPATH_FMT}/include
   ${IRODS_EXTERNALS_FULLPATH_SPDLOG}/include
   )
 
@@ -184,11 +185,11 @@ target_link_libraries(
   ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_system.so
   ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_date_time.so
   ${IRODS_EXTERNALS_FULLPATH_BOOST}/lib/libboost_filesystem.so
-  ${IRODS_EXTERNALS_FULLPATH_FMT}/lib/libfmt.so
   ${CMAKE_DL_LIBS}
   irods_common
   irods_server
   nlohmann_json::nlohmann_json
+  fmt::fmt
   )
 
 # Since we are embedding Python rather than just creating extension modules, we must link to
