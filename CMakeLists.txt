@@ -175,7 +175,6 @@ target_include_directories(
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
   ${IRODS_INCLUDE_DIRS}
   ${IRODS_EXTERNALS_FULLPATH_BOOST}/include
-  ${IRODS_EXTERNALS_FULLPATH_SPDLOG}/include
   )
 
 target_link_libraries(
