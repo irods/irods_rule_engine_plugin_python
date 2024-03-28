@@ -25,6 +25,8 @@ namespace irods::re::python::types
 {
 	__attribute__((visibility("hidden"))) void export_GeneralUpdateInp()
 	{
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 		// clang-format off
 		bp::class_<generalUpdateInp_t>("GeneralUpdateInp", bp::no_init)
 			.def("__init__", make_init_function<generalUpdateInp_t>(
@@ -34,5 +36,6 @@ namespace irods::re::python::types
 			.add_property("values", &generalUpdateInp_t::values)
 			;
 		// clang-format on
+#pragma clang diagnostic pop
 	}
 } //namespace irods::re::python::types
