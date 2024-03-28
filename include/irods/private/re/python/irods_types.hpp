@@ -74,7 +74,10 @@ using list_of_irods_types = type_sequence<
 	float,
 	genQueryInp_t,
 	genQueryOut_t,
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 	generalUpdateInp_t,
+#pragma clang diagnostic pop
 	icatSessionStruct,
 	in_addr,
 	int,
