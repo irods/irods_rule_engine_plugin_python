@@ -439,3 +439,66 @@ callback.writeLine('serverLog', 'hello, server log!')
 ```
 
 Note that the `writeLine` microservice can also target `stdout` in addition to `serverLog`. `callback.writeLine('stdout', ...)` will have the same effect as running `print`. The output will be discarded.
+
+### How do I pass values back to the caller, across rule engine plugin boundaries?
+
+This is achieved by writing a value back _(as a string)_ to the appropriate index within the `rule_args` array. The caller is required to pass one or more variables as **out** parameters.
+
+Here's an example demonstrating how to pass a value, via the input arguments, from the PREP to the native rule engine plugin (NREP).
+
+The following is a python function which overwrites the value of the first input argument.
+```python
+# file: core.py
+
+def get_magic_number(rule_args, callback, rei):
+    # Notice the integer is represented as a string.
+    # Only strings can be passed across rule engine plugin boundaries.
+    #
+    # Take note of the index we're writing to. The index represents the
+    # position of the input argument. Because this rule expects one input
+    # argument, we use index 0. If there were more input arguments, we could
+    # write to those as well using the index which identifies them.
+    rule_args[0] = '42'
+```
+
+And here is the NREP rule which invokes the PREP rule.
+```python
+# file: core.re
+
+nrep_rule()
+{
+    # Due to how the NREP works, we must initialize the variable to a string.
+    # The value of the string isn't important.
+    *magic_number = '-1';
+
+    # Now, we invoke the Python rule in core.py. Remember, the rule takes one
+    # input argument. That argument maps to index 0 within the python rule.
+    get_magic_number(*magic_number);
+
+    # Finally, the value is written to the log file.
+    writeLine('serverLog', 'The magic number is [*magic_number].');
+}
+```
+
+It's important that the value passed across rule engine plugin boundaries be of type string. Passing any other type will result in an error.
+
+Upon invoking `nrep_rule`, a message very similar to the one that follows will appear in the server log file. See the **log_message** property. It should contain `[42]` instead of `[-1]`.
+```js
+{
+  "log_category": "legacy",
+  "log_level": "info",
+  "log_message": "writeLine: inString = The magic number is [42].\n",
+  "request_api_name": "EXEC_MY_RULE_AN",
+  "request_api_number": 625,
+  "request_api_version": "d",
+  "request_client_user": "rods",
+  "request_host": "10.15.164.3",
+  "request_proxy_user": "rods",
+  "request_release_version": "rods4.3.1",
+  "server_host": "76f890b83c4d",
+  "server_pid": 2637,
+  "server_timestamp": "2024-04-10T12:43:31.381Z",
+  "server_type": "agent",
+  "server_zone": "tempZone"
+}
+```
