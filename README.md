@@ -421,6 +421,17 @@ The following arguments are strictly optional and may be used either in `Query`'
   * *limit*: `None` by default (ie "no limit"), this option can be an integer >= 1 if specified, and limits the returned row enumeration to the requested number of results. Often used with *offset*, as defined above.
   * *case-sensitive* is normally `True`. If it is set to `False`, the condition string will be uppercased, and the query will be executed without regard to case.  This allows for more permissive matching on the names of resources, collections, data objects, etc.
   * *options* is a bitmask of extra options, and defaults to a value of 0. `genquery.Option.NO_DISTINCT` is one such extra option, as is RETURN_TOTAL_ROW_COUNT (although in the latter case, using the `Query` object's `row_count` method should be preferred.)
+  * *parser* defines which GenQuery parser to use for querying the catalog. The following values are supported:
+    - `Parser.GENQUERY1` configures the `Query` object to use GenQuery1 (i.e. the traditional parser). This is the default.
+    - `Parser.GENQUERY2` configures the `Query` object to use GenQuery2. GenQuery2 is an experimental parser with several enhancements over GenQuery1.
+      - When using the GenQuery2 parser, the following applies:
+        - The `output` constructor parameter is ignored.
+        - The `case_sensitive` constructor parameter is ignored.
+        - The `options` constructor parameter is ignored.
+        - The `total_rows` member function of the `Query` class always returns `None`.
+  * *order_by* is a string holding the sorting instructions for a GenQuery2 query. The string must be a comma-delimited list of GenQuery2 columns (or expressions). For example, `order_by='COLL_NAME, DATA_NAME'`. For more examples, see [How do I sort data using the Query class and GenQuery2?](#how-do-i-sort-data-using-the-query-class-and-genquery2). Defaults to an empty string. Only recognized by the GenQuery2 parser.
+
+When the processing of a GenQuery2 resultset is complete, it is best practice to call the `close()` member function. Doing this will instruct the server to immediately free any resources allocated to the `Query` object. This is extremely important when multiple `Query` objects are executed within a single rule.
 
 ## Questions and Answers
 
@@ -502,3 +513,42 @@ Upon invoking `nrep_rule`, a message very similar to the one that follows will a
   "server_zone": "tempZone"
 }
 ```
+
+## How do I escape embedded single quotes using the Query class and GenQuery2?
+
+GenQuery2 provides two ways to escape embedded single quotes. They are as follows:
+- Use a single quote to escape a single quote as defined by the SQL standard
+- Or, use the hexadecimal encoding
+
+Below, we demonstrate each escape mechanism on the data object name, `'_quotes_around_me_'`.
+```python
+from genquery import Query, Parser
+row = Query(callback, 'DATA_NAME', "DATA_NAME = '''_quotes_around_me_\\x27'", parser=Parser.GENQUERY2).first()
+callback.writeLine('serverLog', f'row = {row}')
+```
+
+Notice the use of `\\x` rather than `\x` for the second single quote. This is required to keep Python from interpreting the hexadecimal value.
+
+## How do I sort data using the Query class and GenQuery2?
+
+Use the `order_by` parameter. Two examples are provided below.
+
+Assume we have five collections and we want to sort them by the length of their logical path, but in descending order.
+
+```python
+from genquery import Query, Parser
+for row in Query(callback, 'COLL_NAME, length(COLL_NAME)', order_by='length(COLL_NAME) desc', parser=Parser.GENQUERY2):
+    callback.writeLine('serverLog', f'row = {row}')
+```
+
+And here's a second example demonstrating how to sort using multiple columns.
+
+```python
+from genquery import Query, Parser
+for row in Query(callback, 'COLL_NAME, DATA_NAME', order_by='COLL_NAME desc, DATA_NAME', parser=Parser.GENQUERY2):
+    callback.writeLine('serverLog', f'row = {row}')
+```
+
+The string passed to the `order_by` parameter instructs the database to do the following:
+- First, sort by collection name in descending order
+- Second, sort the data names in each collection in ascending order
