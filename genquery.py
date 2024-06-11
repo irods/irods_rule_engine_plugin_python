@@ -37,6 +37,7 @@ class AS_LIST  (row_return_type): pass
 class AS_TUPLE (row_return_type): pass
 
 class Parser_Impl(object):
+    """GenQuery parser implementations."""
     GENQUERY1 = 1
     GENQUERY2 = 2
 
@@ -131,6 +132,9 @@ class Query(object):
 
         if not isinstance (columns, list):
             raise GenQuery_Columns_Type_Error("'columns' could not be coerced to list type")
+
+        if parser_impl not in [Parser_Impl.GENQUERY1, Parser_Impl.GENQUERY2]:
+            raise ValueError('Invalid value for [parser_impl]. Expected GENQUERY1 or GENQUERY2.')
 
         # Options as specified
         self.columns        = columns     # - via 2nd argument to ctor; or copy() 'columns' keyword option
@@ -234,28 +238,23 @@ class Query(object):
         separate query to fetch the total number of rows.
         """
         if self._total is None:
-            if self.parser_impl == Parser_Impl.GENQUERY2:
-                # Currently not supported.
-                # - Requires running a "SELECT COUNT(DISTINCT)" which may not be supported by the database.
-                # - Or, iterating over the entire resultset, which is a horrible idea.
-                return
-
-            if self.offset == 0 and self.options & Option.RETURN_TOTAL_ROW_COUNT:
-                # Easy mode: Extract row count from gqo.
-                self.exec_if_not_yet_execed()
-                self._total = self.gqo.totalRowCount
-            else:
-                # Hard mode: for some reason, using PostgreSQL, you cannot get
-                # the total row count when an offset is supplied.
-                # When RETURN_TOTAL_ROW_COUNT is set in combination with a
-                # non-zero offset, iRODS solves this by executing the query
-                # twice[1], one time with no offset to get the row count.
-                # Apparently this does not work (we get the correct row count, but no rows).
-                # So instead, we run the query twice manually. This should
-                # perform only slightly worse.
-                # [1]: https://github.com/irods/irods/blob/4.2.6/plugins/database/src/general_query.cpp#L2393
-                self._total = Query(self.callback, self.columns, self.conditions, limit=0,
-                                    options=self.options|Option.RETURN_TOTAL_ROW_COUNT).total_rows()
+            if self.parser_impl == Parser_Impl.GENQUERY1:
+                if self.offset == 0 and self.options & Option.RETURN_TOTAL_ROW_COUNT:
+                    # Easy mode: Extract row count from gqo.
+                    self.exec_if_not_yet_execed()
+                    self._total = self.gqo.totalRowCount
+                else:
+                    # Hard mode: for some reason, using PostgreSQL, you cannot get
+                    # the total row count when an offset is supplied.
+                    # When RETURN_TOTAL_ROW_COUNT is set in combination with a
+                    # non-zero offset, iRODS solves this by executing the query
+                    # twice[1], one time with no offset to get the row count.
+                    # Apparently this does not work (we get the correct row count, but no rows).
+                    # So instead, we run the query twice manually. This should
+                    # perform only slightly worse.
+                    # [1]: https://github.com/irods/irods/blob/4.2.6/plugins/database/src/general_query.cpp#L2393
+                    self._total = Query(self.callback, self.columns, self.conditions, limit=0,
+                                        options=self.options|Option.RETURN_TOTAL_ROW_COUNT).total_rows()
 
         return self._total
 
@@ -278,7 +277,6 @@ class Query(object):
                     yield row
                 except GeneratorExit:
                     self._close()
-                    pass
 
             return
 
