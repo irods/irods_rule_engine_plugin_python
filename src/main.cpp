@@ -566,7 +566,17 @@ static irods::error exec_rule(const irods::default_re_ctx&,
 		const auto rei = get_rei_from_effect_handler(effect_handler);
 		bp::list rule_arguments_python{};
 		for (auto& cpp_argument : rule_arguments_cpp) {
-			rule_arguments_python.append(object_from_any(cpp_argument));
+			try {
+				rule_arguments_python.append(object_from_any(cpp_argument));
+			}
+			catch (const bp::error_already_set&) {
+				// Assume all Unicode Decoding Issues are related to irods/PREP#204
+				if (!PyErr_ExceptionMatches(PyExc_UnicodeDecodeError)) {
+					throw;
+				}
+				PyErr_Clear();
+				rule_arguments_python.append(boost::python::object{});
+			}
 		}
 
 		const bp::object ec = rule_function(rule_arguments_python, CallbackWrapper{effect_handler}, rei);
