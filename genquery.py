@@ -36,7 +36,7 @@ class AS_DICT  (row_return_type): pass
 class AS_LIST  (row_return_type): pass
 class AS_TUPLE (row_return_type): pass
 
-class Parser_Impl(object):
+class Parser(object):
     """GenQuery parser implementations."""
     GENQUERY1 = 1
     GENQUERY2 = 2
@@ -57,7 +57,7 @@ class Query(object):
     :param limit:          (optional) maximum amount of results, can be used for pagination
     :param case_sensitive: (optional) set this to False to make the entire where-clause case insensitive
     :param options:        (optional) other OR-ed options to pass to the query (see the Option type above)
-    :param parser_impl:    (optional) use GenQuery1 or GenQuery2 as the query engine
+    :param parser:         (optional) the GenQuery engine to use. defaults to Parser.GENQUERY1.
 
     GenQuery2 parser implementation:
 
@@ -107,7 +107,7 @@ class Query(object):
             print('name: {}/{} - owned by {}'.format(*x))
     """
 
-    __parameter_names = tuple('columns,conditions,output,offset,limit,case_sensitive,options,parser_impl'.split(','))
+    __parameter_names = tuple('columns,conditions,output,offset,limit,case_sensitive,options,parser'.split(','))
     __non_whitespace = re.compile('\S+')
 
     def __init__(self,
@@ -119,7 +119,7 @@ class Query(object):
                  limit=None,
                  case_sensitive=True,
                  options=0,
-                 parser_impl=Parser_Impl.GENQUERY1):
+                 parser=Parser.GENQUERY1):
 
         self.callback = callback
 
@@ -133,8 +133,8 @@ class Query(object):
         if not isinstance (columns, list):
             raise GenQuery_Columns_Type_Error("'columns' could not be coerced to list type")
 
-        if parser_impl not in [Parser_Impl.GENQUERY1, Parser_Impl.GENQUERY2]:
-            raise ValueError('Invalid value for [parser_impl]. Expected GENQUERY1 or GENQUERY2.')
+        if parser not in [Parser.GENQUERY1, Parser.GENQUERY2]:
+            raise ValueError('Invalid value for [parser]. Expected Parser.GENQUERY1 or Parser.GENQUERY2.')
 
         # Options as specified
         self.columns        = columns     # - via 2nd argument to ctor; or copy() 'columns' keyword option
@@ -144,7 +144,7 @@ class Query(object):
         self.limit          = limit
         self.case_sensitive = case_sensitive
         self.options        = options
-        self.parser_impl    = parser_impl
+        self.parser         = parser
         self.gq2_handle     = None
 
         # The conditions string used in query (possibly uppercased). Appears in SQL-ish str(self) but not repr(self)
@@ -185,7 +185,7 @@ class Query(object):
 
     def exec_if_not_yet_execed(self):
         """Query execution is delayed until the first result or total row count is requested."""
-        if self.parser_impl == Parser_Impl.GENQUERY2:
+        if self.parser == Parser.GENQUERY2:
             if self.gq2_handle is not None:
                 return
 
@@ -238,7 +238,7 @@ class Query(object):
         separate query to fetch the total number of rows.
         """
         if self._total is None:
-            if self.parser_impl == Parser_Impl.GENQUERY1:
+            if self.parser == Parser.GENQUERY1:
                 if self.offset == 0 and self.options & Option.RETURN_TOTAL_ROW_COUNT:
                     # Easy mode: Extract row count from gqo.
                     self.exec_if_not_yet_execed()
@@ -261,7 +261,7 @@ class Query(object):
     def __iter__(self):
         self.exec_if_not_yet_execed()
 
-        if self.parser_impl == Parser_Impl.GENQUERY2:
+        if self.parser == Parser.GENQUERY2:
             while True:
                 try:
                     self.callback.msi_genquery2_next_row(self.gq2_handle)
@@ -313,7 +313,7 @@ class Query(object):
 
     def _fetch(self):
         """Fetch the next batch of results"""
-        if self.parser_impl == Parser_Impl.GENQUERY2:
+        if self.parser == Parser.GENQUERY2:
             # GenQuery2 always returns the full resultset. For that reason, this
             # function is a no-op. Care must be taken to not exhaust the server's
             # available memory.
@@ -325,7 +325,7 @@ class Query(object):
 
     def _close(self):
         """Close the query (prevents filling the statement table)."""
-        if self.parser_impl == Parser_Impl.GENQUERY2:
+        if self.parser == Parser.GENQUERY2:
             if self.gq2_handle is not None:
                 self.callback.msi_genquery2_free(self.gq2_handle)
                 self.gq2_handle = None
@@ -364,7 +364,8 @@ class Query(object):
         return 'select {}{}{}{}'.format(', '.join(self.columns),
                                         ' where '+self.conditions_for_exec  if self.conditions_for_exec else '',
                                         ' limit '+str(self.limit)   if self.limit is not None else '',
-                                        ' offset '+str(self.offset) if self.offset else '')
+                                        ' offset '+str(self.offset) if self.offset else '',
+                                        ' parser '+str(self.parser) if self.parser is not None else '')
 
     def __del__(self):
         """Auto-close query on when Query goes out of scope."""
@@ -380,14 +381,14 @@ def row_iterator(columns,     # comma-separated string, or list, of columns
                  conditions,  # genquery condition eg. "COLL_NAME not like '%/trash/%'"
                  row_return,  # AS_DICT or AS_LIST to specify rows as Python 'list's or 'dict's
                  callback,    # fed in directly from rule call argument
-                 parser_impl=Parser_Impl.GENQUERY1):
+                 parser=Parser.GENQUERY1):
     #
     #  now returns a Python class instance iterator
     #
-    return Query(callback, columns, conditions, output=row_return, parser_impl=parser_impl)
+    return Query(callback, columns, conditions, output=row_return, parser=parser)
 
 
-def row_generator(columns, conditions, row_return, callback, parser_impl=Parser_Impl.GENQUERY1):
+def row_generator(columns, conditions, row_return, callback, parser=Parser.GENQUERY1):
     #-=-=-=-=-=-  generator-style iterator -=-=-=-=-=-
     #
     # # - For reverse compatibility with the previous genquery.py
@@ -395,7 +396,7 @@ def row_generator(columns, conditions, row_return, callback, parser_impl=Parser_
     # from genquery import *
     # from genquery import (row_generator as row_iterator)
     #
-    return (row for row in row_iterator(columns, conditions, row_return, callback, parser_impl=parser_impl))
+    return (row for row in row_iterator(columns, conditions, row_return, callback, parser=parser))
 
 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -409,11 +410,11 @@ def row_generator(columns, conditions, row_return, callback, parser_impl=Parser_
 class paged_iterator (object):
 
     def __init__(self, columns, conditions, row_return, callback,
-                 N_rows_per_page = MAX_SQL_ROWS):
+                 N_rows_per_page = MAX_SQL_ROWS, parser=Parser.GENQUERY1):
 
         self.callback = callback
         self.set_rows_per_page ( N_rows_per_page , hard_limit_at_default = True )
-        self.generator = row_generator (columns, conditions, row_return, callback )
+        self.generator = row_generator (columns, conditions, row_return, callback, parser=parser)
 
     def __iter__(self): return self
     def __next__(self): return self.next()
