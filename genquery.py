@@ -1,6 +1,8 @@
 import itertools
 import re
 from collections import OrderedDict
+from enum import Enum
+from irods_errors import END_OF_RESULTSET
 
 def AUTO_CLOSE_QUERIES(): return True
 
@@ -14,6 +16,9 @@ __all__ = [
 ]
 
 MAX_SQL_ROWS = 256
+
+# An optimization for the GenQuery2 implementation.
+_END_OF_RESULTSET_ERROR_STRING_PART = f':{str(END_OF_RESULTSET)}]'
 
 class Option(object):
     """iRODS QueryInp option flags - used internally.
@@ -36,10 +41,10 @@ class AS_DICT  (row_return_type): pass
 class AS_LIST  (row_return_type): pass
 class AS_TUPLE (row_return_type): pass
 
-class Parser(object):
-    """GenQuery parser implementations."""
+class Parser(Enum):
+    """Available GenQuery parsers."""
     GENQUERY1 = 1
-    GENQUERY2 = 2
+    GENQUERY2 = 2 # Experimental.
 
 class GenQuery_Options_Spec_Error(RuntimeError): pass
 class GenQuery_Columns_Type_Error(RuntimeError): pass
@@ -59,7 +64,9 @@ class Query(object):
     :param options:        (optional) other OR-ed options to pass to the query (see the Option type above)
     :param parser:         (optional) the GenQuery engine to use. defaults to Parser.GENQUERY1.
 
-    GenQuery2 parser implementation:
+    GenQuery2 parser:
+
+      This is an experimental parser and may change in the future.
 
       When used, the following parameters are ignored:
         - output
@@ -75,6 +82,8 @@ class Query(object):
       (without taking offset/limit into account).
 
     Output types:
+
+      This only applies when GenQuery1 is used.
 
       AS_LIST and AS_DICT behave the same as in row_iterator.
       AS_TUPLE produces a tuple, similar to AS_LIST, with the exception that
@@ -186,6 +195,9 @@ class Query(object):
     def exec_if_not_yet_execed(self):
         """Query execution is delayed until the first result or total row count is requested."""
         if self.parser == Parser.GENQUERY2:
+            # The presence of a GenQuery2 handle indicates the query has already been executed.
+            # Therefore, the results are already available for processing. If the query must be
+            # executed again, a new Query object must be used.
             if self.gq2_handle is not None:
                 return
 
@@ -234,8 +246,9 @@ class Query(object):
 
         This includes rows that are omitted from the result due to limit/offset parameters.
 
-        If GenQuery2 is used, this operation will be a no-op. Users are expected to use a
-        separate query to fetch the total number of rows.
+        GenQuery2 does not automatically count the total number of rows in a resultset. Users
+        are expected to execute another query to determine that. For that reason, this function
+        always returns None when GenQuery2 is used.
         """
         if self._total is None:
             if self.parser == Parser.GENQUERY1:
@@ -262,14 +275,18 @@ class Query(object):
         self.exec_if_not_yet_execed()
 
         if self.parser == Parser.GENQUERY2:
+            column_count = len(self.columns)
+
             while True:
                 try:
                     self.callback.msi_genquery2_next_row(self.gq2_handle)
-                except:
-                    break
+                except RuntimeError as e:
+                    if _END_OF_RESULTSET_ERROR_STRING_PART in str(e):
+                        break
+                    raise
 
                 row = []
-                for c in range(len(self.columns)):
+                for c in range(column_count):
                     ret = self.callback.msi_genquery2_column(self.gq2_handle, str(c), '')
                     row.append(ret['arguments'][2])
 
@@ -324,7 +341,11 @@ class Query(object):
         self.cti = ret['arguments'][2]
 
     def _close(self):
-        """Close the query (prevents filling the statement table)."""
+        """Close the query.
+
+        When GenQuery1 is used, prevents filling the statement table.
+        When GenQuery2 is used, closes the resultset.
+        """
         if self.parser == Parser.GENQUERY2:
             if self.gq2_handle is not None:
                 self.callback.msi_genquery2_free(self.gq2_handle)
@@ -361,11 +382,11 @@ class Query(object):
         return result
 
     def __str__(self):
-        return 'select {}{}{}{}'.format(', '.join(self.columns),
-                                        ' where '+self.conditions_for_exec  if self.conditions_for_exec else '',
-                                        ' limit '+str(self.limit)   if self.limit is not None else '',
-                                        ' offset '+str(self.offset) if self.offset else '',
-                                        ' parser '+str(self.parser) if self.parser is not None else '')
+        projections = ', '.join(self.columns)
+        where_clause = ' where ' + self.conditions_for_exec if self.conditions_for_exec else ''
+        limit_clause = ' limit ' + str(self.limit) if self.limit is not None else ''
+        offset_clause = ' offset '+ str(self.offset) if self.offset else ''
+        return f'select {projections}{where_clause}{limit_clause}{offset_clause} [parser={self.parser.name}]'
 
     def __del__(self):
         """Auto-close query on when Query goes out of scope."""
