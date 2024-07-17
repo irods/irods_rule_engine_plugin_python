@@ -433,9 +433,9 @@ The following arguments are strictly optional and may be used either in `Query`'
 
 When the processing of a GenQuery2 resultset is complete, it is best practice to call the `close()` member function. Doing this will instruct the server to immediately free any resources allocated to the `Query` object. This is extremely important when multiple `Query` objects are executed within a single rule.
 
-## Questions and Answers
+# Questions and Answers
 
-### What happened to my `print` output?
+## What happened to my `print` output?
 
 In iRODS server versions 4.3.0 and later, all standard streams are redirected to `/dev/null` in the server. This means that any data sent to `stdout` such as via a `print` statement in a rule run inside the server will be discarded.
 
@@ -451,7 +451,7 @@ callback.writeLine('serverLog', 'hello, server log!')
 
 Note that the `writeLine` microservice can also target `stdout` in addition to `serverLog`. `callback.writeLine('stdout', ...)` will have the same effect as running `print`. The output will be discarded.
 
-### How do I pass values back to the caller, across rule engine plugin boundaries?
+## How do I pass values back to the caller, across rule engine plugin boundaries?
 
 This is achieved by writing a value back _(as a string)_ to the appropriate index within the `rule_args` array. The caller is required to pass one or more variables as **out** parameters.
 
