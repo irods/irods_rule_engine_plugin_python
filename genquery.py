@@ -378,6 +378,14 @@ class Query(object):
         self.gqo = None
         self.cti = None
 
+    def close(self):
+        """Close the query.
+
+        When GenQuery1 is used, prevents filling the statement table.
+        When GenQuery2 is used, closes the resultset.
+        """
+        self._close()
+
     def first(self):
         """Get exactly one result (or None if no results are available)."""
         result = None
