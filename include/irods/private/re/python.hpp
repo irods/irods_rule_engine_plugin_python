@@ -7,7 +7,6 @@
 
 #include <boost/any.hpp>
 #include <boost/optional.hpp>
-#include <boost/format.hpp>
 #include <boost/core/demangle.hpp>
 
 #include <irods/irods_re_serialization.hpp>
@@ -30,6 +29,8 @@
 #endif
 #include <boost/python.hpp>
 #pragma GCC diagnostic pop
+
+#include <fmt/format.h>
 
 #include "irods/private/re/python/irods_types.hpp"
 #include "irods/private/re/python/irods_errors.hpp"
@@ -139,7 +140,7 @@ namespace
 			// clang-format on
 		}
 		else {
-			THROW(SYS_NOT_SUPPORTED, boost::format("Unknown type in msParam: [%s]") % msParam.type);
+			THROW(SYS_NOT_SUPPORTED, fmt::format("Unknown type in msParam: [{0}]", msParam.type));
 		}
 	}
 
@@ -404,8 +405,8 @@ void update_argument(boost::any& cpp_arg, boost::python::object& py_arg)
 	}
 	catch (const std::out_of_range&) {
 		//THROW(SYS_NOT_SUPPORTED,
-		//      boost::format("Attempted to extract from a boost::python::object containing an "
-		//                    "unsupported type: %s") % boost::core::scoped_demangled_name{cpp_arg.type().name()}.get());
+		//      fmt::format("Attempted to extract from a boost::python::object containing an "
+		//                  "unsupported type: {0}", boost::core::scoped_demangled_name{cpp_arg.type().name()}.get()));
 	}
 	catch (const boost::bad_any_cast&) {
 		THROW(SYS_NOT_SUPPORTED, "Failed any_cast when updating boost::any from boost:python::object");
@@ -430,8 +431,8 @@ boost::python::object object_from_any(boost::any& arg)
 		}
 		else {
 			THROW(SYS_NOT_SUPPORTED,
-			      boost::format("Attempted to create a boost::python::object from a boost::any containing an "
-			                    "unsupported type: %s") % boost::core::scoped_demangled_name{arg.type().name()}.get());
+			      fmt::format("Attempted to create a boost::python::object from a boost::any containing an "
+			                  "unsupported type: {0}", boost::core::scoped_demangled_name{arg.type().name()}.get()));
 		}
 	}
 	catch (const boost::bad_any_cast&) {

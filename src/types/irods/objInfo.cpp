@@ -22,7 +22,8 @@
 #include <boost/python/class.hpp>
 #include <boost/python/enum.hpp>
 #pragma GCC diagnostic pop
-#include <boost/format.hpp>
+
+#include <fmt/format.h>
 
 namespace bp = boost::python;
 
@@ -98,7 +99,7 @@ namespace irods::re::python::types
 							return std::string{s->value[i]};
 						}
 					}
-					PyErr_SetString(PyExc_KeyError, (boost::format{"%s was not found in the list of keys."} % key).str().c_str());
+					PyErr_SetString(PyExc_KeyError, fmt::format("{0} was not found in the list of keys.", key).c_str());
 					bp::throw_error_already_set();
 					return std::string{};
 				})
