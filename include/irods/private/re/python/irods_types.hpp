@@ -36,12 +36,9 @@
 
 #include "irods/private/re/python/types/type_sequence.hpp"
 
-#if PY_VERSION_HEX < 0x03000000
-extern "C" void initirods_types();
-#else
-#  include <Python.h>
+#include <Python.h>
+
 extern "C" PyObject* PyInit_irods_types();
-#endif
 
 void init_irods_types();
 

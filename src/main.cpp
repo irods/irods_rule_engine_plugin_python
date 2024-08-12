@@ -193,11 +193,7 @@ namespace
 			bp::handle<> h_encoded(PyUnicode_AsUTF8String(py_obj));
 			void* storage = reinterpret_cast<boost::python::converter::rvalue_from_python_storage<std::string>*>(data)
 			                    ->storage.bytes;
-#if PY_VERSION_HEX < 0x03000000
-			new (storage) std::string(PyString_AsString(h_encoded.get()));
-#else
 			new (storage) std::string(PyBytes_AsString(h_encoded.get()));
-#endif
 			data->convertible = storage;
 		}
 
@@ -343,15 +339,9 @@ namespace
 static irods::error start(irods::default_re_ctx&, const std::string& _instance_name)
 {
 	try {
-#if PY_VERSION_HEX < 0x03000000
-		PyImport_AppendInittab("plugin_wrappers", &initplugin_wrappers);
-		PyImport_AppendInittab("irods_types", &initirods_types);
-		PyImport_AppendInittab("irods_errors", &initirods_errors);
-#else
 		PyImport_AppendInittab("plugin_wrappers", &PyInit_plugin_wrappers);
 		PyImport_AppendInittab("irods_types", &PyInit_irods_types);
 		PyImport_AppendInittab("irods_errors", &PyInit_irods_errors);
-#endif
 		Py_InitializeEx(0);
 		std::lock_guard<std::recursive_mutex> lock{python_mutex};
 		boost::filesystem::path etc_irods_path = irods::get_irods_config_directory();
