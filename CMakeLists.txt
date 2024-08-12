@@ -47,16 +47,11 @@ if (NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
   message(STATUS "Setting unspecified CMAKE_BUILD_TYPE to '${CMAKE_BUILD_TYPE}'")
 endif()
 
-if (NOT IRODS_PYTHON_VERSION)
-  set(IRODS_PYTHON_VERSION "3" CACHE STRING "The version of python to link against" FORCE)
-  message(STATUS "Setting unspecified IRODS_PYTHON_VERSION to '${IRODS_PYTHON_VERSION}'. This is the correct setting for normal builds.")
-endif()
-
 find_package(OpenSSL REQUIRED COMPONENTS Crypto SSL)
 find_package(nlohmann_json "3.6.1" REQUIRED)
 find_package(fmt "8.1.1"
   HINTS "${IRODS_EXTERNALS_FULLPATH_FMT}")
-find_package(Python "${IRODS_PYTHON_VERSION}" REQUIRED COMPONENTS Development)
+find_package(Python 3 REQUIRED COMPONENTS Development)
 
 set(
   PLUGIN
