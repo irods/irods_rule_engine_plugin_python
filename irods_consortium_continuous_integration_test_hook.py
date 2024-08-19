@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import glob
 import multiprocessing
 import optparse
 import os
@@ -21,8 +22,13 @@ def main():
 
     if options.do_setup:
         built_packages_root_directory = options.built_packages_root_directory
+        package_suffix = irods_python_ci_utilities.get_package_suffix()
         plugin_dir = irods_python_ci_utilities.append_os_specific_directory(built_packages_root_directory)
-        irods_python_ci_utilities.install_os_packages_from_files([os.path.join(plugin_dir, entry) for entry in os.listdir(plugin_dir)])
+        irods_python_ci_utilities.install_os_packages_from_files(
+            glob.glob(os.path.join(plugin_dir,
+                f'irods-rule-engine-plugin-python*.{package_suffix}')
+            )
+        )
         irods_python_ci_utilities.subprocess_get_output(['sudo', 'su', '-', 'irods', '-c', 'python3 scripts/setup_python_rule_engine_as_only_rule_engine.py'], check_rc=True)
 
     test_output_file = 'log/test_output.log'
