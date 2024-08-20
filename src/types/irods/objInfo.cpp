@@ -3,6 +3,8 @@
 
 #include "irods/private/re/python/types/irods/objInfo.hpp"
 
+#include <cstring>
+
 #include <irods/objInfo.h>
 
 #include "irods/private/re/python/types/array_ref.hpp"
@@ -92,7 +94,7 @@ namespace irods::re::python::types
 			.add_property("value", +[](keyValPair_t *s) { return array_ref<array_ref<char, true>>{s->value, static_cast<std::size_t>(s->len)}; })
 			.def("__getitem__", +[](keyValPair_t* s, const std::string key) {
 					for (int i = 0; i < s->len; ++i) {
-						if (strcmp(key.c_str(), s->keyWord[i]) == 0) {
+						if (std::strcmp(key.c_str(), s->keyWord[i]) == 0) {
 							return std::string{s->value[i]};
 						}
 					}

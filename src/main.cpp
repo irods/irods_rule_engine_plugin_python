@@ -2,6 +2,7 @@
 #include <pyconfig.h>
 
 #include <cstdint>
+#include <cstring>
 #include <ctime>
 #include <fstream>
 #include <list>
@@ -750,20 +751,20 @@ static irods::error exec_rule_text(const irods::default_re_ctx&,
 				if (mp->type == NULL) {
 					rule_vars_python[label] = NULL;
 				}
-				else if (strcmp(mp->type, DOUBLE_MS_T) == 0) {
+				else if (std::strcmp(mp->type, DOUBLE_MS_T) == 0) {
 					double* tmpDouble = (double*) mp->inOutStruct;
 					rule_vars_python[label] = tmpDouble;
 				}
-				else if (strcmp(mp->type, INT_MS_T) == 0) {
+				else if (std::strcmp(mp->type, INT_MS_T) == 0) {
 					int* tmpInt = (int*) mp->inOutStruct;
 					rule_vars_python[label] = tmpInt;
 				}
-				else if (strcmp(mp->type, STR_MS_T) == 0) {
+				else if (std::strcmp(mp->type, STR_MS_T) == 0) {
 					char* tmpChar = (char*) mp->inOutStruct;
 					std::string tmpStr(tmpChar);
 					rule_vars_python[label] = tmpStr;
 				}
-				else if (strcmp(mp->type, DATETIME_MS_T) == 0) {
+				else if (std::strcmp(mp->type, DATETIME_MS_T) == 0) {
 					rodsLong_t* tmpRodsLong = (rodsLong_t*) mp->inOutStruct;
 					rule_vars_python[label] = tmpRodsLong;
 				}
@@ -899,20 +900,20 @@ static irods::error exec_rule_expression(irods::default_re_ctx&,
 						if (mp->type == NULL) {
 							rule_vars_python[label] = boost::python::object{};
 						}
-						else if (strcmp(mp->type, DOUBLE_MS_T) == 0) {
+						else if (std::strcmp(mp->type, DOUBLE_MS_T) == 0) {
 							double* tmpDouble = (double*) mp->inOutStruct;
 							rule_vars_python[label] = tmpDouble;
 						}
-						else if (strcmp(mp->type, INT_MS_T) == 0) {
+						else if (std::strcmp(mp->type, INT_MS_T) == 0) {
 							int* tmpInt = (int*) mp->inOutStruct;
 							rule_vars_python[label] = tmpInt;
 						}
-						else if (strcmp(mp->type, STR_MS_T) == 0) {
+						else if (std::strcmp(mp->type, STR_MS_T) == 0) {
 							char* tmpChar = (char*) mp->inOutStruct;
 							std::string tmpStr(tmpChar);
 							rule_vars_python[label] = tmpStr;
 						}
-						else if (strcmp(mp->type, DATETIME_MS_T) == 0) {
+						else if (std::strcmp(mp->type, DATETIME_MS_T) == 0) {
 							rodsLong_t* tmpRodsLong = (rodsLong_t*) mp->inOutStruct;
 							rule_vars_python[label] = tmpRodsLong;
 						}

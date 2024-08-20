@@ -1,6 +1,7 @@
 #ifndef IRODS_RE_PYTHON_HPP
 #define IRODS_RE_PYTHON_HPP
 
+#include <cstring>
 #include <type_traits>
 #include <functional>
 
@@ -109,28 +110,28 @@ namespace
 		else if (!msParam.type) {
 			THROW(SYS_NOT_SUPPORTED, "msParam type is null");
 		}
-		else if (strcmp(msParam.type, GenQueryInp_MS_T) == 0) {
+		else if (std::strcmp(msParam.type, GenQueryInp_MS_T) == 0) {
 			return boost::python::object{*static_cast<genQueryInp_t*>(msParam.inOutStruct)};
 		}
-		else if (strcmp(msParam.type, GenQueryOut_MS_T) == 0) {
+		else if (std::strcmp(msParam.type, GenQueryOut_MS_T) == 0) {
 			return boost::python::object{*static_cast<genQueryOut_t*>(msParam.inOutStruct)};
 		}
-		else if (strcmp(msParam.type, KeyValPair_MS_T) == 0) {
+		else if (std::strcmp(msParam.type, KeyValPair_MS_T) == 0) {
 			return boost::python::object{*static_cast<keyValPair_t*>(msParam.inOutStruct)};
 		}
-		else if (strcmp(msParam.type, DataObjLseekOut_MS_T) == 0) {
+		else if (std::strcmp(msParam.type, DataObjLseekOut_MS_T) == 0) {
 			return boost::python::object{*static_cast<fileLseekOut_t*>(msParam.inOutStruct)};
 		}
-		else if (strcmp(msParam.type, RodsObjStat_MS_T) == 0) {
+		else if (std::strcmp(msParam.type, RodsObjStat_MS_T) == 0) {
 			return boost::python::object{*static_cast<rodsObjStat_t*>(msParam.inOutStruct)};
 		}
-		else if (strcmp(msParam.type, INT_MS_T) == 0) {
+		else if (std::strcmp(msParam.type, INT_MS_T) == 0) {
 			return boost::python::object{*static_cast<int*>(msParam.inOutStruct)};
 		}
-		else if (strcmp(msParam.type, FLOAT_MS_T) == 0) {
+		else if (std::strcmp(msParam.type, FLOAT_MS_T) == 0) {
 			return boost::python::object{*static_cast<float*>(msParam.inOutStruct)};
 		}
-		else if (strcmp(msParam.type, BUF_LEN_MS_T) == 0) {
+		else if (std::strcmp(msParam.type, BUF_LEN_MS_T) == 0) {
 			// clang-format off
 			return msParam.inpOutBuf
 			     ? boost::python::object{bytesBuf_t{msParam.inpOutBuf->len, msParam.inpOutBuf->buf}}
