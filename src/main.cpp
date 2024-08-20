@@ -553,7 +553,7 @@ static irods::error list_rules(const irods::default_re_ctx&, std::vector<std::st
 
 			bp::list function_names = bp::extract<bp::list>(core_namespace["function_names"]);
 
-			size_t len_names = bp::extract<std::size_t>(function_names.attr("__len__")());
+			std::size_t len_names = bp::extract<std::size_t>(function_names.attr("__len__")());
 			for (std::size_t i = 0; i < len_names; ++i) {
 				rule_vec.push_back(bp::extract<std::string>(function_names[i]));
 				std::string tmp = bp::extract<std::string>(function_names[i]);
