@@ -106,18 +106,11 @@ namespace
 	static inline constexpr const char* const rule_engine_name = "python";
 	using log_re = irods::experimental::log::rule_engine;
 
-	// Python thread states and other data from the interpreter
+	// Data we hang onto for the interpreter
 	namespace python_state
 	{
 		// Thread state object for main Python interpreter
 		static PyThreadState* ts_main;
-
-		// Thread state object for current thread
-		static thread_local PyThreadState* ts_thread;
-		// Pre-initialize thread state object for current thread
-		static thread_local PyThreadState* ts_thread_old;
-		// Reference counter for nested python operations
-		static thread_local uint64_t ts_thread_refct = 0;
 
 #if PY_VERSION_HEX >= 0x03080000
 		// List of default module search paths
@@ -253,34 +246,27 @@ namespace
 		return rei;
 	}
 
-	// Helper struct for managing python thread state
-	struct python_thread_state_scope
+	// Helper class that acquires the GIL while in scope
+	class python_gil_lock
 	{
-		python_thread_state_scope()
+	public:
+		python_gil_lock()
+			: _previous_gil_state(PyGILState_Ensure())
+		{ }
+
+		~python_gil_lock()
 		{
-			if (0 == python_state::ts_thread_refct) {
-				python_state::ts_thread = PyThreadState_New(python_state::ts_main->interp);
-				PyEval_RestoreThread(python_state::ts_thread);
-				python_state::ts_thread_old = PyThreadState_Swap(python_state::ts_thread);
-			}
-			python_state::ts_thread_refct++;
+			PyGILState_Release(_previous_gil_state);
 		}
 
-		~python_thread_state_scope()
-		{
-			if (1 == python_state::ts_thread_refct) {
-				PyThreadState_Swap(python_state::ts_thread_old);
-				PyThreadState_Clear(python_state::ts_thread);
-				PyThreadState_DeleteCurrent();
-			}
-			python_state::ts_thread_refct--;
-		}
+		python_gil_lock(const python_gil_lock&) = delete;
 
-		python_thread_state_scope(const python_thread_state_scope&) = delete;
+		python_gil_lock& operator=(const python_gil_lock&) = delete;
 
-		python_thread_state_scope& operator=(const python_thread_state_scope&) = delete;
+	private:
+		PyGILState_STATE _previous_gil_state; // GIL state prior to calling PyGILState_Ensure
 
-	}; //struct python_thread_state_scope
+	}; //class python_gil_lock
 
 	struct RuleCallWrapper
 	{
@@ -552,7 +538,7 @@ static irods::error rule_exists(const irods::default_re_ctx&, const std::string&
 {
 	_return = false;
 	std::lock_guard<std::recursive_mutex> lock{python_mutex};
-	python_thread_state_scope tstate;
+	python_gil_lock gil_lock;
 	try {
 		// TODO Enable non core.py Python rulebases
 		bp::object core_module = bp::import("core");
@@ -572,7 +558,7 @@ static irods::error rule_exists(const irods::default_re_ctx&, const std::string&
 		return ERROR(RULE_ENGINE_ERROR, err_msg);
 	}
 	// NOTE: If adding more catch blocks, nest this try/catch in another try block
-	// along with the lock and tstate definitions. They need to stay in-scope for extract_python_exception,
+	// along with the lock and gil_lock definitions. They need to stay in-scope for extract_python_exception,
 	// but should be out of scope for other exception handlers.
 
 	return SUCCESS();
@@ -582,8 +568,8 @@ static irods::error list_rules(const irods::default_re_ctx&, std::vector<std::st
 {
 	try {
 		std::lock_guard<std::recursive_mutex> lock{python_mutex};
-		python_thread_state_scope tstate;
-		// tstate (and therefore also lock) needs to stay in scope for extract_python_exception
+		python_gil_lock gil_lock;
+		// gil_lock (and therefore also lock) needs to stay in scope for extract_python_exception
 		// hence the nested exception handling
 		try {
 			bp::object core_module = bp::import("core");
@@ -649,8 +635,8 @@ static irods::error exec_rule(const irods::default_re_ctx&,
 {
 	try {
 		std::lock_guard<std::recursive_mutex> lock{python_mutex};
-		python_thread_state_scope tstate;
-		// tstate (and therefore also lock) needs to stay in scope for extract_python_exception
+		python_gil_lock gil_lock;
+		// gil_lock (and therefore also lock) needs to stay in scope for extract_python_exception
 		// hence the nested exception handling
 		try {
 			// TODO Enable non core.py Python rulebases
@@ -776,8 +762,8 @@ static irods::error exec_rule_text(const irods::default_re_ctx&,
 
 	try {
 		std::lock_guard<std::recursive_mutex> lock{python_mutex};
-		python_thread_state_scope tstate;
-		// tstate (and therefore also lock) needs to stay in scope for extract_python_exception
+		python_gil_lock gil_lock;
+		// gil_lock (and therefore also lock) needs to stay in scope for extract_python_exception
 		// hence the nested exception handling
 		try {
 			execCmdOut_t* myExecCmdOut = (execCmdOut_t*) malloc(sizeof(*myExecCmdOut));
@@ -930,8 +916,8 @@ static irods::error exec_rule_expression(irods::default_re_ctx&,
 {
 	try {
 		std::lock_guard<std::recursive_mutex> lock{python_mutex};
-		python_thread_state_scope tstate;
-		// tstate (and therefore also lock) needs to stay in scope for extract_python_exception
+		python_gil_lock gil_lock;
+		// gil_lock (and therefore also lock) needs to stay in scope for extract_python_exception
 		// hence the nested exception handling
 		try {
 			bp::dict rule_vars_python;
