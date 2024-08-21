@@ -99,8 +99,6 @@ const std::string DYNAMIC_PEP_RULE_REGEX = "[^ ]*pep_[^ ]*_(pre|post)";
 
 namespace bp = boost::python;
 
-static std::recursive_mutex python_mutex;
-
 namespace
 {
 	static inline constexpr const char* const rule_engine_name = "python";
@@ -422,41 +420,36 @@ namespace
 static irods::error start(irods::default_re_ctx&, const std::string& _instance_name)
 {
 	python_state::ts_main = nullptr;
-	{
-		std::lock_guard<std::recursive_mutex> lock{python_mutex};
-		// lock needs to stay in scope for extract_python_exception
-		// hence the weird nesting here
-		try {
-			PyImport_AppendInittab("plugin_wrappers", &PyInit_plugin_wrappers);
-			PyImport_AppendInittab("irods_types", &PyInit_irods_types);
-			PyImport_AppendInittab("irods_errors", &PyInit_irods_errors);
+	try {
+		PyImport_AppendInittab("plugin_wrappers", &PyInit_plugin_wrappers);
+		PyImport_AppendInittab("irods_types", &PyInit_irods_types);
+		PyImport_AppendInittab("irods_errors", &PyInit_irods_errors);
 
-			initialize_python(_instance_name);
+		initialize_python(_instance_name);
 
-			bp::object plugin_wrappers = bp::import("plugin_wrappers");
-			bp::object irods_types = bp::import("irods_types");
-			bp::object irods_errors = bp::import("irods_errors");
+		bp::object plugin_wrappers = bp::import("plugin_wrappers");
+		bp::object irods_types = bp::import("irods_types");
+		bp::object irods_errors = bp::import("irods_errors");
 
-			StringFromPythonUnicode::register_converter();
-		}
-		catch (const bp::error_already_set&) {
-			const std::string formatted_python_exception = extract_python_exception();
-			// clang-format off
-			log_re::error({
-				{"rule_engine_plugin", rule_engine_name},
-				{"instance_name", _instance_name},
-				{"log_message", "caught python exception"},
-				{"python_exception", formatted_python_exception},
-			});
-			// clang-format on
-			std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ +
-			                      " Caught Python exception.\n" + formatted_python_exception;
-			return ERROR(RULE_ENGINE_ERROR, err_msg);
-		}
-
-		python_state::ts_main = PyEval_SaveThread();
-		// NO MORE PYTHON IN THIS FUNCTION PAST THIS POINT
+		StringFromPythonUnicode::register_converter();
 	}
+	catch (const bp::error_already_set&) {
+		const std::string formatted_python_exception = extract_python_exception();
+		// clang-format off
+		log_re::error({
+			{"rule_engine_plugin", rule_engine_name},
+			{"instance_name", _instance_name},
+			{"log_message", "caught python exception"},
+			{"python_exception", formatted_python_exception},
+		});
+		// clang-format on
+		std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ +
+		                      " Caught Python exception.\n" + formatted_python_exception;
+		return ERROR(RULE_ENGINE_ERROR, err_msg);
+	}
+
+	python_state::ts_main = PyEval_SaveThread();
+	// NO MORE PYTHON IN THIS FUNCTION PAST THIS POINT
 
 	// Initialize microservice table
 	irods::ms_table& ms_table = get_microservice_table();
@@ -537,7 +530,6 @@ static irods::error stop(irods::default_re_ctx&, const std::string&)
 static irods::error rule_exists(const irods::default_re_ctx&, const std::string& rule_name, bool& _return)
 {
 	_return = false;
-	std::lock_guard<std::recursive_mutex> lock{python_mutex};
 	python_gil_lock gil_lock;
 	try {
 		// TODO Enable non core.py Python rulebases
@@ -558,7 +550,7 @@ static irods::error rule_exists(const irods::default_re_ctx&, const std::string&
 		return ERROR(RULE_ENGINE_ERROR, err_msg);
 	}
 	// NOTE: If adding more catch blocks, nest this try/catch in another try block
-	// along with the lock and gil_lock definitions. They need to stay in-scope for extract_python_exception,
+	// along with the gil_lock definition. They need to stay in-scope for extract_python_exception,
 	// but should be out of scope for other exception handlers.
 
 	return SUCCESS();
@@ -567,9 +559,8 @@ static irods::error rule_exists(const irods::default_re_ctx&, const std::string&
 static irods::error list_rules(const irods::default_re_ctx&, std::vector<std::string>& rule_vec)
 {
 	try {
-		std::lock_guard<std::recursive_mutex> lock{python_mutex};
 		python_gil_lock gil_lock;
-		// gil_lock (and therefore also lock) needs to stay in scope for extract_python_exception
+		// gil_lock needs to stay in scope for extract_python_exception
 		// hence the nested exception handling
 		try {
 			bp::object core_module = bp::import("core");
@@ -634,9 +625,8 @@ static irods::error exec_rule(const irods::default_re_ctx&,
                               irods::callback effect_handler)
 {
 	try {
-		std::lock_guard<std::recursive_mutex> lock{python_mutex};
 		python_gil_lock gil_lock;
-		// gil_lock (and therefore also lock) needs to stay in scope for extract_python_exception
+		// gil_lock needs to stay in scope for extract_python_exception
 		// hence the nested exception handling
 		try {
 			// TODO Enable non core.py Python rulebases
@@ -761,9 +751,8 @@ static irods::error exec_rule_text(const irods::default_re_ctx&,
 	}
 
 	try {
-		std::lock_guard<std::recursive_mutex> lock{python_mutex};
 		python_gil_lock gil_lock;
-		// gil_lock (and therefore also lock) needs to stay in scope for extract_python_exception
+		// gil_lock needs to stay in scope for extract_python_exception
 		// hence the nested exception handling
 		try {
 			execCmdOut_t* myExecCmdOut = (execCmdOut_t*) malloc(sizeof(*myExecCmdOut));
@@ -915,9 +904,8 @@ static irods::error exec_rule_expression(irods::default_re_ctx&,
                                          irods::callback effect_handler)
 {
 	try {
-		std::lock_guard<std::recursive_mutex> lock{python_mutex};
 		python_gil_lock gil_lock;
-		// gil_lock (and therefore also lock) needs to stay in scope for extract_python_exception
+		// gil_lock needs to stay in scope for extract_python_exception
 		// hence the nested exception handling
 		try {
 			bp::dict rule_vars_python;
