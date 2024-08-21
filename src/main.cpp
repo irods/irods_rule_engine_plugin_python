@@ -1,6 +1,7 @@
 // include this first to fix macro redef warnings
 #include <pyconfig.h>
 
+#include <cassert>
 #include <cstdint>
 #include <cstring>
 #include <ctime>
@@ -27,6 +28,7 @@
 #include <irods/rodsErrorTable.h>
 #include <irods/irods_default_paths.hpp>
 #include <irods/irods_error.hpp>
+#include <irods/irods_exception.hpp>
 #include <irods/irods_logger.hpp>
 #include <irods/irods_re_plugin.hpp>
 #include <irods/irods_re_structs.hpp>
@@ -254,17 +256,99 @@ namespace
 
 		~python_gil_lock()
 		{
-			PyGILState_Release(_previous_gil_state);
+			if (!_released) {
+				PyGILState_Release(_previous_gil_state);
+			}
 		}
 
 		python_gil_lock(const python_gil_lock&) = delete;
 
 		python_gil_lock& operator=(const python_gil_lock&) = delete;
 
+		inline bool released()
+		{
+			return _released;
+		}
+
+		// restores python state to prior to last PyGILState_Ensure call
+		// returns active PyThreadState
+		// doesn't necessarily release the GIL, only this instance's hold on it.
+		// if GIL was acquired further up the stack, it will still be locked. 
+		inline PyThreadState* release()
+		{
+			if (_released) {
+				THROW(RULE_ENGINE_ERROR, "release called on already-released python_gil_lock");
+			}
+
+			PyThreadState* current_thread_state = PyThreadState_Get();
+			if (current_thread_state->gilstate_counter <= 1) {
+				current_thread_state = nullptr;
+			}
+
+			PyGILState_Release(_previous_gil_state);
+
+			_released = true;
+			return current_thread_state;
+		}
+
+		// reacquires GIL after a call to release
+		inline  void reacquire()
+		{
+			if (_released) {
+				THROW(RULE_ENGINE_ERROR, "reacquire called on non-released python_gil_lock");
+			}
+
+			_previous_gil_state = PyGILState_Ensure();
+			_released = false;
+		}
+
 	private:
 		PyGILState_STATE _previous_gil_state; // GIL state prior to calling PyGILState_Ensure
+		bool _released = false; // whether or not PyGILState_Release has already been called
 
 	}; //class python_gil_lock
+
+	// Helper class that unlocks GIL while in scope
+	class python_gil_unlock
+	{
+	public:
+		// Saves the current thread state, releasing the GIL
+		// Does not otherwise alter thread state in any way
+		python_gil_unlock()
+			: _previous_thread_state(PyEval_SaveThread())
+		{ }
+
+		// Calls release on gil_lock and, if necessary, saves the current thread state
+		// if should_reacquire is true, reacquire is called on gil_lock during destruction
+		python_gil_unlock(python_gil_lock* const gil_lock, bool should_reacquire)
+			: _gil_lock(gil_lock), _should_reacquire(should_reacquire)
+		{
+			if (_gil_lock->release() != nullptr) {
+				_previous_thread_state = PyEval_SaveThread();
+			}
+		}
+
+		~python_gil_unlock()
+		{
+			if (_previous_thread_state != nullptr) {
+				PyEval_RestoreThread(_previous_thread_state);
+			}
+			if (_should_reacquire) {
+				assert(_gil_lock != nullptr);
+				_gil_lock->reacquire();
+			}
+		}
+
+		python_gil_unlock(const python_gil_unlock&) = delete;
+
+		python_gil_unlock& operator=(const python_gil_unlock&) = delete;
+
+	private:
+		PyThreadState* _previous_thread_state = nullptr;
+		python_gil_lock* const _gil_lock = nullptr;
+		const bool _should_reacquire = false;
+
+	}; //class python_gil_unlock
 
 	struct RuleCallWrapper
 	{
@@ -538,6 +622,7 @@ static irods::error rule_exists(const irods::default_re_ctx&, const std::string&
 	}
 	catch (const bp::error_already_set&) {
 		const std::string formatted_python_exception = extract_python_exception();
+		python_gil_unlock gil_release(&gil_lock, false);
 		// clang-format off
 		log_re::error({
 			{"rule_engine_plugin", rule_engine_name},
@@ -583,6 +668,7 @@ static irods::error list_rules(const irods::default_re_ctx&, std::vector<std::st
 		}
 		catch (const bp::error_already_set&) {
 			const std::string formatted_python_exception = extract_python_exception();
+			python_gil_unlock gil_release(&gil_lock, false);
 			// clang-format off
 			log_re::error({
 				{"rule_engine_plugin", rule_engine_name},
@@ -660,6 +746,7 @@ static irods::error exec_rule(const irods::default_re_ctx&,
 		catch (const bp::error_already_set&) {
 			const std::string formatted_python_exception = extract_python_exception();
 			// clang-format off
+			python_gil_unlock gil_release(&gil_lock, false);
 			log_re::error({
 				{"rule_engine_plugin", rule_engine_name},
 				{"log_message", "caught python exception"},
@@ -849,6 +936,7 @@ static irods::error exec_rule_text(const irods::default_re_ctx&,
 					rule_function(rule_arguments_python, CallbackWrapper{effect_handler}, rei));
 			}
 			else {
+				python_gil_unlock gil_release(&gil_lock, false);
 				// clang-format off
 				log_re::error({
 					{"rule_engine_plugin", rule_engine_name},
@@ -860,6 +948,7 @@ static irods::error exec_rule_text(const irods::default_re_ctx&,
 		}
 		catch (const bp::error_already_set&) {
 			const std::string formatted_python_exception = extract_python_exception();
+			python_gil_unlock gil_release(&gil_lock, false);
 			// clang-format off
 			log_re::error({
 				{"rule_engine_plugin", rule_engine_name},
@@ -971,6 +1060,7 @@ static irods::error exec_rule_expression(irods::default_re_ctx&,
 		}
 		catch (const bp::error_already_set&) {
 			const std::string formatted_python_exception = extract_python_exception();
+			python_gil_unlock gil_release(&gil_lock, false);
 			// clang-format off
 			log_re::error({
 				{"rule_engine_plugin", rule_engine_name},
