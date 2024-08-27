@@ -1,12 +1,12 @@
 #ifndef IRODS_RE_PYTHON_HPP
 #define IRODS_RE_PYTHON_HPP
 
+#include <cstring>
 #include <type_traits>
 #include <functional>
 
 #include <boost/any.hpp>
 #include <boost/optional.hpp>
-#include <boost/format.hpp>
 #include <boost/core/demangle.hpp>
 
 #include <irods/irods_re_serialization.hpp>
@@ -29,6 +29,8 @@
 #endif
 #include <boost/python.hpp>
 #pragma GCC diagnostic pop
+
+#include <fmt/format.h>
 
 #include "irods/private/re/python/irods_types.hpp"
 #include "irods/private/re/python/irods_errors.hpp"
@@ -109,28 +111,28 @@ namespace
 		else if (!msParam.type) {
 			THROW(SYS_NOT_SUPPORTED, "msParam type is null");
 		}
-		else if (strcmp(msParam.type, GenQueryInp_MS_T) == 0) {
+		else if (std::strcmp(msParam.type, GenQueryInp_MS_T) == 0) {
 			return boost::python::object{*static_cast<genQueryInp_t*>(msParam.inOutStruct)};
 		}
-		else if (strcmp(msParam.type, GenQueryOut_MS_T) == 0) {
+		else if (std::strcmp(msParam.type, GenQueryOut_MS_T) == 0) {
 			return boost::python::object{*static_cast<genQueryOut_t*>(msParam.inOutStruct)};
 		}
-		else if (strcmp(msParam.type, KeyValPair_MS_T) == 0) {
+		else if (std::strcmp(msParam.type, KeyValPair_MS_T) == 0) {
 			return boost::python::object{*static_cast<keyValPair_t*>(msParam.inOutStruct)};
 		}
-		else if (strcmp(msParam.type, DataObjLseekOut_MS_T) == 0) {
+		else if (std::strcmp(msParam.type, DataObjLseekOut_MS_T) == 0) {
 			return boost::python::object{*static_cast<fileLseekOut_t*>(msParam.inOutStruct)};
 		}
-		else if (strcmp(msParam.type, RodsObjStat_MS_T) == 0) {
+		else if (std::strcmp(msParam.type, RodsObjStat_MS_T) == 0) {
 			return boost::python::object{*static_cast<rodsObjStat_t*>(msParam.inOutStruct)};
 		}
-		else if (strcmp(msParam.type, INT_MS_T) == 0) {
+		else if (std::strcmp(msParam.type, INT_MS_T) == 0) {
 			return boost::python::object{*static_cast<int*>(msParam.inOutStruct)};
 		}
-		else if (strcmp(msParam.type, FLOAT_MS_T) == 0) {
+		else if (std::strcmp(msParam.type, FLOAT_MS_T) == 0) {
 			return boost::python::object{*static_cast<float*>(msParam.inOutStruct)};
 		}
-		else if (strcmp(msParam.type, BUF_LEN_MS_T) == 0) {
+		else if (std::strcmp(msParam.type, BUF_LEN_MS_T) == 0) {
 			// clang-format off
 			return msParam.inpOutBuf
 			     ? boost::python::object{bytesBuf_t{msParam.inpOutBuf->len, msParam.inpOutBuf->buf}}
@@ -138,7 +140,7 @@ namespace
 			// clang-format on
 		}
 		else {
-			THROW(SYS_NOT_SUPPORTED, boost::format("Unknown type in msParam: [%s]") % msParam.type);
+			THROW(SYS_NOT_SUPPORTED, fmt::format("Unknown type in msParam: [{0}]", msParam.type));
 		}
 	}
 
@@ -403,8 +405,8 @@ void update_argument(boost::any& cpp_arg, boost::python::object& py_arg)
 	}
 	catch (const std::out_of_range&) {
 		//THROW(SYS_NOT_SUPPORTED,
-		//      boost::format("Attempted to extract from a boost::python::object containing an "
-		//                    "unsupported type: %s") % boost::core::scoped_demangled_name{cpp_arg.type().name()}.get());
+		//      fmt::format("Attempted to extract from a boost::python::object containing an "
+		//                  "unsupported type: {0}", boost::core::scoped_demangled_name{cpp_arg.type().name()}.get()));
 	}
 	catch (const boost::bad_any_cast&) {
 		THROW(SYS_NOT_SUPPORTED, "Failed any_cast when updating boost::any from boost:python::object");
@@ -429,8 +431,8 @@ boost::python::object object_from_any(boost::any& arg)
 		}
 		else {
 			THROW(SYS_NOT_SUPPORTED,
-			      boost::format("Attempted to create a boost::python::object from a boost::any containing an "
-			                    "unsupported type: %s") % boost::core::scoped_demangled_name{arg.type().name()}.get());
+			      fmt::format("Attempted to create a boost::python::object from a boost::any containing an "
+			                  "unsupported type: {0}", boost::core::scoped_demangled_name{arg.type().name()}.get()));
 		}
 	}
 	catch (const boost::bad_any_cast&) {
