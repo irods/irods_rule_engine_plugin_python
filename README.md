@@ -150,10 +150,10 @@ With the below rule contained anywhere in the Python rulebase:
 ```
 def testRule(rule_args, callback, rei):
   from irods_errors import USER_FILE_DOES_NOT_EXIST
-  check_err = lambda e,errcode: e.message.startswith('[iRods__Error__Code:{}]'.format(errcode))
+  check_err = lambda e,errcode: str(e).startswith('[iRods__Error__Code:{}]'.format(errcode))
   try:
     ret_val = callback.msiObjStat(rule_args[0], irods_types.RodsObjStat())
-  except RuntimeError, e:
+  except RuntimeError as e:
     if check_err(e, USER_FILE_DOES_NOT_EXIST):
       callback.writeLine('serverLog', 'ERROR in testRule: "'+rule_args[0]+'" not found')
     else:
