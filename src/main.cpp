@@ -1,7 +1,9 @@
 // include this first to fix macro redef warnings
 #include <pyconfig.h>
 
+#include <cassert>
 #include <cstdint>
+#include <cstring>
 #include <ctime>
 #include <fstream>
 #include <list>
@@ -26,6 +28,7 @@
 #include <irods/rodsErrorTable.h>
 #include <irods/irods_default_paths.hpp>
 #include <irods/irods_error.hpp>
+#include <irods/irods_exception.hpp>
 #include <irods/irods_logger.hpp>
 #include <irods/irods_re_plugin.hpp>
 #include <irods/irods_re_structs.hpp>
@@ -98,25 +101,23 @@ const std::string DYNAMIC_PEP_RULE_REGEX = "[^ ]*pep_[^ ]*_(pre|post)";
 
 namespace bp = boost::python;
 
-static std::recursive_mutex python_mutex;
-
 namespace
 {
-	const char* const rule_engine_name = "python";
+	static inline constexpr const char* const rule_engine_name = "python";
 	using log_re = irods::experimental::log::rule_engine;
 
-	// Python thread states and other data from the interpreter
+	// Data we hang onto for the interpreter
 	namespace python_state
 	{
 		// Thread state object for main Python interpreter
 		static PyThreadState* ts_main;
 
-		// Thread state object for current thread
-		static thread_local PyThreadState* ts_thread;
-		// Pre-initialize thread state object for current thread
-		static thread_local PyThreadState* ts_thread_old;
-		// Reference counter for nested python operations
-		static thread_local uint64_t ts_thread_refct = 0;
+#if PY_VERSION_HEX >= 0x03080000
+		// List of default module search paths
+		static std::vector<std::wstring> default_module_search_paths;
+		// Whether or not default_module_search_paths is populated
+		static bool default_module_search_paths_set = false;
+#endif
 	} //namespace python_state
 }
 
@@ -245,34 +246,109 @@ namespace
 		return rei;
 	}
 
-	// Helper struct for managing python thread state
-	struct python_thread_state_scope
+	// Helper class that acquires the GIL while in scope
+	class python_gil_lock
 	{
-		python_thread_state_scope()
+	public:
+		python_gil_lock()
+			: _previous_gil_state(PyGILState_Ensure())
+		{ }
+
+		~python_gil_lock()
 		{
-			if (0 == python_state::ts_thread_refct) {
-				python_state::ts_thread = PyThreadState_New(python_state::ts_main->interp);
-				PyEval_RestoreThread(python_state::ts_thread);
-				python_state::ts_thread_old = PyThreadState_Swap(python_state::ts_thread);
+			if (!_released) {
+				PyGILState_Release(_previous_gil_state);
 			}
-			python_state::ts_thread_refct++;
 		}
 
-		~python_thread_state_scope()
+		python_gil_lock(const python_gil_lock&) = delete;
+
+		python_gil_lock& operator=(const python_gil_lock&) = delete;
+
+		inline bool released()
 		{
-			if (1 == python_state::ts_thread_refct) {
-				PyThreadState_Swap(python_state::ts_thread_old);
-				PyThreadState_Clear(python_state::ts_thread);
-				PyThreadState_DeleteCurrent();
-			}
-			python_state::ts_thread_refct--;
+			return _released;
 		}
 
-		python_thread_state_scope(const python_thread_state_scope&) = delete;
+		// restores python state to prior to last PyGILState_Ensure call
+		// returns active PyThreadState
+		// doesn't necessarily release the GIL, only this instance's hold on it.
+		// if GIL was acquired further up the stack, it will still be locked. 
+		inline PyThreadState* release()
+		{
+			if (_released) {
+				THROW(RULE_ENGINE_ERROR, "release called on already-released python_gil_lock");
+			}
 
-		python_thread_state_scope& operator=(const python_thread_state_scope&) = delete;
+			PyThreadState* current_thread_state = PyThreadState_Get();
+			if (current_thread_state->gilstate_counter <= 1) {
+				current_thread_state = nullptr;
+			}
 
-	}; //struct python_thread_state_scope
+			PyGILState_Release(_previous_gil_state);
+
+			_released = true;
+			return current_thread_state;
+		}
+
+		// reacquires GIL after a call to release
+		inline  void reacquire()
+		{
+			if (_released) {
+				THROW(RULE_ENGINE_ERROR, "reacquire called on non-released python_gil_lock");
+			}
+
+			_previous_gil_state = PyGILState_Ensure();
+			_released = false;
+		}
+
+	private:
+		PyGILState_STATE _previous_gil_state; // GIL state prior to calling PyGILState_Ensure
+		bool _released = false; // whether or not PyGILState_Release has already been called
+
+	}; //class python_gil_lock
+
+	// Helper class that unlocks GIL while in scope
+	class python_gil_unlock
+	{
+	public:
+		// Saves the current thread state, releasing the GIL
+		// Does not otherwise alter thread state in any way
+		python_gil_unlock()
+			: _previous_thread_state(PyEval_SaveThread())
+		{ }
+
+		// Calls release on gil_lock and, if necessary, saves the current thread state
+		// if should_reacquire is true, reacquire is called on gil_lock during destruction
+		python_gil_unlock(python_gil_lock* const gil_lock, bool should_reacquire)
+			: _gil_lock(gil_lock), _should_reacquire(should_reacquire)
+		{
+			if (_gil_lock->release() != nullptr) {
+				_previous_thread_state = PyEval_SaveThread();
+			}
+		}
+
+		~python_gil_unlock()
+		{
+			if (_previous_thread_state != nullptr) {
+				PyEval_RestoreThread(_previous_thread_state);
+			}
+			if (_should_reacquire) {
+				assert(_gil_lock != nullptr);
+				_gil_lock->reacquire();
+			}
+		}
+
+		python_gil_unlock(const python_gil_unlock&) = delete;
+
+		python_gil_unlock& operator=(const python_gil_unlock&) = delete;
+
+	private:
+		PyThreadState* _previous_thread_state = nullptr;
+		python_gil_lock* const _gil_lock = nullptr;
+		const bool _should_reacquire = false;
+
+	}; //class python_gil_unlock
 
 	struct RuleCallWrapper
 	{
@@ -377,54 +453,87 @@ namespace
 		bp::class_<CallbackWrapper>("CallbackWrapper", bp::no_init)
 			.def("__getattribute__", &CallbackWrapper::getAttribute);
 	}
+
+	static inline void initialize_python(const std::string& _instance_name)
+	{
+		auto etc_irods_path = irods::get_irods_config_directory();
+
+#if PY_VERSION_HEX >= 0x03080000
+		if (python_state::default_module_search_paths_set) {
+			PyConfig py_config;
+			PyConfig_InitPythonConfig(&py_config);
+
+			py_config.install_signal_handlers = 0;
+
+			for (auto&& module_search_path : python_state::default_module_search_paths) {
+				PyWideStringList_Append(&py_config.module_search_paths, module_search_path.c_str());
+			}
+			PyWideStringList_Append(&py_config.module_search_paths, etc_irods_path.generic_wstring().c_str());
+			py_config.module_search_paths_set = 1;
+
+			PyStatus py_status = Py_InitializeFromConfig(&py_config);
+
+			if (!PyStatus_Exception(py_status)) {
+				return;
+			}
+
+			// clang-format off
+			log_re::error({
+				{"rule_engine_plugin", rule_engine_name},
+				{"instance_name", _instance_name},
+				{"log_message", "failed to initialize interpreter with PyConfig; falling back to legacy initialization"},
+				{"PyStatus.exitcode", fmt::to_string(py_status.exitcode)},
+				{"PyStatus.err_msg", py_status.err_msg},
+				{"PyStatus.func", py_status.func},
+			});
+			// clang-format on
+		}
+#endif
+
+		Py_InitializeEx(0);
+#if PY_VERSION_HEX < 0x03070000
+		PyEval_InitThreads();
+#endif
+		bp::object mod_sys = bp::import("sys");
+		bp::list sys_path = bp::extract<bp::list>(mod_sys.attr("path"));
+		sys_path.append(bp::str(etc_irods_path.generic_string().c_str()));
+	}
+
 } // anonymous namespace
 
 static irods::error start(irods::default_re_ctx&, const std::string& _instance_name)
 {
 	python_state::ts_main = nullptr;
-	{
-		std::lock_guard<std::recursive_mutex> lock{python_mutex};
-		// lock needs to stay in scope for extract_python_exception
-		// hence the weird nesting here
-		try {
-			PyImport_AppendInittab("plugin_wrappers", &PyInit_plugin_wrappers);
-			PyImport_AppendInittab("irods_types", &PyInit_irods_types);
-			PyImport_AppendInittab("irods_errors", &PyInit_irods_errors);
-			Py_InitializeEx(0);
-#if PY_VERSION_HEX < 0x03070000
-			PyEval_InitThreads();
-#endif
-			boost::filesystem::path etc_irods_path = irods::get_irods_config_directory();
-			std::string exec_str = "import sys\nsys.path.append('" + etc_irods_path.generic_string() + "')";
+	try {
+		PyImport_AppendInittab("plugin_wrappers", &PyInit_plugin_wrappers);
+		PyImport_AppendInittab("irods_types", &PyInit_irods_types);
+		PyImport_AppendInittab("irods_errors", &PyInit_irods_errors);
 
-			bp::object main_module = bp::import("__main__");
-			bp::object main_namespace = main_module.attr("__dict__");
-			bp::exec(exec_str.c_str(), main_namespace);
+		initialize_python(_instance_name);
 
-			bp::object plugin_wrappers = bp::import("plugin_wrappers");
-			bp::object irods_types = bp::import("irods_types");
-			bp::object irods_errors = bp::import("irods_errors");
+		bp::object plugin_wrappers = bp::import("plugin_wrappers");
+		bp::object irods_types = bp::import("irods_types");
+		bp::object irods_errors = bp::import("irods_errors");
 
-			StringFromPythonUnicode::register_converter();
-		}
-		catch (const bp::error_already_set&) {
-			const std::string formatted_python_exception = extract_python_exception();
-			// clang-format off
-			log_re::error({
-				{"rule_engine_plugin", rule_engine_name},
-				{"instance_name", _instance_name},
-				{"log_message", "caught python exception"},
-				{"python_exception", formatted_python_exception},
-			});
-			// clang-format on
-			std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ +
-			                      " Caught Python exception.\n" + formatted_python_exception;
-			return ERROR(RULE_ENGINE_ERROR, err_msg);
-		}
-
-		python_state::ts_main = PyEval_SaveThread();
-		// NO MORE PYTHON IN THIS FUNCTION PAST THIS POINT
+		StringFromPythonUnicode::register_converter();
 	}
+	catch (const bp::error_already_set&) {
+		const std::string formatted_python_exception = extract_python_exception();
+		// clang-format off
+		log_re::error({
+			{"rule_engine_plugin", rule_engine_name},
+			{"instance_name", _instance_name},
+			{"log_message", "caught python exception"},
+			{"python_exception", formatted_python_exception},
+		});
+		// clang-format on
+		std::string err_msg = std::string("irods_rule_engine_plugin_python::") + __PRETTY_FUNCTION__ +
+		                      " Caught Python exception.\n" + formatted_python_exception;
+		return ERROR(RULE_ENGINE_ERROR, err_msg);
+	}
+
+	python_state::ts_main = PyEval_SaveThread();
+	// NO MORE PYTHON IN THIS FUNCTION PAST THIS POINT
 
 	// Initialize microservice table
 	irods::ms_table& ms_table = get_microservice_table();
@@ -505,8 +614,7 @@ static irods::error stop(irods::default_re_ctx&, const std::string&)
 static irods::error rule_exists(const irods::default_re_ctx&, const std::string& rule_name, bool& _return)
 {
 	_return = false;
-	std::lock_guard<std::recursive_mutex> lock{python_mutex};
-	python_thread_state_scope tstate;
+	python_gil_lock gil_lock;
 	try {
 		// TODO Enable non core.py Python rulebases
 		bp::object core_module = bp::import("core");
@@ -514,6 +622,7 @@ static irods::error rule_exists(const irods::default_re_ctx&, const std::string&
 	}
 	catch (const bp::error_already_set&) {
 		const std::string formatted_python_exception = extract_python_exception();
+		python_gil_unlock gil_release(&gil_lock, false);
 		// clang-format off
 		log_re::error({
 			{"rule_engine_plugin", rule_engine_name},
@@ -526,7 +635,7 @@ static irods::error rule_exists(const irods::default_re_ctx&, const std::string&
 		return ERROR(RULE_ENGINE_ERROR, err_msg);
 	}
 	// NOTE: If adding more catch blocks, nest this try/catch in another try block
-	// along with the lock and tstate definitions. They need to stay in-scope for extract_python_exception,
+	// along with the gil_lock definition. They need to stay in-scope for extract_python_exception,
 	// but should be out of scope for other exception handlers.
 
 	return SUCCESS();
@@ -535,9 +644,8 @@ static irods::error rule_exists(const irods::default_re_ctx&, const std::string&
 static irods::error list_rules(const irods::default_re_ctx&, std::vector<std::string>& rule_vec)
 {
 	try {
-		std::lock_guard<std::recursive_mutex> lock{python_mutex};
-		python_thread_state_scope tstate;
-		// tstate (and therefore also lock) needs to stay in scope for extract_python_exception
+		python_gil_lock gil_lock;
+		// gil_lock needs to stay in scope for extract_python_exception
 		// hence the nested exception handling
 		try {
 			bp::object core_module = bp::import("core");
@@ -552,7 +660,7 @@ static irods::error list_rules(const irods::default_re_ctx&, std::vector<std::st
 
 			bp::list function_names = bp::extract<bp::list>(core_namespace["function_names"]);
 
-			size_t len_names = bp::extract<std::size_t>(function_names.attr("__len__")());
+			std::size_t len_names = bp::extract<std::size_t>(function_names.attr("__len__")());
 			for (std::size_t i = 0; i < len_names; ++i) {
 				rule_vec.push_back(bp::extract<std::string>(function_names[i]));
 				std::string tmp = bp::extract<std::string>(function_names[i]);
@@ -560,6 +668,7 @@ static irods::error list_rules(const irods::default_re_ctx&, std::vector<std::st
 		}
 		catch (const bp::error_already_set&) {
 			const std::string formatted_python_exception = extract_python_exception();
+			python_gil_unlock gil_release(&gil_lock, false);
 			// clang-format off
 			log_re::error({
 				{"rule_engine_plugin", rule_engine_name},
@@ -602,9 +711,8 @@ static irods::error exec_rule(const irods::default_re_ctx&,
                               irods::callback effect_handler)
 {
 	try {
-		std::lock_guard<std::recursive_mutex> lock{python_mutex};
-		python_thread_state_scope tstate;
-		// tstate (and therefore also lock) needs to stay in scope for extract_python_exception
+		python_gil_lock gil_lock;
+		// gil_lock needs to stay in scope for extract_python_exception
 		// hence the nested exception handling
 		try {
 			// TODO Enable non core.py Python rulebases
@@ -638,6 +746,7 @@ static irods::error exec_rule(const irods::default_re_ctx&,
 		catch (const bp::error_already_set&) {
 			const std::string formatted_python_exception = extract_python_exception();
 			// clang-format off
+			python_gil_unlock gil_release(&gil_lock, false);
 			log_re::error({
 				{"rule_engine_plugin", rule_engine_name},
 				{"log_message", "caught python exception"},
@@ -729,9 +838,8 @@ static irods::error exec_rule_text(const irods::default_re_ctx&,
 	}
 
 	try {
-		std::lock_guard<std::recursive_mutex> lock{python_mutex};
-		python_thread_state_scope tstate;
-		// tstate (and therefore also lock) needs to stay in scope for extract_python_exception
+		python_gil_lock gil_lock;
+		// gil_lock needs to stay in scope for extract_python_exception
 		// hence the nested exception handling
 		try {
 			execCmdOut_t* myExecCmdOut = (execCmdOut_t*) malloc(sizeof(*myExecCmdOut));
@@ -750,20 +858,20 @@ static irods::error exec_rule_text(const irods::default_re_ctx&,
 				if (mp->type == NULL) {
 					rule_vars_python[label] = NULL;
 				}
-				else if (strcmp(mp->type, DOUBLE_MS_T) == 0) {
+				else if (std::strcmp(mp->type, DOUBLE_MS_T) == 0) {
 					double* tmpDouble = (double*) mp->inOutStruct;
 					rule_vars_python[label] = tmpDouble;
 				}
-				else if (strcmp(mp->type, INT_MS_T) == 0) {
+				else if (std::strcmp(mp->type, INT_MS_T) == 0) {
 					int* tmpInt = (int*) mp->inOutStruct;
 					rule_vars_python[label] = tmpInt;
 				}
-				else if (strcmp(mp->type, STR_MS_T) == 0) {
+				else if (std::strcmp(mp->type, STR_MS_T) == 0) {
 					char* tmpChar = (char*) mp->inOutStruct;
 					std::string tmpStr(tmpChar);
 					rule_vars_python[label] = tmpStr;
 				}
-				else if (strcmp(mp->type, DATETIME_MS_T) == 0) {
+				else if (std::strcmp(mp->type, DATETIME_MS_T) == 0) {
 					rodsLong_t* tmpRodsLong = (rodsLong_t*) mp->inOutStruct;
 					rule_vars_python[label] = tmpRodsLong;
 				}
@@ -828,6 +936,7 @@ static irods::error exec_rule_text(const irods::default_re_ctx&,
 					rule_function(rule_arguments_python, CallbackWrapper{effect_handler}, rei));
 			}
 			else {
+				python_gil_unlock gil_release(&gil_lock, false);
 				// clang-format off
 				log_re::error({
 					{"rule_engine_plugin", rule_engine_name},
@@ -839,6 +948,7 @@ static irods::error exec_rule_text(const irods::default_re_ctx&,
 		}
 		catch (const bp::error_already_set&) {
 			const std::string formatted_python_exception = extract_python_exception();
+			python_gil_unlock gil_release(&gil_lock, false);
 			// clang-format off
 			log_re::error({
 				{"rule_engine_plugin", rule_engine_name},
@@ -883,9 +993,8 @@ static irods::error exec_rule_expression(irods::default_re_ctx&,
                                          irods::callback effect_handler)
 {
 	try {
-		std::lock_guard<std::recursive_mutex> lock{python_mutex};
-		python_thread_state_scope tstate;
-		// tstate (and therefore also lock) needs to stay in scope for extract_python_exception
+		python_gil_lock gil_lock;
+		// gil_lock needs to stay in scope for extract_python_exception
 		// hence the nested exception handling
 		try {
 			bp::dict rule_vars_python;
@@ -899,20 +1008,20 @@ static irods::error exec_rule_expression(irods::default_re_ctx&,
 						if (mp->type == NULL) {
 							rule_vars_python[label] = boost::python::object{};
 						}
-						else if (strcmp(mp->type, DOUBLE_MS_T) == 0) {
+						else if (std::strcmp(mp->type, DOUBLE_MS_T) == 0) {
 							double* tmpDouble = (double*) mp->inOutStruct;
 							rule_vars_python[label] = tmpDouble;
 						}
-						else if (strcmp(mp->type, INT_MS_T) == 0) {
+						else if (std::strcmp(mp->type, INT_MS_T) == 0) {
 							int* tmpInt = (int*) mp->inOutStruct;
 							rule_vars_python[label] = tmpInt;
 						}
-						else if (strcmp(mp->type, STR_MS_T) == 0) {
+						else if (std::strcmp(mp->type, STR_MS_T) == 0) {
 							char* tmpChar = (char*) mp->inOutStruct;
 							std::string tmpStr(tmpChar);
 							rule_vars_python[label] = tmpStr;
 						}
-						else if (strcmp(mp->type, DATETIME_MS_T) == 0) {
+						else if (std::strcmp(mp->type, DATETIME_MS_T) == 0) {
 							rodsLong_t* tmpRodsLong = (rodsLong_t*) mp->inOutStruct;
 							rule_vars_python[label] = tmpRodsLong;
 						}
@@ -951,6 +1060,7 @@ static irods::error exec_rule_expression(irods::default_re_ctx&,
 		}
 		catch (const bp::error_already_set&) {
 			const std::string formatted_python_exception = extract_python_exception();
+			python_gil_unlock gil_release(&gil_lock, false);
 			// clang-format off
 			log_re::error({
 				{"rule_engine_plugin", rule_engine_name},
@@ -1020,6 +1130,35 @@ extern "C" irods::pluggable_rule_engine<irods::default_re_ctx>* plugin_factory(c
 		"exec_rule_expression",
 		std::function<irods::error(irods::default_re_ctx&, const std::string&, msParamArray_t*, irods::callback)>(
 			exec_rule_expression));
+
+#if PY_VERSION_HEX >= 0x03080000
+	Py_InitializeEx(0);
+	try {
+		bp::object mod_sys = bp::import("sys");
+		bp::list sys_path = bp::extract<bp::list>(mod_sys.attr("path"));
+		std::size_t sys_path_len = bp::extract<std::size_t>(sys_path.attr("__len__")());
+		python_state::default_module_search_paths.reserve(sys_path_len);
+		for (std::size_t i = 0; i < sys_path_len; ++i) {
+			python_state::default_module_search_paths.push_back(bp::extract<std::wstring>(sys_path[i]));
+		}
+		python_state::default_module_search_paths_set = true;
+	}
+	catch (const bp::error_already_set&) {
+		const std::string formatted_python_exception = extract_python_exception();
+		// clang-format off
+		log_re::error({
+			{"rule_engine_plugin", rule_engine_name},
+			{"instance_name", _inst_name},
+			{"log_message", "caught python exception in plugin factory; will use legacy module search path initialization"},
+			{"python_exception", formatted_python_exception},
+		});
+		// clang-format on
+		python_state::default_module_search_paths.clear();
+		python_state::default_module_search_paths.shrink_to_fit();
+		python_state::default_module_search_paths_set = false;
+	}
+	Py_Finalize(); // We're not supposed to do this, but let's try it anyway.
+#endif
 
 	return re;
 }
