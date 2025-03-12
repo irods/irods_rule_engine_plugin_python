@@ -126,9 +126,6 @@ def acRenameLocalZone(rule_args, callback, rei):
 def acGetUserByDN(rule_args, callback, rei):
     pass
 
-def acAclPolicy(rule_args, callback, rei):
-    callback.msiAclPolicy('STRICT')
-
 def acTicketPolicy(rule_args, callback, rei):
     pass
 
