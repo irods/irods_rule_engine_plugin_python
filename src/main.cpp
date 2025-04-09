@@ -315,8 +315,7 @@ namespace
 
 			const auto err = self.effect_handler(self.rule_name, irods::unpack(rule_args_cpp));
 
-			const auto error_occurred =
-				!err.ok() && err.code() != CAT_NO_ROWS_FOUND && err.code() != CAT_SUCCESS_BUT_WITH_NO_INFO;
+			const auto error_occurred = !err.ok() && err.code() != CAT_NO_ROWS_FOUND;
 
 			bp::list ret_list{};
 			while (!rule_args_cpp.empty()) {
