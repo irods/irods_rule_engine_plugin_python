@@ -39,7 +39,6 @@ namespace irods::re::python::types
 					&rodsEnv::rodsZone,
 					&rodsEnv::rodsLogLevel,
 					&rodsEnv::rodsAuthFile,
-					&rodsEnv::rodsDebug,
 					&rodsEnv::rodsClientServerPolicy,
 					&rodsEnv::rodsClientServerNegotiation,
 					&rodsEnv::rodsEncryptionKeySize,
@@ -76,7 +75,6 @@ namespace irods::re::python::types
 			.add_property("rodsZone", +[](rodsEnv *s) { return array_ref<char>{s->rodsZone}; })
 			.add_property("rodsLogLevel", &rodsEnv::rodsLogLevel)
 			.add_property("rodsAuthFile", +[](rodsEnv *s) { return array_ref<char>{s->rodsAuthFile}; })
-			.add_property("rodsDebug", +[](rodsEnv *s) { return array_ref<char>{s->rodsDebug}; })
 			.add_property("rodsClientServerPolicy", +[](rodsEnv *s) { return array_ref<char>{s->rodsClientServerPolicy}; })
 			.add_property("rodsClientServerNegotiation", +[](rodsEnv *s) { return array_ref<char>{s->rodsClientServerNegotiation}; })
 			.add_property("rodsEncryptionKeySize", &rodsEnv::rodsEncryptionKeySize)
