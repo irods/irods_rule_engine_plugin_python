@@ -50,10 +50,6 @@ namespace irods::re::python::types
 					&rodsEnv::irodsSSLCACertificatePath,
 					&rodsEnv::irodsSSLCACertificateFile,
 					&rodsEnv::irodsSSLVerifyServer,
-					&rodsEnv::irodsCtrlPlaneKey,
-					&rodsEnv::irodsCtrlPlanePort,
-					&rodsEnv::irodsCtrlPlaneEncryptionNumHashRounds,
-					&rodsEnv::irodsCtrlPlaneEncryptionAlgorithm,
 					&rodsEnv::irodsMaxSizeForSingleBuffer,
 					&rodsEnv::irodsDefaultNumberTransferThreads,
 					&rodsEnv::irodsTransBufferSizeForParaTrans,
@@ -83,10 +79,6 @@ namespace irods::re::python::types
 			.add_property("irodsSSLCACertificatePath", +[](rodsEnv *s) { return array_ref<char>{s->irodsSSLCACertificatePath}; })
 			.add_property("irodsSSLCACertificateFile", +[](rodsEnv *s) { return array_ref<char>{s->irodsSSLCACertificateFile}; })
 			.add_property("irodsSSLVerifyServer", +[](rodsEnv *s) { return array_ref<char>{s->irodsSSLVerifyServer}; })
-			.add_property("irodsCtrlPlaneKey", +[](rodsEnv *s) { return array_ref<char>{s->irodsCtrlPlaneKey}; })
-			.add_property("irodsCtrlPlanePort", &rodsEnv::irodsCtrlPlanePort)
-			.add_property("irodsCtrlPlaneEncryptionNumHashRounds", &rodsEnv::irodsCtrlPlaneEncryptionNumHashRounds)
-			.add_property("irodsCtrlPlaneEncryptionAlgorithm", +[](rodsEnv *s) { return array_ref<char>{s->irodsCtrlPlaneEncryptionAlgorithm}; })
 			.add_property("irodsMaxSizeForSingleBuffer", &rodsEnv::irodsMaxSizeForSingleBuffer)
 			.add_property("irodsDefaultNumberTransferThreads", &rodsEnv::irodsDefaultNumberTransferThreads)
 			.add_property("irodsTransBufferSizeForParaTrans", &rodsEnv::irodsTransBufferSizeForParaTrans)
