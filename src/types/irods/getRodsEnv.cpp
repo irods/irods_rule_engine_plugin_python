@@ -50,9 +50,6 @@ namespace irods::re::python::types
 					&rodsEnv::irodsSSLCACertificatePath,
 					&rodsEnv::irodsSSLCACertificateFile,
 					&rodsEnv::irodsSSLVerifyServer,
-					&rodsEnv::irodsSSLCertificateChainFile,
-					&rodsEnv::irodsSSLCertificateKeyFile,
-					&rodsEnv::irodsSSLDHParamsFile,
 					&rodsEnv::irodsCtrlPlaneKey,
 					&rodsEnv::irodsCtrlPlanePort,
 					&rodsEnv::irodsCtrlPlaneEncryptionNumHashRounds,
@@ -86,9 +83,6 @@ namespace irods::re::python::types
 			.add_property("irodsSSLCACertificatePath", +[](rodsEnv *s) { return array_ref<char>{s->irodsSSLCACertificatePath}; })
 			.add_property("irodsSSLCACertificateFile", +[](rodsEnv *s) { return array_ref<char>{s->irodsSSLCACertificateFile}; })
 			.add_property("irodsSSLVerifyServer", +[](rodsEnv *s) { return array_ref<char>{s->irodsSSLVerifyServer}; })
-			.add_property("irodsSSLCertificateChainFile", +[](rodsEnv *s) { return array_ref<char>{s->irodsSSLCertificateChainFile}; })
-			.add_property("irodsSSLCertificateKeyFile", +[](rodsEnv *s) { return array_ref<char>{s->irodsSSLCertificateKeyFile}; })
-			.add_property("irodsSSLDHParamsFile", +[](rodsEnv *s) { return array_ref<char>{s->irodsSSLDHParamsFile}; })
 			.add_property("irodsCtrlPlaneKey", +[](rodsEnv *s) { return array_ref<char>{s->irodsCtrlPlaneKey}; })
 			.add_property("irodsCtrlPlanePort", &rodsEnv::irodsCtrlPlanePort)
 			.add_property("irodsCtrlPlaneEncryptionNumHashRounds", &rodsEnv::irodsCtrlPlaneEncryptionNumHashRounds)
