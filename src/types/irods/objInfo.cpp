@@ -143,7 +143,8 @@ namespace irods::re::python::types
 					&dataObjInfo_t::condInput,
 					&dataObjInfo_t::in_pdmo,
 					&dataObjInfo_t::next,
-					&dataObjInfo_t::rescId))
+					&dataObjInfo_t::rescId,
+					&dataObjInfo_t::dataAccessTime))
 			.add_property("objPath", +[](dataObjInfo_t *s) { return array_ref<char>{s->objPath}; })
 			.add_property("rescName", +[](dataObjInfo_t *s) { return array_ref<char>{s->rescName}; })
 			.add_property("rescHier", +[](dataObjInfo_t *s) { return array_ref<char>{s->rescHier}; })
@@ -183,6 +184,7 @@ namespace irods::re::python::types
 			              bp::make_getter(&dataObjInfo_t::next, bp::return_internal_reference<1>{}),
 			              bp::make_setter(&dataObjInfo_t::next, bp::with_custodian_and_ward<1, 2>{}))
 			.add_property("rescId", &dataObjInfo_t::rescId)
+			.add_property("dataAccessTime", +[](dataObjInfo_t *s) { return array_ref<char>{s->dataAccessTime}; })
 			;
 		// clang-format on
 	}
