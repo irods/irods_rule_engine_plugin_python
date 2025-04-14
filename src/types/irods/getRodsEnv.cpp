@@ -54,7 +54,7 @@ namespace irods::re::python::types
 					&rodsEnv::irodsDefaultNumberTransferThreads,
 					&rodsEnv::irodsTransBufferSizeForParaTrans,
 					&rodsEnv::irodsConnectionPoolRefreshTime,
-					&rodsEnv::irodsPluginHome,
+					&rodsEnv::irodsPluginDirectory,
 					&rodsEnv::tcp_keepalive_intvl,
 					&rodsEnv::tcp_keepalive_probes,
 					&rodsEnv::tcp_keepalive_time))
@@ -83,7 +83,7 @@ namespace irods::re::python::types
 			.add_property("irodsDefaultNumberTransferThreads", &rodsEnv::irodsDefaultNumberTransferThreads)
 			.add_property("irodsTransBufferSizeForParaTrans", &rodsEnv::irodsTransBufferSizeForParaTrans)
 			.add_property("irodsConnectionPoolRefreshTime", &rodsEnv::irodsConnectionPoolRefreshTime)
-			.add_property("irodsPluginHome", +[](rodsEnv *s) { return array_ref<char>{s->irodsPluginHome}; })
+			.add_property("irodsPluginDirectory", +[](rodsEnv *s) { return array_ref<char>{s->irodsPluginDirectory}; })
 			.add_property("tcp_keepalive_intvl", &rodsEnv::tcp_keepalive_intvl)
 			.add_property("tcp_keepalive_probes", &rodsEnv::tcp_keepalive_probes)
 			.add_property("tcp_keepalive_time", &rodsEnv::tcp_keepalive_time)
