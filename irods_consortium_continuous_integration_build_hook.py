@@ -14,8 +14,7 @@ import irods_python_ci_utilities
 def install_building_dependencies(externals_directory):
 
     externals_list = ['irods-externals-boost1.81.0-2',
-                      'irods-externals-clang16.0.6-0',
-                      'irods-externals-json3.10.4-0']
+                      'irods-externals-clang16.0.6-0']
     if externals_directory == 'None' or externals_directory is None:
         irods_python_ci_utilities.install_irods_core_dev_repository()
         irods_python_ci_utilities.install_os_packages(externals_list)
