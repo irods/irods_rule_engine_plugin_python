@@ -379,6 +379,16 @@ namespace
 	}
 } // anonymous namespace
 
+static irods::error setup(irods::default_re_ctx&, const std::string& _instance_name)
+{
+	return SUCCESS();
+} // setup
+
+static irods::error teardown(irods::default_re_ctx&, const std::string& _instance_name)
+{
+	return SUCCESS();
+} // teardown
+
 static irods::error start(irods::default_re_ctx&, const std::string& _instance_name)
 {
 	python_state::ts_main = nullptr;
@@ -993,6 +1003,13 @@ extern "C" irods::pluggable_rule_engine<irods::default_re_ctx>* plugin_factory(c
 {
 	irods::pluggable_rule_engine<irods::default_re_ctx>* re =
 		new irods::pluggable_rule_engine<irods::default_re_ctx>(_inst_name, _context);
+
+	re->add_operation<irods::default_re_ctx&, const std::string&>(
+		"setup", std::function<irods::error(irods::default_re_ctx&, const std::string&)>(setup));
+
+	re->add_operation<irods::default_re_ctx&, const std::string&>(
+		"teardown", std::function<irods::error(irods::default_re_ctx&, const std::string&)>(teardown));
+
 	re->add_operation<irods::default_re_ctx&, const std::string&>(
 		"start", std::function<irods::error(irods::default_re_ctx&, const std::string&)>(start));
 
