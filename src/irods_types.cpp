@@ -43,7 +43,6 @@
 #include "irods/private/re/python/types/irods/rcConnect.hpp"
 #include "irods/private/re/python/types/irods/rodsDef.hpp"
 #include "irods/private/re/python/types/irods/rodsError.hpp"
-#include "irods/private/re/python/types/irods/rodsGeneralUpdate.hpp"
 #include "irods/private/re/python/types/irods/rodsGenQuery.hpp"
 #include "irods/private/re/python/types/irods/rodsType.hpp"
 #include "irods/private/re/python/types/irods/rodsUser.hpp"
@@ -174,8 +173,6 @@ namespace
 		py_types::export_SpecificQueryInp();
 
 		py_types::export_IcatSessionStruct();
-
-		py_types::export_GeneralUpdateInp();
 
 		py_types::export_Timeval();
 
