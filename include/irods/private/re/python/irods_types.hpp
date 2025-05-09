@@ -19,7 +19,6 @@
 #include <irods/fileOpen.h>
 #include <irods/fileRename.h>
 #include <irods/rcConnect.h>
-#include <irods/rodsGeneralUpdate.h>
 #include <irods/icatStructs.hpp>
 #include <irods/irods_hierarchy_parser.hpp>
 #include <irods/irods_plugin_context.hpp>
@@ -71,10 +70,6 @@ using list_of_irods_types = type_sequence<
 	float,
 	genQueryInp_t,
 	genQueryOut_t,
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-	generalUpdateInp_t,
-#pragma clang diagnostic pop
 	icatSessionStruct,
 	in_addr,
 	int,
