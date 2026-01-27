@@ -54,7 +54,7 @@ The example `core.py.template` file in this repository contains a Python impleme
 
 # Python Version
 
-This version of the Python Rule Engine Plugin uses the Python 2.7 interpreter.
+This version of the Python Rule Engine Plugin uses the Python 3 interpreter.
 
 # Remote Execution
 
