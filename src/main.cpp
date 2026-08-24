@@ -245,6 +245,38 @@ namespace
 		return rei;
 	}
 
+	irods::error require_privileged_user_for_python_execution(const ruleExecInfo_t& rei, const char* operation)
+	{
+		int client_user_authflag = 0;
+		if (rei.rsComm) {
+			client_user_authflag = rei.rsComm->clientUser.authInfo.authFlag;
+		}
+		else if (rei.uoic) {
+			client_user_authflag = rei.uoic->authInfo.authFlag;
+		}
+
+		int proxy_user_authflag = 0;
+		if (rei.rsComm) {
+			proxy_user_authflag = rei.rsComm->proxyUser.authInfo.authFlag;
+		}
+		else if (rei.uoip) {
+			proxy_user_authflag = rei.uoip->authInfo.authFlag;
+		}
+
+		if ((client_user_authflag < REMOTE_PRIV_USER_AUTH) || (proxy_user_authflag < REMOTE_PRIV_USER_AUTH)) {
+			// clang-format off
+			log_re::debug({
+				{"rule_engine_plugin", rule_engine_name},
+				{"operation", operation},
+				{"log_message", "Insufficient privileges to execute Python rule text"},
+			});
+			// clang-format on
+			return ERROR(SYS_NO_API_PRIV, "Insufficient privileges to execute Python rule text");
+		}
+
+		return SUCCESS();
+	} // require_privileged_user_for_python_execution
+
 	// Helper struct for managing python thread state
 	struct python_thread_state_scope
 	{
@@ -711,30 +743,8 @@ static irods::error exec_rule_text(const irods::default_re_ctx&,
 		return ERROR(NULL_VALUE_ERR, "Null rei pointer in exec_rule_text");
 	}
 
-	int client_user_authflag = 0;
-	if (rei->uoic) {
-		client_user_authflag = rei->uoic->authInfo.authFlag;
-	}
-	else if (rei->rsComm) {
-		client_user_authflag = rei->rsComm->clientUser.authInfo.authFlag;
-	}
-
-	int proxy_user_authflag = 0;
-	if (rei->uoip) {
-		proxy_user_authflag = rei->uoip->authInfo.authFlag;
-	}
-	else if (rei->rsComm) {
-		proxy_user_authflag = rei->rsComm->proxyUser.authInfo.authFlag;
-	}
-
-	if ((client_user_authflag < REMOTE_PRIV_USER_AUTH) || (proxy_user_authflag < REMOTE_PRIV_USER_AUTH)) {
-		// clang-format off
-		log_re::debug({
-			{"rule_engine_plugin", rule_engine_name},
-			{"log_message", "Insufficient privileges to run irule in Python rule engine plugin"},
-		});
-		// clang-format on
-		return ERROR(SYS_NO_API_PRIV, "Insufficient privileges to run irule in Python rule engine plugin");
+	if (const auto err = require_privileged_user_for_python_execution(*rei, "exec_rule_text"); !err.ok()) {
+		return err;
 	}
 
 	try {
@@ -891,6 +901,23 @@ static irods::error exec_rule_expression(irods::default_re_ctx&,
                                          msParamArray_t* ms_params,
                                          irods::callback effect_handler)
 {
+	// Because Python is not sandboxed, need to restrict execution of Python text to admin users only.
+	const auto rei = get_rei_from_effect_handler(effect_handler);
+
+	if (!rei) {
+		// clang-format off
+		log_re::error({
+			{"rule_engine_plugin", rule_engine_name},
+			{"log_message", "RuleExecInfo object is NULL - cannot authenticate user"},
+		});
+		// clang-format on
+		return ERROR(NULL_VALUE_ERR, "Null rei pointer in exec_rule_expression");
+	}
+
+	if (const auto err = require_privileged_user_for_python_execution(*rei, "exec_rule_expression"); !err.ok()) {
+		return err;
+	}
+
 	try {
 		std::lock_guard<std::recursive_mutex> lock{python_mutex};
 		python_thread_state_scope tstate;
@@ -954,7 +981,6 @@ static irods::error exec_rule_expression(irods::default_re_ctx&,
 			bp::exec(fcn_text.c_str(), main_namespace, main_namespace);
 			bp::object rule_function = main_module.attr(rule_name.c_str());
 
-			const auto rei = get_rei_from_effect_handler(effect_handler);
 			bp::list rule_arguments_python{};
 			return to_irods_error_object(rule_function(rule_arguments_python, CallbackWrapper{effect_handler}, rei));
 		}
