@@ -2,8 +2,9 @@
 #define RE_PYTHON_TYPES_INIT_STRUCT_HPP
 
 #include <memory>
+#include <tuple>
+#include <type_traits>
 #include "irods/private/re/python/types/raw_constructor.hpp"
-#include "irods/private/re/python/types/type_sequence.hpp"
 
 #include <patchlevel.h>
 #include <boost/version.hpp>
@@ -22,11 +23,8 @@
 #include <boost/python/tuple.hpp>
 #pragma GCC diagnostic pop
 
-template <class T, typename = std::enable_if_t<std::is_pointer<T>::value>>
-T populate_helper(boost::python::tuple& args,
-                  int& index,
-                  boost::python::stl_input_iterator<boost::python::object>&,
-                  int&)
+template <class T, std::enable_if_t<std::is_pointer<T>::value, int> = 0>
+void populate_member(T& member, boost::python::tuple& args, int& index)
 {
 	if (index < boost::python::len(args)) {
 		if (!boost::python::object{args[index++]}.is_none()) {
@@ -36,67 +34,63 @@ T populate_helper(boost::python::tuple& args,
 			boost::python::throw_error_already_set();
 		}
 	}
-	return {};
+	member = {};
 }
 
-template <class T, typename = std::enable_if_t<std::is_array<T>::value>>
-std::remove_all_extents_t<T> populate_helper(boost::python::tuple& args,
-                                             int& index,
-                                             boost::python::stl_input_iterator<boost::python::object>& iter,
-                                             int& index_into_array)
+template <class T, std::enable_if_t<!std::is_array<T>::value, int> = 0>
+void populate_array_element(T& element, boost::python::stl_input_iterator<boost::python::object>& iter)
+{
+	if (iter != boost::python::stl_input_iterator<boost::python::object>{}) {
+		element = boost::python::extract<T>{*(iter++)};
+	}
+}
+
+template <class T, std::enable_if_t<std::is_array<T>::value, int> = 0>
+void populate_array_element(T& array, boost::python::stl_input_iterator<boost::python::object>& iter)
+{
+	for (auto& element : array) {
+		populate_array_element(element, iter);
+	}
+}
+
+template <class T, std::enable_if_t<std::is_array<T>::value, int> = 0>
+void populate_member(T& member, boost::python::tuple& args, int& index)
 {
 	if (index < boost::python::len(args)) {
-		if (index_into_array == 0) {
-			iter = boost::python::stl_input_iterator<boost::python::object>{args[index]};
-		}
-		if (index_into_array < NumElements<T> - 1) {
-			++index_into_array;
-		}
-		else {
-			index++;
-			index_into_array = 0;
-		}
-		if (iter != boost::python::stl_input_iterator<boost::python::object>{}) {
-			return boost::python::extract<std::remove_all_extents_t<T>>{*(iter++)};
-		}
+		boost::python::stl_input_iterator<boost::python::object> iter{args[index++]};
+		populate_array_element(member, iter);
 	}
-	return {};
 }
 
 template <class T,
-          typename = std::enable_if_t<!std::is_array<T>::value>,
-          typename = std::enable_if_t<!std::is_pointer<T>::value>>
-T populate_helper(boost::python::tuple& args,
-                  int& index,
-                  boost::python::stl_input_iterator<boost::python::object>&,
-                  int&)
+          std::enable_if_t<!std::is_array<T>::value, int> = 0,
+          std::enable_if_t<!std::is_pointer<T>::value, int> = 0>
+void populate_member(T& member, boost::python::tuple& args, int& index)
 {
 	if (index < boost::python::len(args)) {
-		return boost::python::extract<T>{args[index++]};
+		member = boost::python::extract<T>{args[index++]};
 	}
-	return {};
 }
 
-template <class T, typename... Ts>
-struct init_c_struct;
-
-template <class T, typename... MemberTypes, typename... ExpandedTypes>
-struct init_c_struct<T, type_sequence<MemberTypes...>, type_sequence<ExpandedTypes...>>
+template <class T, typename... MemberTypes>
+struct init_c_struct
 {
+	inline static std::tuple<MemberTypes T::*...> members;
+
 	static std::shared_ptr<T> fn(boost::python::tuple args, boost::python::dict)
 	{
+		auto result = std::shared_ptr<T>{new T{}};
 		int index = 0;
-		int index_into_array = 0;
-		boost::python::stl_input_iterator<boost::python::object> iter{};
-		return std::shared_ptr<T>{new T{populate_helper<ExpandedTypes>(args, index, iter, index_into_array)...}};
+		std::apply([&](auto... member) { (populate_member((*result).*member, args, index), ...); }, members);
+		return result;
 	}
 };
 
 template <class T, typename... MemberTypes>
-boost::python::object make_init_function([[maybe_unused]] MemberTypes T::*... members)
+boost::python::object make_init_function(MemberTypes T::*... members)
 {
-	return raw_constructor(
-		&init_c_struct<T, type_sequence<MemberTypes...>, make_expanded_sequence_for<MemberTypes...>>::fn, 0);
+	init_c_struct<T, MemberTypes...>::members = std::tuple<MemberTypes T::*...>{members...};
+	return boost::python::raw_constructor(&init_c_struct<T, MemberTypes...>::fn, 0);
 }
 
 #endif // RE_PYTHON_TYPES_INIT_STRUCT_HPP
