@@ -118,44 +118,41 @@ namespace
 		// Reference counter for nested python operations
 		static thread_local uint64_t ts_thread_refct = 0;
 	} //namespace python_state
-}
 
-void register_regexes_from_array(const nlohmann::json& _array, const std::string& _instance_name)
-{
-	try {
-		for (const auto& elem : _array) {
-			try {
-				const auto& tmp = elem.get_ref<const std::string&>();
-				RuleExistsHelper::Instance()->registerRuleRegex(tmp);
-				// clang-format off
-				log_re::debug({
-					{"rule_engine_plugin", rule_engine_name},
-					{"instance_name", _instance_name},
-					{"regex", tmp},
-				});
-				// clang-format on
-			}
-			catch (const boost::bad_any_cast&) {
-				// clang-format off
-				log_re::error({
-					{"rule_engine_plugin", rule_engine_name},
-					{"instance_name", _instance_name},
-					{"log_message", "failed to cast pep_regex_to_match to string"},
-				});
-				// clang-format on
-				continue;
+	void register_regexes_from_array(const nlohmann::json& _array, const std::string& _instance_name)
+	{
+		try {
+			for (const auto& elem : _array) {
+				try {
+					const auto& tmp = elem.get_ref<const std::string&>();
+					RuleExistsHelper::Instance()->registerRuleRegex(tmp);
+					// clang-format off
+					log_re::debug({
+						{"rule_engine_plugin", rule_engine_name},
+						{"instance_name", _instance_name},
+						{"regex", tmp},
+					});
+					// clang-format on
+				}
+				catch (const boost::bad_any_cast&) {
+					// clang-format off
+					log_re::error({
+						{"rule_engine_plugin", rule_engine_name},
+						{"instance_name", _instance_name},
+						{"log_message", "failed to cast pep_regex_to_match to string"},
+					});
+					// clang-format on
+					continue;
+				}
 			}
 		}
+		catch (const boost::bad_any_cast&) {
+			std::stringstream msg;
+			msg << "[" << _instance_name << "] failed to any_cast a std::vector<boost::any>&";
+			THROW(INVALID_ANY_CAST, msg.str());
+		}
 	}
-	catch (const boost::bad_any_cast&) {
-		std::stringstream msg;
-		msg << "[" << _instance_name << "] failed to any_cast a std::vector<boost::any>&";
-		THROW(INVALID_ANY_CAST, msg.str());
-	}
-}
 
-namespace
-{
 	irods::error to_irods_error_object(const bp::object& object)
 	{
 		if (bp::extract<int> result{object}; result.check()) {
