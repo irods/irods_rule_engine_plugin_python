@@ -23,17 +23,18 @@
 #include <boost/filesystem/operations.hpp>
 #pragma GCC diagnostic pop
 
-#include <irods/rodsErrorTable.h>
 #include <irods/irods_default_paths.hpp>
 #include <irods/irods_error.hpp>
 #include <irods/irods_logger.hpp>
+#include <irods/irods_ms_plugin.hpp>
 #include <irods/irods_re_plugin.hpp>
-#include <irods/irods_re_structs.hpp>
 #include <irods/irods_re_ruleexistshelper.hpp>
 #include <irods/irods_re_serialization.hpp>
-#include <irods/irods_ms_plugin.hpp>
+#include <irods/irods_re_structs.hpp>
 #include <irods/irods_server_properties.hpp>
 #include <irods/msParam.h>
+#include <irods/rodsError.h>
+#include <irods/rodsErrorTable.h>
 #include <irods/rsExecMyRule.hpp>
 
 #include "irods/private/re/python.hpp"
@@ -607,6 +608,17 @@ static irods::error exec_rule(const irods::default_re_ctx&,
                               std::list<boost::any>& rule_arguments_cpp,
                               irods::callback effect_handler)
 {
+	// Clear client-side errors for dynamic PEPs as we expect failures from the pre-PEPs to control
+	// access to operations. This comment and behavior come directly from the NREP.
+	irods::at_scope_exit clear_rerror_stack_for_dynamic_peps{[&rule_name, &effect_handler] {
+		if (rule_name.starts_with("pep_")) {
+			auto* rei = get_rei_from_effect_handler(effect_handler);
+			if (rei && rei->rsComm) {
+				freeRErrorContent(&rei->rsComm->rError);
+			}
+		}
+	}};
+
 	try {
 		std::lock_guard<std::recursive_mutex> lock{python_mutex};
 		python_thread_state_scope tstate;
