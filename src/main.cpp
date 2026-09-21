@@ -94,7 +94,7 @@ const std::string STRING_VALUE_KEY = "STRING_VALUE_KEY";
 const std::string IRODS_ERROR_PREFIX = "[iRods__Error__Code:";
 
 const std::string STATIC_PEP_RULE_REGEX = "ac[^ ]*";
-const std::string DYNAMIC_PEP_RULE_REGEX = "[^ ]*pep_[^ ]*_(pre|post)";
+const std::string DYNAMIC_PEP_RULE_REGEX = "[^ ]*pep_[^ ]*_(pre|post|except|finally)";
 
 namespace bp = boost::python;
 

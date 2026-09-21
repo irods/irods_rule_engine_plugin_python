@@ -1,8 +1,6 @@
-from __future__ import print_function
-
+import argparse
 import glob
 import multiprocessing
-import optparse
 import os
 import shutil
 import subprocess
@@ -58,11 +56,14 @@ def install_building_dependencies(externals_directory):
         add_cmake_to_front_of_path()
     install_os_specific_dependencies()
 
+
 def install_os_specific_dependencies_apt():
     irods_python_ci_utilities.install_os_packages(['make', 'python3-dev', 'libssl-dev', 'gcc'])
 
+
 def install_os_specific_dependencies_yum():
     irods_python_ci_utilities.install_os_packages(['make', 'gcc', 'python3-devel', 'openssl-devel'])
+
 
 def install_os_specific_dependencies():
     dispatch_map = {
@@ -78,31 +79,44 @@ def install_os_specific_dependencies():
     except KeyError:
         irods_python_ci_utilities.raise_not_implemented_for_distribution()
 
+
 def copy_output_packages(build_directory, output_root_directory):
     irods_python_ci_utilities.gather_files_satisfying_predicate(
         build_directory,
         irods_python_ci_utilities.append_os_specific_directory(output_root_directory),
         lambda s:s.endswith(irods_python_ci_utilities.get_package_suffix()))
 
-def main(build_directory, output_root_directory, irods_packages_root_directory, externals_directory):
+
+def main(build_directory, output_root_directory, irods_packages_root_directory, externals_directory, irods_package_version, debug_build=False):
     install_building_dependencies(externals_directory)
-    if irods_packages_root_directory:
+    if irods_package_version is not None:
+        irods_python_ci_utilities.install_irods_packages_repository()
+        irods_python_ci_utilities.install_released_irods_dev_and_runtime_packages(irods_package_version)
+    elif irods_packages_root_directory:
         irods_python_ci_utilities.install_irods_dev_and_runtime_packages(irods_packages_root_directory)
     build_directory = os.path.abspath(build_directory or tempfile.mkdtemp(prefix='irods_python_rule_engine_plugin_build_directory'))
-    irods_python_ci_utilities.subprocess_get_output(['cmake', os.path.dirname(os.path.realpath(__file__))], check_rc=True, cwd=build_directory)
+    build_type = 'Debug' if debug_build else 'Release'
+    cmake_command = ['cmake', f'-DCMAKE_BUILD_TYPE={build_type}', os.path.dirname(os.path.realpath(__file__))]
+    print(cmake_command)
+    irods_python_ci_utilities.subprocess_get_output(cmake_command, check_rc=True, cwd=build_directory)
     irods_python_ci_utilities.subprocess_get_output(['make', '-j', str(multiprocessing.cpu_count()), 'package'], check_rc=True, cwd=build_directory)
     if output_root_directory:
         copy_output_packages(build_directory, output_root_directory)
 
-if __name__ == '__main__':
-    parser = optparse.OptionParser()
-    parser.add_option('--build_directory')
-    parser.add_option('--output_root_directory')
-    parser.add_option('--irods_packages_root_directory')
-    parser.add_option('--externals_packages_directory')
-    options, _ = parser.parse_args()
 
-    main(options.build_directory,
-         options.output_root_directory,
-         options.irods_packages_root_directory,
-         options.externals_packages_directory)
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Build python rule engine plugin.')
+    parser.add_argument('--build_directory')
+    parser.add_argument('--output_root_directory')
+    parser.add_argument('--irods_packages_root_directory')
+    parser.add_argument('--externals_packages_directory')
+    parser.add_argument('--irods_package_version')
+    parser.add_argument('--debug_build', action='store_true')
+    args = parser.parse_args()
+
+    main(args.build_directory,
+         args.output_root_directory,
+         args.irods_packages_root_directory,
+         args.externals_packages_directory,
+         args.irods_package_version,
+         args.debug_build)
