@@ -115,7 +115,7 @@ class Query(object):
     """
 
     __parameter_names = tuple('columns,conditions,output,offset,limit,case_sensitive,options,parser,order_by'.split(','))
-    __non_whitespace = re.compile('\S+')
+    __non_whitespace = re.compile(r'\S+')
 
     def __init__(self,
                  callback,
